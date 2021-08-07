@@ -1,0 +1,15 @@
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csprojAssemblyReference.cache
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\MainWindow.g.cs
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\App.g.cs
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\MainWindow.baml
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File_Master_project.Properties.Resources.resources
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.GenerateResource.cache
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.CoreCompileInputs.cache
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\File-Master.exe.config
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\File-Master.exe
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\File-Master.pdb
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master_MarkupCompile.cache
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master_MarkupCompile.lref
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master.g.resources
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master.exe
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master.pdb
