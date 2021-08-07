@@ -377,15 +377,10 @@ namespace File_Master_project
                 Auto[i] = Auto[i].Replace("<!change!>", "");
             }
             #endregion
-            if (Auto.Count!=0)
-            {
-                File.WriteAllLines(Currentdir + "\\config\\autosave.txt", Auto.ToArray());
-                Emptyconfig = false;
-            }
-            else
-            {
-                Emptyconfig = true;
-            }
+
+            File.WriteAllLines(Currentdir + "\\config\\autosave.txt", Auto.ToArray());
+            Emptyconfig = false;
+
             #region UI-changes
             Apply_label.IsEnabled = false;
             Apply_label.Opacity = 0.5;
@@ -816,6 +811,7 @@ namespace File_Master_project
             {
                 Autoconfig_upload();
                 Load_Auto(Auto);
+                AS_Menureset();
             }
         }
 
@@ -825,6 +821,7 @@ namespace File_Master_project
             {
                 Load_autosave();
                 Load_Auto(Auto);
+                AS_Menureset();
             }
         }
         #endregion
