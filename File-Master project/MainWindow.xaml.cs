@@ -89,10 +89,13 @@ namespace File_Master_project
         private List<string> Auto = new List<string>(); //structure : {int index}*{char type}src<{string source_path}|dst<{string destination_path}|{interval}|{*if empty it is saved, othervise a save is required to apply changes}
         private string Currentdir = Directory.GetCurrentDirectory();
 
-        #region Mode boolians
-        #region UI-based
+        #region Options
         private bool shortsource = true;
+        private int Savefilesize_Limit = 1000000;//in bytes
+        private int Savefoldersize_Limit = 1000000;//in bytes
         #endregion
+
+        #region Mode boolians
         private bool Submenu = false;
         private bool Emptyconfig = false;
         #endregion
@@ -101,10 +104,12 @@ namespace File_Master_project
         {
             InitializeComponent();
 
-            Startup();
-
-            Load_autosave();
-            Load_Auto(Auto);
+            if (Beta_Warning())
+            {
+                Startup();
+                Load_autosave();
+                Load_Auto(Auto);             
+            }
         }
 
         #region Startup
@@ -134,7 +139,7 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Data_import
+        #region Data_import/Load
         private void Load_autosave()
         {
             if (!Emptyconfig)//if the config file is empty, it won't try to load it
@@ -285,15 +290,19 @@ namespace File_Master_project
                 {
                     if (temp[0][0] == 'M'&& temp[1][0] == 'U')
                     {
-                        Status_label.Content = "Status: Missing source and needs to be applied!";
+                        Status_label.Content = "Status: Missing source and\nneeds to be applied!";
                         Status_label.Foreground = new SolidColorBrush(Color.FromRgb(220, 0, 0));
 
                         Relocate_button.Opacity = 1;
                         Relocate_button.IsEnabled = true;
+
+                        Manualsave_button.IsEnabled = false;
+                        Manualsave_button.Opacity = 0.5;
+                        Save_image.Opacity = 0.5;
                     }
                 }
             }
-            else
+            else//if there is one issue or none
             {
                 if (temp[0][0] == 'M')//if the source is missing
                 {
@@ -302,6 +311,10 @@ namespace File_Master_project
 
                     Relocate_button.Opacity = 1;
                     Relocate_button.IsEnabled = true;
+
+                    Manualsave_button.IsEnabled = false;
+                    Manualsave_button.Opacity = 0.5;
+                    Save_image.Opacity = 0.5;
                 }
                 else if (temp[0][0] == 'U')//if the source is unsaved
                 {
@@ -310,6 +323,10 @@ namespace File_Master_project
 
                     Relocate_button.Opacity = 0.5;
                     Relocate_button.IsEnabled = false;
+
+                    Manualsave_button.IsEnabled = false;
+                    Manualsave_button.Opacity = 0.5;
+                    Save_image.Opacity = 0.5;
                 }
                 else//no issue
                 {
@@ -318,6 +335,10 @@ namespace File_Master_project
 
                     Relocate_button.Opacity = 0.5;
                     Relocate_button.IsEnabled = false;
+
+                    Manualsave_button.IsEnabled = true;
+                    Manualsave_button.Opacity = 1;
+                    Save_image.Opacity = 1;
                 }
             }
             #endregion
@@ -391,7 +412,69 @@ namespace File_Master_project
         }
         #endregion
 
+        #region Saving
+        private void Save(string sourcepath, string destinationpath, bool isFile)
+        {
+            if (isFile)
+            {
+                #region Filesave
+                FileInfo Size = new FileInfo(sourcepath);
+                if (Size.Length < Savefilesize_Limit)//if the file is smaller than 1Mb
+                {
+                    if (File.Exists($"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}"))//if it has to overwrite
+                    {
+                        MessageBox.Show("I cannot overwrite files yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        File.Copy(sourcepath, $"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}", false);
+                        MessageBox.Show("The save was successful!", "Save", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("I cannot save files bigger than 1MB!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                #endregion
+            }
+            else
+            {
+                MessageBox.Show("I cannot save folders yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void Manualsave_button_Click(object sender, RoutedEventArgs e)
+        {
+            if(Warning_Save())
+            {
+                int i = Source_listbox.SelectedIndex;
+                if (GetType(i) == 'F')
+                {
+                    Save(GetSource(i), GetDestination(i),true);
+                }
+                else
+                {
+                    Save(GetSource(i), GetDestination(i), false);
+                }
+            }
+        }
+        #endregion
+
         #region UI-changes/program running
+
+        #region Warnings
+        private bool Beta_Warning()
+        {
+            return MessageBox.Show("This is an unstable version of the program! \nUse it at your own risk!", "Warning!", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.ServiceNotification).Equals(MessageBoxResult.OK);
+            //return true;
+        }
+
+        private bool Warning_Save()
+        {
+            return MessageBox.Show("This is an unstable version of the program! \nIt might cause some issues! \nDo you want to save anyway?", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Exclamation).Equals(MessageBoxResult.Yes);
+            //return true; 
+        }
+        #endregion
 
         #region Menu reset
         private void AS_Menureset()
@@ -408,6 +491,9 @@ namespace File_Master_project
             Relocate_button.Opacity=0.5;
             Viewallsettings_button.IsEnabled = false;
             Viewallsettings_button.Opacity = 0.5;
+            Manualsave_button.IsEnabled = false;
+            Manualsave_button.Opacity = 0.5;
+            Save_image.Opacity = 0.5;
         }
         #endregion
 
@@ -864,9 +950,9 @@ namespace File_Master_project
                 Debug_grid.Visibility = Visibility.Visible;
             }*/
             SystemSounds.Asterisk.Play();
+            //Warning_Save();
             //Autoconfig_upload();
         }
         #endregion
-
     }
 }
