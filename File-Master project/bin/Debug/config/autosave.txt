@@ -1,4 +1,0 @@
-1*Dsrc<D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\config|dst<D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\config|5 day|
-2*Fsrc<E:\Telepítők\Egyéb\Minecraft\Minecraft 1.8.exe|dst<C:\Users\Dani PC\Desktop\Destination|10 day|
-3*Fsrc<E:\Telepítők\Egyéb\Minecraft\installer.log|dst<C:\Users\Dani PC\Desktop\Destination|10 day|
-4*Fsrc<E:\Telepítők\Egyéb\NetFxRepairTool.exe|dst<C:\Users\Dani PC\Desktop\Destination|1 hour|
