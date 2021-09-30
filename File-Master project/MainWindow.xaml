@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:File_Master_project"
         mc:Ignorable="d"
-        Title="File-Master" Height="485" Width="890" Background="#FF1A1A1A" Foreground="Black" WindowStartupLocation="CenterScreen" BorderBrush="Black" BorderThickness="5,30,5,5" Visibility="Visible" WindowStyle="None" Icon="icon-recycle-10.jpg" ResizeMode="CanMinimize">
+        Title="File-Master" Height="485" Width="890" Background="#FF1A1A1A" Foreground="Black" WindowStartupLocation="CenterScreen" BorderBrush="Black" BorderThickness="5,30,5,5" Visibility="Visible" WindowStyle="None" Icon="icon-recycle-10.jpg" ResizeMode="CanMinimize" MouseLeftButtonDown="Main_window_MouseLeftButtonDown">
     <Grid x:Name="Main_grid">
         <Image x:Name="Icon_image" HorizontalAlignment="Left" Height="25" Margin="5,-27,0,0" VerticalAlignment="Top" Width="25" Source="icon-recycle-10.jpg"/>
         <Label Content="File-Master" HorizontalAlignment="Left" Margin="31,-32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="16"/>
-        <Label Content="v1.0" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+        <Label Content="v1.1" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
         <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="820,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="852,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="848,-32,0,0" VerticalAlignment="Top" Width="32" Source="icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown"/>

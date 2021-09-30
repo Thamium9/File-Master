@@ -415,32 +415,41 @@ namespace File_Master_project
         #region Saving
         private void Save(string sourcepath, string destinationpath, bool isFile)
         {
-            if (isFile)
+            bool success = false;
+            try
             {
-                #region Filesave
-                FileInfo Size = new FileInfo(sourcepath);
-                if (Size.Length < Savefilesize_Limit)//if the file is smaller than 1Mb
+                if (isFile)
                 {
-                    if (File.Exists($"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}"))//if it has to overwrite
+                    #region Filesave
+                    FileInfo Size = new FileInfo(sourcepath);
+                    if (Size.Length < Savefilesize_Limit)//if the file is smaller than 1Mb
                     {
-                        MessageBox.Show("I cannot overwrite files yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        if (File.Exists($"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}"))//if it has to overwrite
+                        {
+                            MessageBox.Show("I cannot overwrite files yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                        else
+                        {
+                            File.Copy(sourcepath, $"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}", false);
+                            success = true;
+                        }
                     }
                     else
                     {
-                        File.Copy(sourcepath, $"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}", false);
-                        MessageBox.Show("The save was successful!", "Save", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show("I cannot save files bigger than 1MB!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
+                    #endregion
                 }
                 else
                 {
-                    MessageBox.Show("I cannot save files bigger than 1MB!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("I cannot save folders yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                #endregion
             }
-            else
+            catch (Exception)
             {
-                MessageBox.Show("I cannot save folders yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+                MessageBox.Show("The operation was unsuccessful!", "Unknown Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+            }         
+            if(success) MessageBox.Show("The save was successful!", "Save", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Manualsave_button_Click(object sender, RoutedEventArgs e)
@@ -623,6 +632,8 @@ namespace File_Master_project
         }
         #endregion
 
+        #region Menu bar
+
         #region Close/Minimize buttons
         private void Close_image_MouseEnter(object sender, MouseEventArgs e)
         {
@@ -643,6 +654,40 @@ namespace File_Master_project
         {
             Minimizebackground_rectangle.Visibility = Visibility.Hidden;
         }
+        #endregion
+
+        #region Top right menu button actions
+        private void Close_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you want to close the program? \nIf you close it, all unsaved changes will be lost!", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
+            {
+                Close();
+            }
+        }
+
+        private void Minimize_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            Main_window.WindowState = WindowState.Minimized;
+        }
+        #endregion
+
+        #region Move window
+        private void Main_window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (e.LeftButton.Equals(MouseButtonState.Pressed))
+                {
+                    this.DragMove();
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Unexpected error with dragging the window!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Itemlist edit
@@ -893,7 +938,7 @@ namespace File_Master_project
         #region Apply/Dismiss buttons
         private void Apply_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to apply these changes?","Apply changes",MessageBoxButton.YesNo,MessageBoxImage.Warning,MessageBoxResult.Yes).Equals(MessageBoxResult.Yes));
+            if (MessageBox.Show("Are you sure you want to apply the changes?","Apply changes",MessageBoxButton.YesNo,MessageBoxImage.Warning,MessageBoxResult.Yes).Equals(MessageBoxResult.Yes));
             {
                 Autoconfig_upload();
                 Load_Auto(Auto);
@@ -903,7 +948,7 @@ namespace File_Master_project
 
         private void Dismiss_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to cancel these changes?", "Dismiss changes", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No).Equals(MessageBoxResult.Yes)) ;
+            if (MessageBox.Show("Do you want to cancel the changes?", "Dismiss changes", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No).Equals(MessageBoxResult.Yes)) ;
             {
                 Load_autosave();
                 Load_Auto(Auto);
@@ -912,21 +957,6 @@ namespace File_Master_project
         }
         #endregion
 
-        #endregion
-
-        #region Top right menu button actions
-        private void Close_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (MessageBox.Show("Are you sure you want to close the program? \nIf you close it, all unsaved changes will be lost!", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
-            {
-                Close();
-            }
-        }
-
-        private void Minimize_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            Main_window.WindowState = WindowState.Minimized;
-        }
         #endregion
 
         #endregion
