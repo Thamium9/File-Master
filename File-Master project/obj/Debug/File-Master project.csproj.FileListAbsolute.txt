@@ -13,3 +13,6 @@ D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master_Mar
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master.g.resources
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master.exe
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master.pdb
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Hardcodet.NotifyIcon.Wpf.dll
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Hardcodet.NotifyIcon.Wpf.xml
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.CopyComplete

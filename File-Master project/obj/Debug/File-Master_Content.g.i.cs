@@ -8,6 +8,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("icons8-save(grey-dark).png")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("icons/cleanup2.png")]
 
 

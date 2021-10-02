@@ -86,17 +86,22 @@ namespace File_Master_project
 
         #endregion
 
-        private List<string> Auto = new List<string>(); //structure : {int index}*{char type}src<{string source_path}|dst<{string destination_path}|{interval}|{*if empty it is saved, othervise a save is required to apply changes}
+        private List<string> Backupinfo_List = new List<string>(); //structure : {int index}*{char type}src<{string source_path}|dst<{string destination_path}|{interval}|{*if empty it is saved, othervise a save is required to apply changes}
         private string Currentdir = Directory.GetCurrentDirectory();
 
-        #region Options
+        #region Options (User)
         private bool shortsource = true;
         private int Savefilesize_Limit = 1000000;//in bytes
         private int Savefoldersize_Limit = 1000000;//in bytes
+        private bool Minimize_as_TaskbarIcon = true;
+        private bool Start_with_minimized = false;
         #endregion
 
-        #region Mode boolians
-        private bool Submenu = false;
+        #region Options (System)
+        private bool InDevelopment = true;
+        private bool Hasprivileges = false;
+        private bool Hasadminrights = false;
+        private string Menu;
         private bool Emptyconfig = false;
         #endregion
 
@@ -104,12 +109,20 @@ namespace File_Master_project
         {
             InitializeComponent();
 
-            if (Beta_Warning())
+            #region Window visibility on startup
+            if (!Minimize_as_TaskbarIcon || !Start_with_minimized) NotifyIcon_Taskbar.Visibility = Visibility.Collapsed; //hide notifyicon when not needed
+            if (Start_with_minimized) Program_Minimize(Minimize_as_TaskbarIcon);
+            else Main_window.WindowState = WindowState.Normal;
+            #endregion
+
+            if (InDevelopment)
             {
-                Startup();
-                Load_autosave();
-                Load_Auto(Auto);             
+                Unstable_Warning();         
             }
+            Startup();
+            Menu = "Backup";
+            Load_backupinfo();
+            Load_Backupitems(Backupinfo_List);
         }
 
         #region Startup
@@ -118,39 +131,39 @@ namespace File_Master_project
         {          
             Directory.CreateDirectory(Currentdir + "\\Logs");
             Directory.CreateDirectory(Currentdir + "\\config");
-            if (!(File.Exists(Currentdir + "\\config\\autosave.txt")))
+            if (!(File.Exists(Currentdir + "\\config\\backup.txt")))
             {
-                File.Create(Currentdir + "\\config\\autosave.txt");
+                File.Create(Currentdir + "\\config\\backup.txt");
                 Emptyconfig = true;
             }
         }
         #endregion
 
-        #region Autosave feature
+        #region Backup feature
 
-        #region Autosave list recount
+        #region Backupinfo list recount
         private void Autorecount()
         {
-            for (int i = 0; i < Auto.Count(); i++)
+            for (int i = 0; i < Backupinfo_List.Count(); i++)
             {
-                string[] temp = Auto[i].Split('*');//separates the indexnumber from the rest of the code
-                Auto[i] = $"{i+1}*{temp[1]}";
+                string[] temp = Backupinfo_List[i].Split('*');//separates the indexnumber from the rest of the code
+                Backupinfo_List[i] = $"{i+1}*{temp[1]}";
             }
         }
         #endregion
 
         #region Data_import/Load
-        private void Load_autosave()
+        private void Load_backupinfo()
         {
             if (!Emptyconfig)//if the config file is empty, it won't try to load it
             {
-                Auto = File.ReadAllLines(Directory.GetCurrentDirectory() + "\\config\\autosave.txt").ToList();
+                Backupinfo_List = File.ReadAllLines(Directory.GetCurrentDirectory() + "\\config\\backup.txt").ToList();
                 #region Check for empty rows to avoid crash
-                for (int i = 0; i < Auto.Count(); i++)
+                for (int i = 0; i < Backupinfo_List.Count(); i++)
                 {
-                    if (Auto[i] == "")
+                    if (Backupinfo_List[i] == "")
                     {
-                        Auto.RemoveAt(i);
+                        Backupinfo_List.RemoveAt(i);
                     }
                 }
                 #endregion
@@ -164,12 +177,12 @@ namespace File_Master_project
             #endregion
         }
 
-        private void Load_Auto(List<string> Auto)//only loads source / checks for missing and unsaved source 
+        private void Load_Backupitems(List<string> Backupinfo_List)//only loads source / checks for missing-unsaved sources 
         {
             Warning3_label.Visibility = Visibility.Hidden;
             Source_listbox.Items.Clear();
             int index = 0;
-            foreach (var item in Auto)
+            foreach (var item in Backupinfo_List)
             {
                 string status = "";
                 if (GetType(index)=='D')//D->Directory
@@ -201,7 +214,7 @@ namespace File_Master_project
                     }
                     #endregion
 
-                    #region Add folder with statinfo to list
+                    #region Add folder with statusinfo to list
                     if (shortsource)
                     {
                         string[] temp = GetSource(index).Split('\\');
@@ -242,7 +255,7 @@ namespace File_Master_project
                     }
                     #endregion
 
-                    #region Add file with statinfo to list
+                    #region Add file with statusinfo to list
                     if (shortsource)
                     {
                         string[] temp = GetSource(index).Split('\\');
@@ -258,7 +271,7 @@ namespace File_Master_project
             }          
         }
 
-        private void Load_Auto(List<string> Auto, int index)//loads destination + interval + status
+        private void Load_Backupitem(List<string> Backupinfo_List, int index)//loads destination + interval + status
         {
             Viewallsettings_button.IsEnabled = true;
             Viewallsettings_button.Opacity = 1;
@@ -350,56 +363,56 @@ namespace File_Master_project
         private string GetSource(int index)
         {
             string result;
-            result = Auto[index].Split('|')[0].Split('<')[1];
+            result = Backupinfo_List[index].Split('|')[0].Split('<')[1];
             return result;
         }
 
         private string GetDestination(int index)
         {
             string result;
-            result = Auto[index].Split('|')[1].Split('<')[1];
+            result = Backupinfo_List[index].Split('|')[1].Split('<')[1];
             return result;
         }
 
         private char GetType(int index)
         {
             char result;
-            result = Auto[index].Split('|')[0].Split('*')[1][0];
+            result = Backupinfo_List[index].Split('|')[0].Split('*')[1][0];
             return result;
         }
 
         private int GetIndex(int index)
         {
             int result;
-            result = int.Parse(Auto[index].Split('|')[0].Split('*')[0]);
+            result = int.Parse(Backupinfo_List[index].Split('|')[0].Split('*')[0]);
             return result;
         }
 
         private Interval GetInterval(int index)
         {
-            Interval result = new Interval(Auto[index].Split('|')[2]);
+            Interval result = new Interval(Backupinfo_List[index].Split('|')[2]);
             return result;
         }
 
         private bool GetSavestatus(int index)
         {
-            if (Auto[index].Split('|')[3] == "") return true;
+            if (Backupinfo_List[index].Split('|')[3] == "") return true;
             else return false;
         }
 
         #endregion
 
         #region Data_export
-        private void Autoconfig_upload()
+        private void Upload_Backupinfo()
         {
             #region Status to saved
-            for (int i = 0; i < Auto.Count; i++)
+            for (int i = 0; i < Backupinfo_List.Count; i++)
             {
-                Auto[i] = Auto[i].Replace("<!change!>", "");
+                Backupinfo_List[i] = Backupinfo_List[i].Replace("<!change!>", "");
             }
             #endregion
 
-            File.WriteAllLines(Currentdir + "\\config\\autosave.txt", Auto.ToArray());
+            File.WriteAllLines(Currentdir + "\\config\\backup.txt", Backupinfo_List.ToArray());
             Emptyconfig = false;
 
             #region UI-changes
@@ -459,7 +472,7 @@ namespace File_Master_project
                 int i = Source_listbox.SelectedIndex;
                 if (GetType(i) == 'F')
                 {
-                    Save(GetSource(i), GetDestination(i),true);
+                    Save(GetSource(i), GetDestination(i), true);
                 }
                 else
                 {
@@ -469,10 +482,12 @@ namespace File_Master_project
         }
         #endregion
 
+        #endregion
+
         #region UI-changes/program running
 
         #region Warnings
-        private bool Beta_Warning()
+        private bool Unstable_Warning()
         {
             return MessageBox.Show("This is an unstable version of the program! \nUse it at your own risk!", "Warning!", MessageBoxButton.OK, MessageBoxImage.Exclamation, MessageBoxResult.OK, MessageBoxOptions.ServiceNotification).Equals(MessageBoxResult.OK);
             //return true;
@@ -485,113 +500,7 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Menu reset
-        private void AS_Menureset()
-        {
-            Source_listbox.SelectedItem = -1;
-            Warning1_label.Visibility = Visibility.Visible;
-            Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            Destination_textbox.Text = "Select a source folder!";
-            Interval_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            Interval_label.Content = "N.A.";
-            Status_label.Content = "Status: N.A";
-            Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            Relocate_button.IsEnabled = false;
-            Relocate_button.Opacity=0.5;
-            Viewallsettings_button.IsEnabled = false;
-            Viewallsettings_button.Opacity = 0.5;
-            Manualsave_button.IsEnabled = false;
-            Manualsave_button.Opacity = 0.5;
-            Save_image.Opacity = 0.5;
-        }
-        #endregion
-
-        #region Side panel transitions
-
-        #region Autosave menu
-        private void As_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (!Submenu)
-            {
-                Autocleanup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-                Autosave_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
-                Filesorting_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-                Settings_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-
-                Autosave_grid.Visibility = Visibility.Visible;
-                Debug_grid.Visibility = Visibility.Hidden;
-                //other grids
-            }
-            else
-            {
-                SystemSounds.Exclamation.Play();
-            }
-        }
-
-        private void As_label_MouseEnter(object sender, MouseEventArgs e)
-        {
-            Autosave_menu.BorderThickness = new Thickness(0, 2, 0, 2);
-        }
-
-        private void As_label_MouseLeave(object sender, MouseEventArgs e)
-        {
-            Autosave_menu.BorderThickness = new Thickness(0, 0, 0, 0);
-        }
-        #endregion
-
-
-        #region Auto cleanup menu
-        private void Ac_label_MouseEnter(object sender, MouseEventArgs e)
-        {
-            Autocleanup_menu.BorderThickness = new Thickness(0, 2, 0, 2);
-        }
-
-        private void Ac_label_MouseLeave(object sender, MouseEventArgs e)
-        {
-            Autocleanup_menu.BorderThickness = new Thickness(0, 0, 0, 0);
-        }
-
-        private void Ac_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            Autocleanup_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
-            Autosave_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-            Filesorting_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-            Settings_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-        }
-
-
-
-        #endregion
-
-
-        #region File shorting menu
-        private void Fs_label_MouseEnter(object sender, MouseEventArgs e)
-        {
-            Filesorting_menu.BorderThickness = new Thickness(0, 2, 0, 2);
-        }
-
-        private void Fs_label_MouseLeave(object sender, MouseEventArgs e)
-        {
-            Filesorting_menu.BorderThickness = new Thickness(0, 0, 0, 0);
-        }
-
-        private void Fs_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            Autocleanup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-            Autosave_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-            Filesorting_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
-            Settings_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
-        }
-
-
-        #endregion
-
-
-        #region Settings menu
-
-        #endregion
-
-        #endregion
+        #region Backup menu
 
         #region Source item selection
         private void Source_listbox_SelectionChanged(object sender, SelectionChangedEventArgs e)//changes when you select an item from the source list
@@ -599,7 +508,7 @@ namespace File_Master_project
             int i = Source_listbox.SelectedIndex;
             if (i != -1)//if the index is -1 there is no item selected
             {
-                Load_Auto(Auto, i);
+                Load_Backupitem(Backupinfo_List, i);
 
                 #region UI-changes
                 Warning1_label.Visibility = Visibility.Hidden;
@@ -632,72 +541,14 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Menu bar
+        #region Itemlist edit (submenu)
 
-        #region Close/Minimize buttons
-        private void Close_image_MouseEnter(object sender, MouseEventArgs e)
-        {
-            Closebackground_rectangle.Visibility = Visibility.Visible;
-        }
-
-        private void Close_image_MouseLeave(object sender, MouseEventArgs e)
-        {
-            Closebackground_rectangle.Visibility = Visibility.Hidden;
-        }
-
-        private void Minimize_image_MouseEnter(object sender, MouseEventArgs e)
-        {
-            Minimizebackground_rectangle.Visibility = Visibility.Visible;
-        }
-
-        private void Minimize_image_MouseLeave(object sender, MouseEventArgs e)
-        {
-            Minimizebackground_rectangle.Visibility = Visibility.Hidden;
-        }
-        #endregion
-
-        #region Top right menu button actions
-        private void Close_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (MessageBox.Show("Are you sure you want to close the program? \nIf you close it, all unsaved changes will be lost!", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
-            {
-                Close();
-            }
-        }
-
-        private void Minimize_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            Main_window.WindowState = WindowState.Minimized;
-        }
-        #endregion
-
-        #region Move window
-        private void Main_window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            try
-            {
-                if (e.LeftButton.Equals(MouseButtonState.Pressed))
-                {
-                    this.DragMove();
-                }
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("Unexpected error with dragging the window!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-        #endregion
-
-        #endregion
-
-        #region Itemlist edit
-
-        #region Add item
+        #region Add item (submenu)
         private void Additem_button_Click(object sender, RoutedEventArgs e)
         {
-            Autosavesubmenu1_grid.Visibility = Visibility.Visible;
-            Autosave_grid.Visibility = Visibility.Hidden;
-            Submenu = true;
+            HideAllMenu();
+            Backupsubmenu1_grid.Visibility = Visibility.Visible;
+            Menu = "Backup.sub1";
         }
 
         private void Newitemapply_button_Click(object sender, RoutedEventArgs e)//adds the new item to the system
@@ -716,9 +567,9 @@ namespace File_Master_project
             }
             else if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
             {
-                Autosavesubmenu1_grid.Visibility = Visibility.Hidden;
-                Autosave_grid.Visibility = Visibility.Visible;
-                Submenu = false;
+                HideAllMenu();
+                Backup_grid.Visibility = Visibility.Visible;
+                Menu = "Backup";
 
                 #region Get Type
                 char type;
@@ -733,16 +584,16 @@ namespace File_Master_project
                 Interval intv = new Interval(Intervalselection_combobox.SelectedItem.ToString().Remove(0, 38));//the first 38 element is system data
                 #endregion
 
-                string temp = $"{Auto.Count() + 1}*{type}src<{Sourceinput_textbox.Text}|dst<{Destinationinput_textbox.Text}|{intv.Time} {intv.Unit}|<!change!>";
-                Auto.Add(temp);
-                Load_Auto(Auto);
-                Source_listbox.SelectedIndex = (Source_listbox.Items.Count-1);//selects the new item automatically
+                string temp = $"{Backupinfo_List.Count() + 1}*{type}src<{Sourceinput_textbox.Text}|dst<{Destinationinput_textbox.Text}|{intv.Time} {intv.Unit}|<!change!>";
+                Backupinfo_List.Add(temp);
+                Load_Backupitems(Backupinfo_List);
+                Source_listbox.SelectedIndex = (Source_listbox.Items.Count - 1);//selects the new item automatically
 
                 #region Submenu reset
                 Sourceinput_textbox.Text = "";
                 Destinationinput_textbox.Text = "";
                 Intervalselection_combobox.SelectedIndex = -1;
-                Optionfolder_radiobutton.IsChecked = true;               
+                Optionfolder_radiobutton.IsChecked = true;
                 #endregion
             }
         }
@@ -751,7 +602,7 @@ namespace File_Master_project
         #region Remove item
         private void Removeitem_button_Click(object sender, RoutedEventArgs e)
         {
-            if (Source_listbox.SelectedIndex==-1)
+            if (Source_listbox.SelectedIndex == -1)
             {
                 MessageBox.Show("You have to select an item in order to delete it!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -759,7 +610,7 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to delete this item? \nIt will be deleted permanently!", "Delete", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
                 {
-                    Auto.RemoveAt(Source_listbox.SelectedIndex);
+                    Backupinfo_List.RemoveAt(Source_listbox.SelectedIndex);
                     Source_listbox.SelectedIndex = -1;
 
                     #region Activate apply/dismiss options
@@ -771,19 +622,19 @@ namespace File_Master_project
                     #endregion
 
                     Autorecount();
-                    Load_Auto(Auto);
-                    AS_Menureset();
-                }              
+                    Load_Backupitems(Backupinfo_List);
+                    Reset_Backupmenu();
+                }
             }
         }
         #endregion
 
-        #region Relocate item
+        #region Relocate item (submenu)
         private void Relocate_button_Click(object sender, RoutedEventArgs e)
         {
-            Autosavesubmenu1_grid.Visibility = Visibility.Visible;
-            Autosave_grid.Visibility = Visibility.Hidden;
-            Submenu = true;
+            HideAllMenu();
+            Backupsubmenu1_grid.Visibility = Visibility.Visible;
+            Menu = "Backup.sub1";
             Destinationinput_textbox.IsEnabled = false;
             Intervalselection_combobox.Visibility = Visibility.Hidden;
             Interval2_label.Visibility = Visibility.Visible;
@@ -826,9 +677,9 @@ namespace File_Master_project
             }
             else if (MessageBox.Show("Are you sure you want to apply these changes?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
             {
-                Autosavesubmenu1_grid.Visibility = Visibility.Hidden;
-                Autosave_grid.Visibility = Visibility.Visible;
-                Submenu = false;
+                HideAllMenu();
+                Backup_grid.Visibility = Visibility.Visible;
+                Menu = "Backup";
 
                 #region Get Type
                 char type;
@@ -843,8 +694,8 @@ namespace File_Master_project
                 string interval = Interval2_label.Content.ToString();
                 #endregion
                 int index = Source_listbox.SelectedIndex;
-                Auto[index] = $"{GetIndex(Source_listbox.SelectedIndex)}*{type}src<{Sourceinput_textbox.Text}|dst<{Destinationinput_textbox.Text}|{interval}|<!change!>";
-                Load_Auto(Auto);
+                Backupinfo_List[index] = $"{GetIndex(Source_listbox.SelectedIndex)}*{type}src<{Sourceinput_textbox.Text}|dst<{Destinationinput_textbox.Text}|{interval}|<!change!>";
+                Load_Backupitems(Backupinfo_List);
                 Source_listbox.SelectedIndex = (Source_listbox.Items.Count - 1);//selects the relocated item automatically
 
                 #region Submenu reset
@@ -864,12 +715,12 @@ namespace File_Master_project
         }
         #endregion
 
-        #region View all settings
+        #region View all settings (submenu)
         private void Viewallsettings_button_Click(object sender, RoutedEventArgs e)
         {
-            Autosavesubmenu1_grid.Visibility = Visibility.Visible;
-            Autosave_grid.Visibility = Visibility.Hidden;
-            Submenu = true;
+            HideAllMenu();
+            Backupsubmenu1_grid.Visibility = Visibility.Visible;
+            Menu = "Backup.sub1";
             Destinationinput_textbox.IsEnabled = false;
             Sourceinput_textbox.IsEnabled = false;
             Intervalselection_combobox.Visibility = Visibility.Hidden;
@@ -896,7 +747,7 @@ namespace File_Master_project
             #endregion
             Destinationinput_textbox.Text = GetDestination(index);
             Sourceinput_textbox.Text = GetSource(index);
-            if (GetType(index)=='D')
+            if (GetType(index) == 'D')
             {
                 Optionfolder_radiobutton.IsChecked = true;
             }
@@ -908,12 +759,12 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Cancel button(universal)
-        private void Autosavesubmenu1cancel_button_Click(object sender, RoutedEventArgs e)
+        #region Cancel button  (universal submenu)
+        private void Backupsubmenu1cancel_button_Click(object sender, RoutedEventArgs e)
         {
-            Autosavesubmenu1_grid.Visibility = Visibility.Hidden;
-            Autosave_grid.Visibility = Visibility.Visible;
-            Submenu = false;
+            HideAllMenu();
+            Backup_grid.Visibility = Visibility.Visible;
+            Menu = "Backup";
 
             #region Submenu reset
             Sourceinput_textbox.Text = "";
@@ -938,11 +789,11 @@ namespace File_Master_project
         #region Apply/Dismiss buttons
         private void Apply_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to apply the changes?","Apply changes",MessageBoxButton.YesNo,MessageBoxImage.Warning,MessageBoxResult.Yes).Equals(MessageBoxResult.Yes));
+            if (MessageBox.Show("Are you sure you want to apply the changes?", "Apply changes", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes)) ;
             {
-                Autoconfig_upload();
-                Load_Auto(Auto);
-                AS_Menureset();
+                Upload_Backupinfo();
+                Load_Backupitems(Backupinfo_List);
+                Reset_Backupmenu();
             }
         }
 
@@ -950,13 +801,241 @@ namespace File_Master_project
         {
             if (MessageBox.Show("Do you want to cancel the changes?", "Dismiss changes", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No).Equals(MessageBoxResult.Yes)) ;
             {
-                Load_autosave();
-                Load_Auto(Auto);
-                AS_Menureset();
+                Load_backupinfo();
+                Load_Backupitems(Backupinfo_List);
+                Reset_Backupmenu();
             }
         }
         #endregion
 
+        #endregion
+
+        #region Menu reset
+        private void Reset_Backupmenu()
+        {
+            Source_listbox.SelectedItem = -1;
+            Warning1_label.Visibility = Visibility.Visible;
+            Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
+            Destination_textbox.Text = "Select a source folder!";
+            Interval_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
+            Interval_label.Content = "N.A.";
+            Status_label.Content = "Status: N.A";
+            Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
+            Relocate_button.IsEnabled = false;
+            Relocate_button.Opacity = 0.5;
+            Viewallsettings_button.IsEnabled = false;
+            Viewallsettings_button.Opacity = 0.5;
+            Manualsave_button.IsEnabled = false;
+            Manualsave_button.Opacity = 0.5;
+            Save_image.Opacity = 0.5;
+        }
+        #endregion
+
+        #endregion
+
+        #region Categorization menu
+
+        #endregion
+
+        #region Menu control (Grids)
+        private void HideAllMenu()
+        {
+            Backup_grid.Visibility = Visibility.Hidden;
+            Backupsubmenu1_grid.Visibility = Visibility.Hidden;
+            Debug_grid.Visibility = Visibility.Hidden;           
+        }
+        #endregion
+
+        #region Side panel transitions
+
+        #region Backup menu
+
+        private void Bc_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsSubmenu())
+            {
+                FileCleanup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+                Backup_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
+                Categorization_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+                Settings_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+
+                HideAllMenu();
+                Backup_grid.Visibility = Visibility.Visible;
+                Menu = "Backup";
+            }
+            else
+            {
+                SystemSounds.Exclamation.Play();
+            }
+        }
+
+        private void Bc_label_MouseEnter(object sender, MouseEventArgs e)
+        {
+            Backup_menu.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+        }
+
+        private void Bc_label_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (Menu.Split('.')[0] == "Backup") Backup_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
+            else Backup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+        }
+
+        #endregion
+
+        #region File-Cleanup menu
+        private void Fc_label_MouseEnter(object sender, MouseEventArgs e)
+        {
+            FileCleanup_menu.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+        }
+
+        private void Fc_label_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (Menu.Split('.')[0] == "File-Cleanup") FileCleanup_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
+            else FileCleanup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+        }
+
+        private void Fc_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            FileCleanup_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
+            Backup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+            Categorization_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+            Settings_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+
+            HideAllMenu();
+            Menu = "File-Cleanup";
+        }
+
+
+
+        #endregion
+
+        #region Categorization menu
+        private void Ctg_label_MouseEnter(object sender, MouseEventArgs e)
+        {
+            Categorization_menu.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+        }
+
+        private void Ctg_label_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if(Menu.Split('.')[0] == "Categorization") Categorization_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
+            else Categorization_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+        }
+
+        private void Ctg_label_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            FileCleanup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+            Backup_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+            Categorization_menu.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
+            Menu = "Categorization";
+            Settings_menu.Background = new SolidColorBrush(Color.FromRgb(20, 20, 20));
+
+            HideAllMenu();
+        }
+
+
+        #endregion
+
+        #region Settings menu
+
+        #endregion
+
+        private bool IsSubmenu()
+        {
+            return Menu.Split('.').Length > 1;
+        }
+
+        #endregion
+
+        #region Menu bar
+
+        #region Close/Minimize buttons
+        private void Close_image_MouseEnter(object sender, MouseEventArgs e)
+        {
+            Closebackground_rectangle.Visibility = Visibility.Visible;
+        }
+
+        private void Close_image_MouseLeave(object sender, MouseEventArgs e)
+        {
+            Closebackground_rectangle.Visibility = Visibility.Hidden;
+        }
+
+        private void Minimize_image_MouseEnter(object sender, MouseEventArgs e)
+        {
+            Minimizebackground_rectangle.Visibility = Visibility.Visible;
+        }
+
+        private void Minimize_image_MouseLeave(object sender, MouseEventArgs e)
+        {
+            Minimizebackground_rectangle.Visibility = Visibility.Hidden;
+        }
+        #endregion
+
+        #region Top right menu button actions
+
+        #region Close program
+        private void Close_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+             Close();
+        }
+
+        private void Main_window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (!MessageBox.Show("Are you sure you want to close the program? \nIf you close it, all unsaved changes will be lost!", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
+            {
+                e.Cancel = true;
+            }
+        }
+        #endregion
+
+        #region Minimize program
+        private void Minimize_image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            Program_Minimize(Minimize_as_TaskbarIcon);
+        }
+
+        private void Program_Minimize(bool Minimize_as_TaskbarIcon)
+        {
+            if (Minimize_as_TaskbarIcon)
+            {
+                Main_window.WindowState = WindowState.Minimized;
+                NotifyIcon_Taskbar.Visibility = Visibility.Visible;
+                Main_window.ShowInTaskbar = false;
+            }
+            else
+            {
+                Main_window.WindowState = WindowState.Minimized;
+            }
+        }
+
+        #region NotifyIcon
+        private void NotifyIcon_Taskbar_TrayLeftMouseDown(object sender, RoutedEventArgs e)
+        {
+            Main_window.WindowState = WindowState.Normal;
+            Main_window.Activate();
+            NotifyIcon_Taskbar.Visibility = Visibility.Collapsed;
+            Main_window.ShowInTaskbar = true;
+        }
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Move window
+        private void Main_window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (e.LeftButton.Equals(MouseButtonState.Pressed))
+                {
+                    this.DragMove();
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Unexpected error with dragging the window!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
         #endregion
 
         #endregion
@@ -976,12 +1055,16 @@ namespace File_Master_project
             //Temp();
             /*if (!Submenu)
             {
-                Autosave_grid.Visibility = Visibility.Hidden;
+                Backup_grid.Visibility = Visibility.Hidden;
                 Debug_grid.Visibility = Visibility.Visible;
             }*/
             SystemSounds.Asterisk.Play();
             //Warning_Save();
             //Autoconfig_upload();
+        }
+        private void Main_window_MouseMove(object sender, MouseEventArgs e)
+        {
+            debug_label.Content = Menu;
         }
         #endregion
     }
