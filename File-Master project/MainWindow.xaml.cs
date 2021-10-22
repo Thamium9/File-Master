@@ -84,6 +84,80 @@ namespace File_Master_project
             }
         }
 
+        class Backupitem
+        {
+            private int Index;
+            private char Type;
+            private string Source_path;
+            private string Destination_path;
+            private Interval Save_interval;
+            private string State;
+
+            public Backupitem(int interval, char type, string source_path, string destination_path, Interval save_interval, string state)
+            {
+                Index = Index;
+                Type = type;
+                Source_path = source_path;
+                Destination_path = destination_path;
+                Save_interval = save_interval;
+                State = state;
+            }
+        }
+
+        class Backuplist
+        {
+            private List<Backupitem> Itemlist = new List<Backupitem>();
+
+            public void AddBackupitem(Backupitem item)
+            {
+                Itemlist.Add(item);
+            }
+
+            public Backupitem GetBackupitem(int index)
+            {
+                return Itemlist[index];
+            }
+        }
+
+        class Settings
+        {
+            //default settings
+            public bool Shortsource = true;
+            public bool Minimize_as_TaskbarIcon = true;
+            public bool Start_with_minimized = false;
+
+            public int Savefilesize_Limit = 1000000;//in bytes
+            public int Savefoldersize_Limit = 1000000;//in bytes
+
+            private string[] Temp;
+            private string Path = $"{Directory.GetCurrentDirectory()}\\config\\settings.txt";
+
+            public Settings()
+            {             
+                if (!File.Exists(Path)) File.Create(Path);
+            }
+
+            public void Load_Settings()
+            {
+                Temp = File.ReadAllLines(Path);
+                foreach (var item in Temp)
+                {
+                    if (item.Split('=')[0] == "Shortsource") Shortsource = Get_Bool(item.Split('=')[1]);
+                    if (item.Split('=')[0] == "Minimize_as_TaskbarIcon") Minimize_as_TaskbarIcon = Get_Bool(item.Split('=')[1]);
+                    if (item.Split('=')[0] == "Start_with_minimized") Start_with_minimized = Get_Bool(item.Split('=')[1]);
+
+                    if (item.Split('=')[0] == "Savefilesize_Limit") Savefilesize_Limit = int.Parse(item.Split('=')[1]);
+                    if (item.Split('=')[0] == "Savefoldersize_Limit") Savefoldersize_Limit = int.Parse(item.Split('=')[1]);
+                }
+            }
+
+            private bool Get_Bool(string value)
+            {
+                if (value == "true") return true;
+                else return false;
+            }
+        }
+
         #endregion
 
         private List<string> Backupinfo_List = new List<string>(); //structure : {int index}*{char type}src<{string source_path}|dst<{string destination_path}|{interval}|{*if empty it is saved, othervise a save is required to apply changes}
@@ -115,10 +189,14 @@ namespace File_Master_project
             else Main_window.WindowState = WindowState.Normal;
             #endregion
 
+            Settings Usersettings = new Settings();
+            Usersettings.Shortsource = false;
+
             if (InDevelopment)
             {
                 Unstable_Warning();         
             }
+            Main_window.Activate();
             Startup();
             Menu = "Backup";
             Load_backupinfo();
