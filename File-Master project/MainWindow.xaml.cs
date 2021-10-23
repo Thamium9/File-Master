@@ -93,9 +93,9 @@ namespace File_Master_project
             private Interval Save_interval;
             private string State;
 
-            public Backupitem(int interval, char type, string source_path, string destination_path, Interval save_interval, string state)
+            public Backupitem(int index, char type, string source_path, string destination_path, Interval save_interval, string state)
             {
-                Index = Index;
+                Index = index;
                 Type = type;
                 Source_path = source_path;
                 Destination_path = destination_path;
@@ -107,6 +107,7 @@ namespace File_Master_project
         class Backuplist
         {
             private List<Backupitem> Itemlist = new List<Backupitem>();
+            private string Drivename;
 
             public void AddBackupitem(Backupitem item)
             {
@@ -351,8 +352,8 @@ namespace File_Master_project
 
         private void Load_Backupitem(List<string> Backupinfo_List, int index)//loads destination + interval + status
         {
-            Viewallsettings_button.IsEnabled = true;
-            Viewallsettings_button.Opacity = 1;
+            Configuration_button.IsEnabled = true;
+            Configuration_button.Opacity = 1;
 
             #region Loads interval
             if (GetInterval(index).Convert_to_min() < 60)
@@ -384,8 +385,8 @@ namespace File_Master_project
                         Status_label.Content = "Status: Missing source and\nneeds to be applied!";
                         Status_label.Foreground = new SolidColorBrush(Color.FromRgb(220, 0, 0));
 
-                        Relocate_button.Opacity = 1;
-                        Relocate_button.IsEnabled = true;
+                        Fixissue_button.Opacity = 1;
+                        Fixissue_button.IsEnabled = true;
 
                         Manualsave_button.IsEnabled = false;
                         Manualsave_button.Opacity = 0.5;
@@ -400,8 +401,8 @@ namespace File_Master_project
                     Status_label.Content = "Status: Missing source!";
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
 
-                    Relocate_button.Opacity = 1;
-                    Relocate_button.IsEnabled = true;
+                    Fixissue_button.Opacity = 1;
+                    Fixissue_button.IsEnabled = true;
 
                     Manualsave_button.IsEnabled = false;
                     Manualsave_button.Opacity = 0.5;
@@ -412,8 +413,8 @@ namespace File_Master_project
                     Status_label.Content = "Status: Needs to be applied!";
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(220, 90, 36));
 
-                    Relocate_button.Opacity = 0.5;
-                    Relocate_button.IsEnabled = false;
+                    Fixissue_button.Opacity = 0.5;
+                    Fixissue_button.IsEnabled = false;
 
                     Manualsave_button.IsEnabled = false;
                     Manualsave_button.Opacity = 0.5;
@@ -424,8 +425,8 @@ namespace File_Master_project
                     Status_label.Content = "Status: OK!";
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
 
-                    Relocate_button.Opacity = 0.5;
-                    Relocate_button.IsEnabled = false;
+                    Fixissue_button.Opacity = 0.5;
+                    Fixissue_button.IsEnabled = false;
 
                     Manualsave_button.IsEnabled = true;
                     Manualsave_button.Opacity = 1;
@@ -899,10 +900,10 @@ namespace File_Master_project
             Interval_label.Content = "N.A.";
             Status_label.Content = "Status: N.A";
             Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            Relocate_button.IsEnabled = false;
-            Relocate_button.Opacity = 0.5;
-            Viewallsettings_button.IsEnabled = false;
-            Viewallsettings_button.Opacity = 0.5;
+            Fixissue_button.IsEnabled = false;
+            Fixissue_button.Opacity = 0.5;
+            Configuration_button.IsEnabled = false;
+            Configuration_button.Opacity = 0.5;
             Manualsave_button.IsEnabled = false;
             Manualsave_button.Opacity = 0.5;
             Save_image.Opacity = 0.5;
