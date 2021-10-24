@@ -6,22 +6,22 @@
         xmlns:local="clr-namespace:File_Master_project"
         xmlns:tb="http://www.hardcodet.net/taskbar" 
         mc:Ignorable="d"
-        Title="File-Master" Height="600" Width="1150" Background="#FF1A1A1A" Foreground="Black" WindowStartupLocation="CenterScreen" BorderBrush="Black" BorderThickness="5,30,5,5" Visibility="Visible" WindowStyle="None" Icon="Icons/icon-recycle-10.jpg" ResizeMode="CanMinimize" MouseLeftButtonDown="Main_window_MouseLeftButtonDown" Closing="Main_window_Closing" MouseMove="Main_window_MouseMove">
+        Title="File-Master" Height="700" Width="1025" Background="#FF1A1A1A" Foreground="Black" WindowStartupLocation="CenterScreen" BorderBrush="Black" BorderThickness="5,30,5,5" Visibility="Visible" WindowStyle="None" Icon="Icons/icon-recycle-10.jpg" ResizeMode="CanMinimize" MouseLeftButtonDown="Main_window_MouseLeftButtonDown" Closing="Main_window_Closing" MouseMove="Main_window_MouseMove">
     <Grid x:Name="Main_grid">
 
         <!--#region Menu items-->
         <tb:TaskbarIcon x:Name="NotifyIcon_Taskbar" IconSource="/Icons/icon-recycle-10.ico" ToolTipText="File-Master" TrayLeftMouseDown="NotifyIcon_Taskbar_TrayLeftMouseDown">
         </tb:TaskbarIcon>
-        <Label x:Name="debug_label" Content="" HorizontalAlignment="Left" Margin="830,-32,0,0" VerticalAlignment="Top" Width="155" Height="31" Foreground="#FFACACAC" FontStyle="Italic"/>
+        <Label x:Name="debug_label" Content="" HorizontalAlignment="Left" Margin="303,-32,0,0" VerticalAlignment="Top" Width="155" Height="31" Foreground="#FFACACAC" FontStyle="Italic"/>
         <Image x:Name="Icon_image" HorizontalAlignment="Left" Height="25" Margin="5,-27,0,0" VerticalAlignment="Top" Width="25" Source="Icons/icon-recycle-10.jpg"/>
         <Label Content="File-Master" HorizontalAlignment="Left" Margin="31,-32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="16"/>
-        <Label Content="v0.3" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
-        <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="1075,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
-        <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="1112,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
-        <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="1108,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown"/>
-        <Image x:Name="Minimize_image" HorizontalAlignment="Left" Height="32" Margin="1071,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-minimize-window-64v2.png" MouseEnter="Minimize_image_MouseEnter" MouseLeave="Minimize_image_MouseLeave" MouseLeftButtonDown="Minimize_image_MouseLeftButtonDown"/>
-        <Button Content="Debug" HorizontalAlignment="Left" Margin="732,-28,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
-        <DockPanel HorizontalAlignment="Left" Height="565" LastChildFill="False" VerticalAlignment="Top" Width="160" Background="#FF141414">
+        <Label Content="v0.4.0" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+        <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="894,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24"/>
+        <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="943,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24"/>
+        <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="939,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown" RenderTransformOrigin="1.156,0.236"/>
+        <Image x:Name="Minimize_image" HorizontalAlignment="Left" Height="32" Margin="890,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-minimize-window-64v2.png" MouseEnter="Minimize_image_MouseEnter" MouseLeave="Minimize_image_MouseLeave" MouseLeftButtonDown="Minimize_image_MouseLeftButtonDown"/>
+        <Button Content="Debug" HorizontalAlignment="Left" Margin="205,-28,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
+        <DockPanel HorizontalAlignment="Left" Height="665" LastChildFill="False" VerticalAlignment="Top" Width="160" Background="#FF141414">
         </DockPanel>
 
         <Menu x:Name="Categorization_menu" Height="75" VerticalAlignment="Top" Width="160" Margin="0,222,0,0" HorizontalAlignment="Left" VerticalContentAlignment="Center" Background="#FF141414" BorderBrush="#FF303030" BorderThickness="0"/>
@@ -36,56 +36,60 @@
         <Image x:Name="Backup_image" HorizontalAlignment="Left" Height="40" Margin="60,5,0,0" VerticalAlignment="Top" Width="40" Source="Icons/backup3.png"/>
         <Label x:Name="Bc_label" Content="Backup" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="16" FontWeight="Bold" VerticalContentAlignment="Center" Height="75" Width="160" MouseLeftButtonDown="Bc_label_MouseLeftButtonDown" MouseEnter="Bc_label_MouseEnter" MouseLeave="Bc_label_MouseLeave" HorizontalContentAlignment="Center" Padding="5,40,5,5"/>
 
-        <Menu x:Name="Settings_menu" Height="50" VerticalAlignment="Top" Width="160" Margin="0,515,0,0" HorizontalAlignment="Left" VerticalContentAlignment="Center" Background="#FF141414" BorderBrush="#FF303030" BorderThickness="0"/>
+        <Menu x:Name="Settings_menu" Height="50" VerticalAlignment="Top" Width="160" Margin="0,615,0,0" HorizontalAlignment="Left" VerticalContentAlignment="Center" Background="#FF141414" BorderBrush="#FF303030" BorderThickness="0"/>
         <!--#endregion-->
 
         <!--#region Backup -->
 
-        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="565" Margin="160,0,0,0" VerticalAlignment="Top" Width="980">
-            <GroupBox Header="Notifications" HorizontalAlignment="Left" Height="145" Margin="497,410,0,0" VerticalAlignment="Top" Width="450" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" Visibility="Hidden"/>
-            <GroupBox Header="Notifications" HorizontalAlignment="Left" Height="145" Margin="33,410,0,0" VerticalAlignment="Top" Width="450" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" Visibility="Hidden"/>
-            <GroupBox Header="Notifications" HorizontalAlignment="Left" Height="391" Margin="500,10,0,0" VerticalAlignment="Top" Width="450" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB"/>
-            <Label x:Name="Apply_label" Content="Apply changes ✅" HorizontalAlignment="Right" Margin="0,498,-170,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="14" MouseEnter="Apply_label_MouseEnter" MouseLeave="Apply_label_MouseLeave" Opacity="0.5" IsEnabled="False" MouseLeftButtonDown="Apply_label_MouseLeftButtonDown"/>
-            <Button x:Name="Additem_button" Content="Add new backup item" HorizontalAlignment="Left" Margin="180,371,0,0" VerticalAlignment="Top" Width="150" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" Click="Additem_button_Click" RenderTransformOrigin="0.621,0.529"/>
-            <Label Content="Backup items" HorizontalAlignment="Left" Margin="30,32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-            <Label Content="Destination" HorizontalAlignment="Right" Margin="0,32,377,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-            <ListBox x:Name="Source_listbox" HorizontalAlignment="Left" Height="305" Margin="30,66,0,0" VerticalAlignment="Top" Width="450" Background="#FF151515" Padding="5,0,0,0" Foreground="#FFACACAC" FontWeight="Bold" SelectionChanged="Source_listbox_SelectionChanged">
-                <ListBoxItem Content="Destination: HDD-K01 (H:) -------------------------------------- (5,9GB / 60GB)" Tag="" Focusable="False"/>
+        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="665" Margin="160,0,0,0" VerticalAlignment="Top" Width="855">
+            <GroupBox Header="Manage selected item" HorizontalAlignment="Right" Height="284" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="790" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" FontSize="14"/>
+            <Label x:Name="Apply_label" Content="Apply changes ✅" HorizontalAlignment="Right" Margin="0,356,-240,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="14" MouseEnter="Apply_label_MouseEnter" MouseLeave="Apply_label_MouseLeave" Opacity="0.5" IsEnabled="False" MouseLeftButtonDown="Apply_label_MouseLeftButtonDown"/>
+            <Label Content="Backup items:" HorizontalAlignment="Left" Margin="30,17,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <Label Content="Destination :" HorizontalAlignment="Right" Margin="0,370,700,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold"/>
+            <ListBox x:Name="Source_listbox" HorizontalAlignment="Left" Height="279" Margin="30,51,0,0" VerticalAlignment="Top" Width="511" Background="#FF151515" Padding="5,0,0,0" Foreground="#FFACACAC" FontWeight="Bold" SelectionChanged="Source_listbox_SelectionChanged">
+                <ListBoxItem Content="Destination: HDD-K01 (H:) ----------------------------------- (5,9GB / 60GB)" Tag="" Focusable="False" Background="#FF2C2C2C"/>
                 <ListBoxItem Content="->C:\Users\Dani PC\AppData\Roaming\.minecraft - (11,2MB)" Foreground="#FFD4471D" Tag="0"/>
                 <ListBoxItem Content="->Folder : C:\...\.minecraft - (5,6GB)" Foreground="#FFDE0000" Tag="1"/>
+                <ListBoxItem Content="➕ Add new task" Foreground="#FFACACAC" HorizontalAlignment="Left" Background="#002C2C2C" FontWeight="Normal" Margin="0" Tag="add"/>
             </ListBox>
-            <TextBox x:Name="Destination_textbox" HorizontalAlignment="Right" Height="44" Margin="0,66,30,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="450" Background="#FF151515" Text="Select a source folder!" Foreground="#FFE29A06" VerticalContentAlignment="Center" Padding="5,0,0,0" IsReadOnly="True" Focusable="False" FontWeight="Bold"/>
-            <Image x:Name="Settings_image" HorizontalAlignment="Right" Height="24" Margin="0,146,195,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-settings-48.png"/>
-            <Label Content="Save interval:" HorizontalAlignment="Right" Margin="0,172,360,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Opacity="0.5"/>
-            <Label x:Name="Dismiss_label" Content="Dismiss changes ❎" HorizontalAlignment="Right" Margin="0,459,-170,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="14" MouseEnter="Dismiss_label_MouseEnter" MouseLeave="Dismiss_label_MouseLeave" IsEnabled="False" Opacity="0.5" MouseLeftButtonDown="Dismiss_label_MouseLeftButtonDown"/>
-            <Image x:Name="Settings2_image" HorizontalAlignment="Right" Height="24" Margin="0,199,195,0" VerticalAlignment="Top" Width="24" Source="Icons/icons8-settings-48.png"/>
-            <Button x:Name="Removeitem_button" Content="Remove selected item" HorizontalAlignment="Left" Margin="330,371,0,0" VerticalAlignment="Top" Width="150" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" Click="Removeitem_button_Click"/>
-            <Button x:Name="Configuration_button" Content="Configuration" HorizontalAlignment="Right" Margin="0,193,41,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontStyle="Italic" FontWeight="Bold" FontSize="14" Click="Viewallsettings_button_Click" Opacity="0.5" IsEnabled="False"/>
-            <Label x:Name="Interval_label" Content="N.A. " HorizontalAlignment="Right" Margin="0,172,279,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" FontStyle="Italic" FontWeight="Bold" Width="81" Opacity="0.5"/>
-            <Button x:Name="Manualsave_button" Content="Manual save" HorizontalAlignment="Right" Margin="0,247,41,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" IsEnabled="False" Click="Manualsave_button_Click"/>
-            <Separator HorizontalAlignment="Right" Height="20" Margin="0,339,-447,0" VerticalAlignment="Top" Width="417"/>
-            <Label x:Name="Status_label" Content="Status: N.A" HorizontalAlignment="Right" Margin="0,134,224,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" FontWeight="Bold" Width="234"/>
-            <Button x:Name="Fixissue_button" Content="Fix issue" HorizontalAlignment="Right" Margin="0,140,41,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" Click="Relocate_button_Click" IsEnabled="False"/>
-            <Button x:Name="Manualsaveall_button" Content="Manual save ALL" HorizontalAlignment="Right" Margin="0,498,92,0" VerticalAlignment="Top" Width="337" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" Opacity="0.5" IsEnabled="False"/>
-            <Image x:Name="Save_image" HorizontalAlignment="Right" Height="24" Margin="0,253,195,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(grey-dark).png" Opacity="0.5"/>
-            <Label Content="Last saved:" HorizontalAlignment="Right" Margin="0,250,377,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold"/>
-            <Image x:Name="SaveAll_image" HorizontalAlignment="Right" Height="24" Margin="0,503,434,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(orange-dark).png" Opacity="0.5"/>
-            <Image x:Name="SaveAll2_image" HorizontalAlignment="Right" Height="24" Margin="0,503,63,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(orange-dark).png" Opacity="0.5"/>
-            <Label Content="Smart save: OFF" HorizontalAlignment="Right" Margin="0,211,343,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold"/>
+            <TextBox x:Name="Destination_textbox" HorizontalAlignment="Right" Height="44" Margin="0,399,314,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="480" Background="#FF151515" Text="Select a source folder!" Foreground="#FFE29A06" VerticalContentAlignment="Center" Padding="5,0,0,0" IsReadOnly="True" Focusable="False" FontWeight="Bold"/>
+            <Image x:Name="Settings_image" HorizontalAlignment="Right" Height="24" Margin="0,478,218,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-settings-48.png"/>
+            <Label Content="Save interval:" HorizontalAlignment="Right" Margin="0,487,696,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Opacity="0.5"/>
+            <Label x:Name="Dismiss_label" Content="Dismiss changes ❎" HorizontalAlignment="Right" Margin="0,317,-240,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="14" MouseEnter="Dismiss_label_MouseEnter" MouseLeave="Dismiss_label_MouseLeave" IsEnabled="False" Opacity="0.5" MouseLeftButtonDown="Dismiss_label_MouseLeftButtonDown"/>
+            <Image x:Name="Settings2_image" HorizontalAlignment="Right" Height="24" Margin="0,528,218,0" VerticalAlignment="Top" Width="24" Source="Icons/icons8-settings-48.png"/>
+            <Button x:Name="Removeitem_button" Content="Remove item" HorizontalAlignment="Right" Margin="0,373,64,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" Click="Removeitem_button_Click" FontSize="14" RenderTransformOrigin="0.582,0.444" FontStyle="Italic"/>
+            <Button x:Name="Additem_button" Content="Add new backup item" HorizontalAlignment="Right" Margin="0,608,-199,0" VerticalAlignment="Top" Width="150" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" Click="Additem_button_Click" RenderTransformOrigin="0.621,0.529" FontWeight="Bold" FontSize="13"/>
+            <Button x:Name="Configuration_button" Content="Configuration" HorizontalAlignment="Right" Margin="0,473,64,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontStyle="Italic" FontWeight="Bold" FontSize="14" Click="Viewallsettings_button_Click" Opacity="0.5" IsEnabled="False"/>
+            <Label x:Name="Interval_label" Content="N.A. " HorizontalAlignment="Right" Margin="0,487,541,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" FontStyle="Italic" FontWeight="Bold" Width="150" Opacity="0.5"/>
+            <Button x:Name="Manualsave_button" Content="Manual save" HorizontalAlignment="Right" Margin="0,573,64,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" IsEnabled="False" Click="Manualsave_button_Click"/>
+            <Separator HorizontalAlignment="Right" Height="20" Margin="0,169,35,0" VerticalAlignment="Top" Width="258"/>
+            <Label x:Name="Status_label" Content="Status: N.A" HorizontalAlignment="Right" Margin="0,453,314,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" FontWeight="Bold" Width="480"/>
+            <Button x:Name="Fixissue_button" Content="Restore files" HorizontalAlignment="Right" Margin="0,523,64,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" Click="Relocate_button_Click" IsEnabled="False"/>
+            <Button x:Name="Manualsaveall_button" Content="Manual save ALL" HorizontalAlignment="Right" Margin="0,296,64,0" VerticalAlignment="Top" Width="200" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" Opacity="0.5" IsEnabled="False"/>
+            <Image x:Name="Save_image" HorizontalAlignment="Right" Height="24" Margin="0,578,218,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(grey-dark).png" Opacity="0.5"/>
+            <Label Content="Last saved:" HorizontalAlignment="Right" Margin="0,555,713,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold"/>
+            <Image x:Name="SaveAll_image" HorizontalAlignment="Right" Height="24" Margin="0,301,269,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(orange-dark).png" Opacity="0.5"/>
+            <Image x:Name="SaveAll2_image" HorizontalAlignment="Right" Height="24" Margin="0,301,35,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(orange-dark).png" Opacity="0.5"/>
+            <Label Content="Smart save: OFF" HorizontalAlignment="Right" Margin="0,521,679,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold"/>
             <DataGrid HorizontalAlignment="Left" Height="278" Margin="36,127,0,0" VerticalAlignment="Top" Width="456" Background="#FF151515" BorderBrush="{x:Null}" Visibility="Hidden"/>
-            <Label Content="Add new backup drives" HorizontalAlignment="Left" Margin="30,3,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <Label Content="Add new backup drives" HorizontalAlignment="Left" Margin="941,-37,-240,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
             <!--#region Warning labels -->
-            <Label x:Name="Warning1_label" Content="*Select an item from the list in order to view its settings" HorizontalAlignment="Left" Margin="49,431,0,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" Background="#FF1A1A1A"/>
-            <Label x:Name="Warning2_label" Content="! Some items are disabled !" HorizontalAlignment="Left" Margin="49,489,0,0" VerticalAlignment="Top" Foreground="#FFDC5A24" FontSize="14"/>
-            <Label x:Name="Warning3_label" Content="! Some files or folders are missing !" HorizontalAlignment="Left" Margin="49,460,0,0" VerticalAlignment="Top" Foreground="#FFC800B4" FontSize="14"/>
-            <Label x:Name="Warning4_label" Content="! There are some issues !" HorizontalAlignment="Left" Margin="49,518,0,0" VerticalAlignment="Top" Foreground="#FFDE0000" FontSize="14"/>
+            <Label x:Name="Warning1_label" Content="*Select a backup item from the list" HorizontalAlignment="Left" Margin="562,48,0,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" Background="#FF1A1A1A"/>
+            <Label x:Name="Warning2_label" Content="! Some items are disabled !" HorizontalAlignment="Left" Margin="562,106,0,0" VerticalAlignment="Top" Foreground="#FFDC5A24" FontSize="14"/>
+            <Label x:Name="Warning3_label" Content="! Some files or folders are missing !" HorizontalAlignment="Left" Margin="562,77,0,0" VerticalAlignment="Top" Foreground="#FFC800B4" FontSize="14"/>
+            <Label x:Name="Warning4_label" Content="! There are some issues !" HorizontalAlignment="Left" Margin="562,135,0,0" VerticalAlignment="Top" Foreground="#FFDE0000" FontSize="14"/>
+            <Button x:Name="temp_button" Content="Manage backup drives" HorizontalAlignment="Right" Margin="0,198,64,0" VerticalAlignment="Top" Width="200" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" Opacity="0.5" IsEnabled="False"/>
+            <Button x:Name="temp_button_Copy" Content="Backup settings" HorizontalAlignment="Right" Margin="0,247,64,0" VerticalAlignment="Top" Width="200" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" Opacity="0.5" IsEnabled="False"/>
+            <Button x:Name="temp_button_Copy1" Content="Enable backup" HorizontalAlignment="Right" Margin="0,423,64,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" Opacity="0.5" IsEnabled="False" FontStyle="Italic"/>
+            <Label Content="Notifications:" HorizontalAlignment="Left" Margin="546,17,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <Button x:Name="temp_button_Copy2" Content="View" HorizontalAlignment="Right" Margin="0,400,269,0" VerticalAlignment="Top" Width="45" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="43" FontSize="14" Opacity="0.5" IsEnabled="False" FontStyle="Italic"/>
             <!--#endregion-->
         </Grid>
 
         <!--#region Submenu1 -->
-        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="565" Margin="160,0,0,0" VerticalAlignment="Top" Width="980" Visibility="Hidden">
-            <GroupBox Header="Settings" HorizontalAlignment="Left" Height="334" Margin="364,111,0,0" VerticalAlignment="Top" Width="575" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB"/>
-            <Grid x:Name="Backupsubmenu1_settings1_grid" HorizontalAlignment="Left" Height="312" VerticalAlignment="Top" Width="565"  Margin="369,127,0,0">
+        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="665" Margin="160,0,0,0" VerticalAlignment="Top" Width="855" Visibility="Hidden">
+            <GroupBox Header="Settings" HorizontalAlignment="Left" Height="334" Margin="364,111,0,0" VerticalAlignment="Top" Width="456" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB"/>
+            <Grid x:Name="Backupsubmenu1_settings1_grid" HorizontalAlignment="Left" Height="312" VerticalAlignment="Top" Width="446"  Margin="369,127,0,0" Visibility="Hidden">
                 <Label Content="Method:" HorizontalAlignment="Left" Margin="30,58,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="0.647,1.625"/>
                 <RadioButton x:Name="temp" Content="Single copy" HorizontalAlignment="Left" Margin="107,51,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" IsChecked="True" Background="Gainsboro"/>
                 <RadioButton x:Name="temp_Copy1" Content="Several copies" HorizontalAlignment="Left" Margin="107,85,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro"/>
@@ -103,7 +107,7 @@
                 </ComboBox>
                 <Label x:Name="NoC_label" Content="Number of copies:" HorizontalAlignment="Left" Margin="30,133,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
             </Grid>
-            <Grid x:Name="Backupsubmenu2_settings1_grid" HorizontalAlignment="Left" Height="312" VerticalAlignment="Top" Width="565" Margin="369,127,0,0" Visibility="Hidden">
+            <Grid x:Name="Backupsubmenu2_settings1_grid" HorizontalAlignment="Left" Height="312" VerticalAlignment="Top" Width="446" Margin="369,127,0,0">
                 <CheckBox x:Name="temp1" Content="Forget deleted files on save" HorizontalAlignment="Left" Margin="23,27,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
                 <RadioButton x:Name="temp_Copy2" Content="Manual determination" HorizontalAlignment="Left" Margin="52,50,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro" GroupName="forget files" IsEnabled="False" Opacity="0.25"/>
                 <RadioButton x:Name="temp_Copy3" Content="Store them in 'temp' folder" HorizontalAlignment="Left" Margin="52,73,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" IsChecked="True" Background="Gainsboro" GroupName="forget files" IsEnabled="False" Opacity="0.25"/>
@@ -117,28 +121,28 @@
                 <Label Content="If backup fails:" HorizontalAlignment="Left" Margin="19,187,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
             </Grid>
             <Label Content="Source path (can be file or folder):" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-            <TextBox x:Name="Sourceinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="766" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
-            <Button x:Name="Newitemapply_button" Content="Apply" HorizontalAlignment="Right" Margin="0,0,40,45" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Newitemapply_button_Click"/>
-            <Button x:Name="Autosavesubmenu1cancel_button" Content="Cancel" HorizontalAlignment="Right" Margin="0,0,161,45" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Backupsubmenu1cancel_button_Click"/>
-            <Label Content="*Caution: there is no checks for what you type in is correct or not, so be careful!" HorizontalAlignment="Left" Margin="1,612,0,-73" VerticalAlignment="Top" Foreground="#FFACACAC"/>
-            <Label Content="Settings menu:" HorizontalAlignment="Left" Margin="20,196,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-            <RadioButton x:Name="Optionfolder_radiobutton" Content="Method settings" HorizontalAlignment="Left" Margin="127,195,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" GroupName="settingmenu" IsChecked="True" Background="Gainsboro"/>
-            <RadioButton x:Name="Optionfile_radiobutton" Content="Advanced settings" HorizontalAlignment="Left" Margin="127,218,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" GroupName="settingmenu" Background="Gainsboro"/>
+            <TextBox x:Name="Sourceinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="768" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
+            <Button x:Name="Newitemapply_button" Content="Apply" HorizontalAlignment="Right" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Newitemapply_button_Click"/>
+            <Button x:Name="Autosavesubmenu1cancel_button" Content="Cancel" HorizontalAlignment="Right" Margin="0,0,160,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Backupsubmenu1cancel_button_Click"/>
+            <Label Content="*Caution: there is no checks for what you type in is correct or not, so be careful!" HorizontalAlignment="Left" Margin="907,756,-482,-117" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+            <Label Content="Settings menu:" HorizontalAlignment="Left" Margin="21,248,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <RadioButton x:Name="Optionfolder_radiobutton" Content="Method settings" HorizontalAlignment="Left" Margin="128,247,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" GroupName="settingmenu" IsChecked="True" Background="Gainsboro"/>
+            <RadioButton x:Name="Optionfile_radiobutton" Content="Advanced settings" HorizontalAlignment="Left" Margin="128,270,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" GroupName="settingmenu" Background="Gainsboro"/>
             <Label x:Name="Interval2_label" Content="" HorizontalAlignment="Left" Margin="144,241,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Width="220" Visibility="Hidden"/>
             <Button x:Name="Replaceitemapply_button" Content="Apply" HorizontalAlignment="Right" Margin="0,0,40,45" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Replaceitemapply_button_Click" Visibility="Hidden"/>
-            <Button x:Name="temp_Copy" Content="..." HorizontalAlignment="Left" Margin="786,44,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False"/>
+            <Button x:Name="temp_Copy" Content="..." HorizontalAlignment="Left" Margin="788,44,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False"/>
             <RadioButton x:Name="temp_Copy4" Content="Several copies" HorizontalAlignment="Left" Margin="1038,348,-166,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro" GroupName="Destination type"/>
             <RadioButton x:Name="temp_Copy5" Content="Custom " HorizontalAlignment="Left" Margin="1038,389,-129,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro" GroupName="Destination type"/>
-            <Separator HorizontalAlignment="Left" Height="29" Margin="10,277,0,0" VerticalAlignment="Top" Width="336"/>
-            <Label Content="Destination settings:" HorizontalAlignment="Left" Margin="20,311,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <Separator HorizontalAlignment="Left" Height="29" Margin="10,389,0,0" VerticalAlignment="Top" Width="336"/>
+            <Label Content="Destination settings:" HorizontalAlignment="Left" Margin="20,423,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
             <Separator HorizontalAlignment="Left" Height="29" Margin="10,111,0,0" VerticalAlignment="Top" Width="336"/>
-            <ComboBox x:Name="Intervalselection_combobox_Copy" HorizontalAlignment="Left" Margin="20,377,0,0" VerticalAlignment="Top" Width="297" IsReadOnly="True" Background="Black" Height="30" SelectedIndex="0">
+            <ComboBox x:Name="Intervalselection_combobox_Copy" HorizontalAlignment="Left" Margin="20,457,0,0" VerticalAlignment="Top" Width="297" IsReadOnly="True" Background="Black" Height="30" SelectedIndex="0">
                 <ComboBoxItem Content="Add new custom destination" Tag="new"/>
             </ComboBox>
             <!--#region New destination -->
-            <Label Content="New destination path (folder):" HorizontalAlignment="Left" Margin="20,442,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Visibility="Hidden"/>
-            <TextBox x:Name="Destinationinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,476,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="630" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA" Visibility="Hidden"/>
-            <Button x:Name="temp_Copy6" Content="..." HorizontalAlignment="Left" Margin="650,476,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False" Visibility="Hidden"/>
+            <Label Content="New destination path (folder):" HorizontalAlignment="Left" Margin="20,487,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <TextBox x:Name="Destinationinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,521,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="768" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
+            <Button x:Name="temp_Copy6" Content="..." HorizontalAlignment="Left" Margin="788,521,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False"/>
             <!--#endregion-->
         </Grid>
         <!--#endregion-->

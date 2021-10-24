@@ -14,6 +14,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
 using System.Media;
+using System.Diagnostics;
+using Winform = System.Windows.Forms;
 
 namespace File_Master_project
 {
@@ -84,23 +86,69 @@ namespace File_Master_project
             }
         }
 
+        class Backupsettings_Global
+        {
+            public bool IsTempfolderEnabled;
+            public List<string> BackupdriveList = new List<string>();
+        }
+
+        class Backupsettings_Local
+        {
+            private bool IsSingleCopy;
+            private int NumberOfCopies; //automatically 1 if 'IsSingleCopy' is true
+            private Interval Save_interval;
+            private bool AbsoluteCopy;
+            private bool ManualDetermination = false; //automatically false when 'AbsoluteCopy' is true or 'IsSingleCopy' is false
+            private bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
+            private bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
+            private bool SmartSave;
+            private bool UseMaxStorageData;
+            private int MaxStorageData; //no value if 'UseMaxStorageData' is false
+            private Interval RetryWaitTime;
+            private int MaxNumberOfRetries;
+            private bool PopupOnFail;
+            private bool FileCompression;
+
+            public Backupsettings_Local(bool isSingleCopy, int numberOfCopies, Interval save_interval, bool absoluteCopy, bool manualDetermination, bool storeDeletedInRBin, bool popupWhenRBinIsFull, bool smartSave, bool useMaxStorageData, int maxStorageData, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+            {
+                IsSingleCopy = isSingleCopy;
+                if (IsSingleCopy) NumberOfCopies = 1;
+                else NumberOfCopies = numberOfCopies;
+                Save_interval = save_interval;
+                AbsoluteCopy = absoluteCopy;
+                if(!AbsoluteCopy)
+                {
+                    if (IsSingleCopy) ManualDetermination = manualDetermination;
+                    StoreDeletedInRBin = storeDeletedInRBin;
+                    if (StoreDeletedInRBin) PopupWhenRBinIsFull = popupWhenRBinIsFull;
+                }
+                SmartSave = smartSave;
+                UseMaxStorageData = useMaxStorageData;
+                if (UseMaxStorageData) MaxStorageData = maxStorageData;
+                RetryWaitTime = retryWaitTime;
+                MaxNumberOfRetries = maxNumberOfRetries;
+                PopupOnFail = popupOnFail;
+                FileCompression = fileCompression;
+            }
+        }
+
         class Backupitem
         {
             private int Index;
             private char Type;
             private string Source_path;
             private string Destination_path;
-            private Interval Save_interval;
             private string State;
+            private Backupsettings_Local Configuration;
 
-            public Backupitem(int index, char type, string source_path, string destination_path, Interval save_interval, string state)
+            public Backupitem(int index, char type, string source_path, string destination_path, string state, Backupsettings_Local settings)
             {
                 Index = index;
                 Type = type;
                 Source_path = source_path;
                 Destination_path = destination_path;
-                Save_interval = save_interval;
                 State = state;
+                Configuration = settings;
             }
         }
 
@@ -108,6 +156,8 @@ namespace File_Master_project
         {
             private List<Backupitem> Itemlist = new List<Backupitem>();
             private string Drivename;
+            private string Driveletter;
+            private string DriveID;
 
             public void AddBackupitem(Backupitem item)
             {
@@ -259,7 +309,7 @@ namespace File_Master_project
         private void Load_Backupitems(List<string> Backupinfo_List)//only loads source / checks for missing-unsaved sources 
         {
             Warning3_label.Visibility = Visibility.Hidden;
-            Source_listbox.Items.Clear();
+            //Source_listbox.Items.Clear();
             int index = 0;
             foreach (var item in Backupinfo_List)
             {
@@ -908,6 +958,8 @@ namespace File_Master_project
             Manualsave_button.Opacity = 0.5;
             Save_image.Opacity = 0.5;
         }
+
+
         #endregion
 
         #endregion
@@ -1138,6 +1190,49 @@ namespace File_Master_project
                 Debug_grid.Visibility = Visibility.Visible;
             }*/
             SystemSounds.Asterisk.Play();
+            #region folder selection
+            /*Winform.FolderBrowserDialog folderDlg = new Winform.FolderBrowserDialog();
+            folderDlg.ShowNewFolderButton = true;
+            folderDlg.RootFolder = Environment.SpecialFolder.MyComputer;
+            while (true)
+            {
+                Winform.DialogResult result = folderDlg.ShowDialog();
+                string temp3 = folderDlg.SelectedPath.ToString().Split('\\')[0];
+                if (temp3 != "G:")
+                {
+                    MessageBox.Show(temp3, "err");
+                }
+                else
+                {
+                    break;
+                }
+            }*/
+            #endregion
+            #region file selection
+            /*Winform.OpenFileDialog openFileDialog1 = new Winform.OpenFileDialog();
+            openFileDialog1.InitialDirectory = @"G:";
+            //openFileDialog1.RestoreDirectory = true;
+            openFileDialog1.ValidateNames = false;
+            openFileDialog1.CheckFileExists = false;
+            openFileDialog1.CheckPathExists = true;
+            openFileDialog1.FileName = "Folder selection";
+
+            while (true)
+            {
+                openFileDialog1.ShowDialog();
+                string temp3 = openFileDialog1.FileName.ToString().Split('\\')[0];
+                if (temp3 != "G:")
+                {
+                    MessageBox.Show(temp3, "err");
+                }
+                else
+                {
+                    break;
+                }
+            }*/
+            #endregion
+
+            //Process.Start("G:");
             //Warning_Save();
             //Autoconfig_upload();
         }
