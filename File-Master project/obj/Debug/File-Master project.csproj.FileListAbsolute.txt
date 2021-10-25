@@ -16,3 +16,5 @@ D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master.pdb
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Hardcodet.NotifyIcon.Wpf.dll
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Hardcodet.NotifyIcon.Wpf.xml
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.CopyComplete
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json.dll
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json.xml

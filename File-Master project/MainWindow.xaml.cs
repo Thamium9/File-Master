@@ -16,6 +16,9 @@ using System.IO;
 using System.Media;
 using System.Diagnostics;
 using Winform = System.Windows.Forms;
+using Newtonsoft.Json;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace File_Master_project
 {
@@ -30,11 +33,16 @@ namespace File_Master_project
             public int Time;
             public string Unit;
 
-            public Interval(string auto)
+            public Interval(string time)
             {
-                string[] temp = auto.Split(' ');
+                string[] temp = time.Split(' ');
                 Time = int.Parse(temp[0]);
                 Unit = temp[1];
+            }
+
+            public Interval()
+            {
+
             }
 
             public int Convert_to_min()
@@ -94,20 +102,22 @@ namespace File_Master_project
 
         class Backupsettings_Local
         {
-            private bool IsSingleCopy;
-            private int NumberOfCopies; //automatically 1 if 'IsSingleCopy' is true
+            public bool IsSingleCopy;
+            public int NumberOfCopies; //automatically 1 if 'IsSingleCopy' is true
             private Interval Save_interval;
-            private bool AbsoluteCopy;
-            private bool ManualDetermination = false; //automatically false when 'AbsoluteCopy' is true or 'IsSingleCopy' is false
-            private bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
-            private bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
-            private bool SmartSave;
-            private bool UseMaxStorageData;
-            private int MaxStorageData; //no value if 'UseMaxStorageData' is false
+            public string Save_interval_Code; // Save_interval serialized version
+            public bool AbsoluteCopy;
+            public bool ManualDetermination = false; //automatically false when 'AbsoluteCopy' is true or 'IsSingleCopy' is false
+            public bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
+            public bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
+            public bool SmartSave;
+            public bool UseMaxStorageData;
+            public int MaxStorageData; //no value if 'UseMaxStorageData' is false
             private Interval RetryWaitTime;
-            private int MaxNumberOfRetries;
-            private bool PopupOnFail;
-            private bool FileCompression;
+            public string RetryWaitTime_Code; // RetryWaitTime serialized version
+            public int MaxNumberOfRetries;
+            public bool PopupOnFail;
+            public bool FileCompression;
 
             public Backupsettings_Local(bool isSingleCopy, int numberOfCopies, Interval save_interval, bool absoluteCopy, bool manualDetermination, bool storeDeletedInRBin, bool popupWhenRBinIsFull, bool smartSave, bool useMaxStorageData, int maxStorageData, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
             {
@@ -130,34 +140,75 @@ namespace File_Master_project
                 PopupOnFail = popupOnFail;
                 FileCompression = fileCompression;
             }
+
+            public Interval GetSave_interval()
+            {
+                return Save_interval;
+            }
+
+            public Interval GetRetryWaitTime()
+            {
+                return RetryWaitTime;
+            }
+
+            #region Serialization
+            public void Serialize()
+            {
+                Save_interval_Code = JsonConvert.SerializeObject(Save_interval);
+                RetryWaitTime_Code = JsonConvert.SerializeObject(RetryWaitTime);
+            }
+
+            public void Deserialize()
+            {
+                Save_interval = JsonConvert.DeserializeObject<Interval>(Save_interval_Code);
+                RetryWaitTime = JsonConvert.DeserializeObject<Interval>(RetryWaitTime_Code);
+            }
+            #endregion
         }
 
         class Backupitem
         {
-            private int Index;
-            private char Type;
-            private string Source_path;
-            private string Destination_path;
-            private string State;
+            public string Source_path;
+            public string Destination_path;
+            private string LastSaved; //a date (2021.10.25.18:59)
             private Backupsettings_Local Configuration;
+            public string Configuration_Code; // Configuration serialized version
 
-            public Backupitem(int index, char type, string source_path, string destination_path, string state, Backupsettings_Local settings)
+            public Backupitem(string source_path, string destination_path, string lastSaved, Backupsettings_Local settings)
             {
-                Index = index;
-                Type = type;
                 Source_path = source_path;
                 Destination_path = destination_path;
-                State = state;
+                LastSaved = lastSaved;
                 Configuration = settings;
             }
+
+            public Backupsettings_Local GetBackupsettings()
+            {
+                return Configuration;
+            }
+
+            #region Serialization
+            public void Serialize()
+            {
+                Configuration.Serialize();
+                Configuration_Code = JsonConvert.SerializeObject(Configuration);
+            }
+
+            public void Deserialize()
+            {
+                Configuration = JsonConvert.DeserializeObject<Backupsettings_Local>(Configuration_Code);
+                Configuration.Deserialize();
+            }
+            #endregion
         }
 
-        class Backuplist
+        class Backupdrive
         {
             private List<Backupitem> Itemlist = new List<Backupitem>();
-            private string Drivename;
-            private string Driveletter;
-            private string DriveID;
+            public string Itemlist_Code; // Itemlist serialized version
+            public string Drivename;
+            public char Driveletter;
+            public string DriveID;
 
             public void AddBackupitem(Backupitem item)
             {
@@ -168,6 +219,31 @@ namespace File_Master_project
             {
                 return Itemlist[index];
             }
+
+            public int CountItems()
+            {
+                return Itemlist.Count();
+            }
+
+            #region Serialization
+            public void Serialize()
+            {
+                foreach (var item in Itemlist)
+                {
+                    item.Serialize();
+                }
+                Itemlist_Code = JsonConvert.SerializeObject(Itemlist);
+            }
+
+            public void Deserialize()
+            {
+                Itemlist = JsonConvert.DeserializeObject<List<Backupitem>>(Itemlist_Code);
+                foreach (var item in Itemlist)
+                {
+                    item.Deserialize();
+                }
+            }
+            #endregion
         }
 
         class Settings
@@ -250,8 +326,24 @@ namespace File_Master_project
             Main_window.Activate();
             Startup();
             Menu = "Backup";
-            Load_backupinfo();
-            Load_Backupitems(Backupinfo_List);
+            
+            /*List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
+            Backupdrive Drive = new Backupdrive();
+            Interval SI = new Interval("60 min");
+            Interval RWT = new Interval("10 min");
+
+            Backupsettings_Local config = new Backupsettings_Local(true, 1, SI, true, false, false, false, true, false, 0, RWT, 3, true, false);
+            Backupitem Item = new Backupitem("source path", "destination path", "", config);
+            Drive.DriveID = "911";
+            Drive.Driveletter = 'H';
+            Drive.Drivename = "HDD-K01";
+            Drive.AddBackupitem(Item);
+            DataBackupdrives.Add(Drive);
+            Upload_Backupinfo(DataBackupdrives);*/
+            
+
+            List<Backupdrive> DataBackupdrives = LoadBackupElements();
+            Display_Backupitems(DataBackupdrives);
         }
 
         #region Startup
@@ -282,21 +374,10 @@ namespace File_Master_project
         #endregion
 
         #region Data_import/Load
-        private void Load_backupinfo()
+        private string[] Load_backupinfo()
         {
-            if (!Emptyconfig)//if the config file is empty, it won't try to load it
-            {
-                Backupinfo_List = File.ReadAllLines(Directory.GetCurrentDirectory() + "\\config\\backup.txt").ToList();
-                #region Check for empty rows to avoid crash
-                for (int i = 0; i < Backupinfo_List.Count(); i++)
-                {
-                    if (Backupinfo_List[i] == "")
-                    {
-                        Backupinfo_List.RemoveAt(i);
-                    }
-                }
-                #endregion
-            }
+            string[] Backupinfo;
+            Backupinfo = File.ReadAllLines(Directory.GetCurrentDirectory() + "\\config\\backup.txt");
             #region UI-changes
             Apply_label.IsEnabled = false;
             Apply_label.Opacity = 0.5;
@@ -304,100 +385,63 @@ namespace File_Master_project
             Dismiss_label.Opacity = 0.5;
             Warning2_label.Visibility = Visibility.Hidden;
             #endregion
+            return Backupinfo;
         }
 
-        private void Load_Backupitems(List<string> Backupinfo_List)//only loads source / checks for missing-unsaved sources 
+        private List<Backupdrive> LoadBackupElements()
         {
-            Warning3_label.Visibility = Visibility.Hidden;
-            //Source_listbox.Items.Clear();
-            int index = 0;
-            foreach (var item in Backupinfo_List)
+            string[] Backupinfo = Load_backupinfo();
+            List<Backupdrive> Backupdrives = new List<Backupdrive>();         
+            foreach (var item in Backupinfo)
             {
-                string status = "";
-                if (GetType(index)=='D')//D->Directory
-                {
-                    int i = GetIndex(index);
-                    #region Status checks
-                    if (!Directory.Exists(GetSource(index)))//check for missing directory
-                    {
-                        status += " MISSING";
-                        Warning3_label.Visibility = Visibility.Visible;
-                    }
-                    if (!GetSavestatus(index))
-                    {
-                        #region UI-changes
-                        Apply_label.IsEnabled = true;
-                        Apply_label.Opacity = 1;
-                        Dismiss_label.IsEnabled = true;
-                        Dismiss_label.Opacity = 1;
-                        Warning2_label.Visibility = Visibility.Visible;
-                        #endregion
-                        if (status!="")
-                        {
-                            status += "+UNSAVED";
-                        }
-                        else
-                        {
-                            status += " UNSAVED";
-                        }
-                    }
-                    #endregion
+                Backupdrive Drive = JsonConvert.DeserializeObject<Backupdrive>(item);
+                Drive.Deserialize();
+                Backupdrives.Add(Drive);
+            }
+            return Backupdrives;
+        }
 
-                    #region Add folder with statusinfo to list
-                    if (shortsource)
-                    {
-                        string[] temp = GetSource(index).Split('\\');
-                        Source_listbox.Items.Add($"{i}.{status} Folder : {temp[temp.Length - 1]}");
-                    }
-                    else
-                    {
-                        Source_listbox.Items.Add($"{i}.{status} Folder : {GetSource(index)}");
-                    }
-                    #endregion
-                }
-                else
+        private void Display_Backupitems(List<Backupdrive> Backupdrives)
+        {
+            Backuptask_listbox.Items.Clear();
+            Warning2_label.Visibility = Visibility.Hidden;
+            Warning3_label.Visibility = Visibility.Hidden;
+            Warning4_label.Visibility = Visibility.Hidden;
+            ListBoxItem ListItem;
+            foreach (var Drive in Backupdrives)
+            {
+                #region Add backupdrive to list
+                ListItem = new ListBoxItem();
+                string part1 = "Backup drive: ";
+                part1 += $"{Drive.Drivename} ({Drive.Driveletter}:) ";
+                string part3 = "(5,9GB / 60GB)";
+                string part2 = "";
+                for (int i = 0; i < 80 - (part1.Length + part3.Length); i++)
                 {
-                    int i = GetIndex(index);
-                    #region Status checks
-                    if (!File.Exists(GetSource(index)))//check for missing file
-                    {
-                        status += " MISSING";
-                        Warning3_label.Visibility = Visibility.Visible;
-                    }
-                    if (!GetSavestatus(index))
-                    {
-                        #region UI-changes
-                        Apply_label.IsEnabled = true;
-                        Apply_label.Opacity = 1;
-                        Dismiss_label.IsEnabled = true;
-                        Dismiss_label.Opacity = 1;
-                        Warning2_label.Visibility = Visibility.Visible;
-                        #endregion
-                        if (status != "")
-                        {
-                            status += "+UNSAVED";
-                        }
-                        else
-                        {
-                            status += " UNSAVED";
-                        }
-                    }
-                    #endregion
-
-                    #region Add file with statusinfo to list
-                    if (shortsource)
-                    {
-                        string[] temp = GetSource(index).Split('\\');
-                        Source_listbox.Items.Add($"{i}.{status} File : {temp[temp.Length - 1]}");
-                    }
-                    else
-                    {
-                        Source_listbox.Items.Add($"{i}.{status} File : {GetSource(index)}");
-                    }
-                    #endregion
+                    part2 += "-";
                 }
-                index++;
-            }          
+                ListItem.Content = part1 + part2 + part3;
+                Backuptask_listbox.Items.Add(ListItem);
+                CheckStatus(Drive, ref ListItem);
+                #endregion
+                #region Add backupitems of backupdrive
+                for (int i = 0; i < Drive.CountItems(); i++)
+                {
+                    ListItem = new ListBoxItem();
+                    string part4 = $"-> {GetBackupType(Drive.GetBackupitem(i))}: {Drive.GetBackupitem(i).Source_path} - (5,6GB)";
+                    ListItem.Content = part4;
+                    CheckStatus(Drive.GetBackupitem(i), ref ListItem);
+                    Backuptask_listbox.Items.Add(ListItem);
+                }
+                #endregion
+            }
+            #region Add 'Add new task' button
+            ListItem = new ListBoxItem();
+            ListItem.Content = "➕ Add new task";
+            ListItem.FontWeight = FontWeights.Normal;
+            ListItem.HorizontalAlignment = HorizontalAlignment.Left;
+            Backuptask_listbox.Items.Add(ListItem);
+            #endregion
         }
 
         private void Load_Backupitem(List<string> Backupinfo_List, int index)//loads destination + interval + status
@@ -425,7 +469,7 @@ namespace File_Master_project
             #endregion
 
             #region Loads status
-            string[] temp = Source_listbox.Items[index].ToString().Split(' ')[1].Split('+');
+            string[] temp = Backuptask_listbox.Items[index].ToString().Split(' ')[1].Split('+');
             if (temp.Length>1)// if there is more than one issue
             {
                 if (temp.Length == 2)// if there is two issue
@@ -485,6 +529,20 @@ namespace File_Master_project
             }
             #endregion
         }
+
+        private void CheckStatus(Backupdrive Drive, ref ListBoxItem ListItem)
+        {
+            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(222, 0, 0));
+        }
+
+        private void CheckStatus(Backupitem Item, ref ListBoxItem ListItem)
+        {
+            if (GetBackupType(Item) == "Item")
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
+                Warning3_label.Visibility = Visibility.Visible;
+            }
+        }
         #endregion
 
         #region Data_extraction
@@ -508,6 +566,13 @@ namespace File_Master_project
             char result;
             result = Backupinfo_List[index].Split('|')[0].Split('*')[1][0];
             return result;
+        }
+
+        private string GetBackupType(Backupitem Item)
+        {
+            if (Directory.Exists(Item.Source_path)) return "Folder";
+            else if (File.Exists(Item.Source_path)) return "File";
+            else return "Item";
         }
 
         private int GetIndex(int index)
@@ -542,6 +607,28 @@ namespace File_Master_project
             #endregion
 
             File.WriteAllLines(Currentdir + "\\config\\backup.txt", Backupinfo_List.ToArray());
+            Emptyconfig = false;
+
+            #region UI-changes
+            Apply_label.IsEnabled = false;
+            Apply_label.Opacity = 0.5;
+            Dismiss_label.IsEnabled = false;
+            Dismiss_label.Opacity = 0.5;
+            Warning2_label.Visibility = Visibility.Hidden;
+            #endregion
+        }
+
+        private void Upload_Backupinfo(List<Backupdrive> Data)
+        {
+            File.WriteAllText(Currentdir + "\\config\\backup.txt", "");
+            foreach (var item in Data)
+            {
+                Backupdrive Drive = item;
+                Drive.Serialize();
+                string Code = JsonConvert.SerializeObject(Drive);
+                File.AppendAllText(Currentdir + "\\config\\backup.txt", Code);
+            }        
+            
             Emptyconfig = false;
 
             #region UI-changes
@@ -598,7 +685,7 @@ namespace File_Master_project
         {
             if(Warning_Save())
             {
-                int i = Source_listbox.SelectedIndex;
+                int i = Backuptask_listbox.SelectedIndex;
                 if (GetType(i) == 'F')
                 {
                     Save(GetSource(i), GetDestination(i), true);
@@ -634,7 +721,7 @@ namespace File_Master_project
         #region Source item selection
         private void Source_listbox_SelectionChanged(object sender, SelectionChangedEventArgs e)//changes when you select an item from the source list
         {
-            int i = Source_listbox.SelectedIndex;
+            int i = Backuptask_listbox.SelectedIndex;
             if (i != -1)//if the index is -1 there is no item selected
             {
                 Load_Backupitem(Backupinfo_List, i);
@@ -715,8 +802,8 @@ namespace File_Master_project
 
                 string temp = $"{Backupinfo_List.Count() + 1}*{type}src<{Sourceinput_textbox.Text}|dst<{Destinationinput_textbox.Text}|{intv.Time} {intv.Unit}|<!change!>";
                 Backupinfo_List.Add(temp);
-                Load_Backupitems(Backupinfo_List);
-                Source_listbox.SelectedIndex = (Source_listbox.Items.Count - 1);//selects the new item automatically
+                //Load_Backupitems(Backupinfo_List);
+                Backuptask_listbox.SelectedIndex = (Backuptask_listbox.Items.Count - 1);//selects the new item automatically
 
                 #region Submenu reset
                 Sourceinput_textbox.Text = "";
@@ -731,7 +818,7 @@ namespace File_Master_project
         #region Remove item
         private void Removeitem_button_Click(object sender, RoutedEventArgs e)
         {
-            if (Source_listbox.SelectedIndex == -1)
+            if (Backuptask_listbox.SelectedIndex == -1)
             {
                 MessageBox.Show("You have to select an item in order to delete it!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -739,8 +826,8 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to delete this item? \nIt will be deleted permanently!", "Delete", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
                 {
-                    Backupinfo_List.RemoveAt(Source_listbox.SelectedIndex);
-                    Source_listbox.SelectedIndex = -1;
+                    Backupinfo_List.RemoveAt(Backuptask_listbox.SelectedIndex);
+                    Backuptask_listbox.SelectedIndex = -1;
 
                     #region Activate apply/dismiss options
                     Apply_label.IsEnabled = true;
@@ -751,7 +838,7 @@ namespace File_Master_project
                     #endregion
 
                     Autorecount();
-                    Load_Backupitems(Backupinfo_List);
+                    //Load_Backupitems(Backupinfo_List);
                     Reset_Backupmenu();
                 }
             }
@@ -771,7 +858,7 @@ namespace File_Master_project
             Replaceitemapply_button.Visibility = Visibility.Visible;
 
             #region Data load
-            int index = Source_listbox.SelectedIndex;
+            int index = Backuptask_listbox.SelectedIndex;
             #region Loads interval
             if (GetInterval(index).Convert_to_min() < 60)
             {
@@ -822,10 +909,10 @@ namespace File_Master_project
                 #region Get interval
                 string interval = Interval2_label.Content.ToString();
                 #endregion
-                int index = Source_listbox.SelectedIndex;
-                Backupinfo_List[index] = $"{GetIndex(Source_listbox.SelectedIndex)}*{type}src<{Sourceinput_textbox.Text}|dst<{Destinationinput_textbox.Text}|{interval}|<!change!>";
-                Load_Backupitems(Backupinfo_List);
-                Source_listbox.SelectedIndex = (Source_listbox.Items.Count - 1);//selects the relocated item automatically
+                int index = Backuptask_listbox.SelectedIndex;
+                Backupinfo_List[index] = $"{GetIndex(Backuptask_listbox.SelectedIndex)}*{type}src<{Sourceinput_textbox.Text}|dst<{Destinationinput_textbox.Text}|{interval}|<!change!>";
+                //Load_Backupitems(Backupinfo_List);
+                Backuptask_listbox.SelectedIndex = (Backuptask_listbox.Items.Count - 1);//selects the relocated item automatically
 
                 #region Submenu reset
                 Sourceinput_textbox.Text = "";
@@ -859,7 +946,7 @@ namespace File_Master_project
             Optionfolder_radiobutton.IsEnabled = false;
 
             #region Data load
-            int index = Source_listbox.SelectedIndex;
+            int index = Backuptask_listbox.SelectedIndex;
             #region Loads interval
             if (GetInterval(index).Convert_to_min() < 60)
             {
@@ -921,7 +1008,7 @@ namespace File_Master_project
             if (MessageBox.Show("Are you sure you want to apply the changes?", "Apply changes", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes)) ;
             {
                 Upload_Backupinfo();
-                Load_Backupitems(Backupinfo_List);
+                //Load_Backupitems(Backupinfo_List);
                 Reset_Backupmenu();
             }
         }
@@ -931,7 +1018,7 @@ namespace File_Master_project
             if (MessageBox.Show("Do you want to cancel the changes?", "Dismiss changes", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No).Equals(MessageBoxResult.Yes)) ;
             {
                 Load_backupinfo();
-                Load_Backupitems(Backupinfo_List);
+                //Load_Backupitems(Backupinfo_List);
                 Reset_Backupmenu();
             }
         }
@@ -942,7 +1029,7 @@ namespace File_Master_project
         #region Menu reset
         private void Reset_Backupmenu()
         {
-            Source_listbox.SelectedItem = -1;
+            Backuptask_listbox.SelectedItem = -1;
             Warning1_label.Visibility = Visibility.Visible;
             Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
             Destination_textbox.Text = "Select a source folder!";
