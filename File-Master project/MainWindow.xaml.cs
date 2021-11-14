@@ -250,11 +250,12 @@ namespace File_Master_project
 
         class Backupdrive
         {
-            private List<Backupitem> Itemlist = new List<Backupitem>();
-            public string Itemlist_Code; // Itemlist serialized version
+            [JsonProperty] public string DriveID;
+            [JsonProperty] private string DefaultVolumeLabel;
             [JsonIgnore] public DriveInfo DriveInformation;
             [JsonIgnore] public bool IsAvailable = true;
-            public string DriveID;
+            [JsonProperty] public string Itemlist_Code; // Itemlist serialized version
+            [JsonIgnore] private List<Backupitem> Itemlist = new List<Backupitem>();
 
             public void ValidityCheck(Dictionary<string, DriveInfo> AllDriveInfo)
             {
@@ -328,6 +329,18 @@ namespace File_Master_project
                 return temp;
             }
 
+            public string GetVolumeLabel()
+            {
+                if (DriveInformation == null) return DefaultVolumeLabel;
+                else return DriveInformation.VolumeLabel;
+            }
+
+            public char GetDriveLetter()
+            {
+                if (DriveInformation == null) return '?';
+                else return DriveInformation.Name[0];
+            }
+
             #region Serialization
             public void Serialize()
             {
@@ -397,6 +410,28 @@ namespace File_Master_project
             }           
         }
 
+        class FileExplorerItem
+        {
+            private DirectoryInfo Current;
+            private FileSystemInfo Item;
+            private long Size_value;
+            
+            public FileExplorerItem(FileInfo file)
+            {
+                Item = file;
+                Size_value = file.Length;
+            }
+
+            public FileExplorerItem(DirectoryInfo folder)
+            {
+                Item = folder;
+            }
+
+            public string Name { get { return Item.Name; } }
+            public string Size { get { return $"{Size_value} bytes"; } }
+            public string Type { get { return Item.Extension; } }
+        }
+
         class Settings
         {
             //default settings
@@ -460,11 +495,18 @@ namespace File_Master_project
         private string CurrentDir = Directory.GetCurrentDirectory();
 
         public MainWindow()
-        {
-            try
+        {         
+            bool debug = true;
+            if (debug)
             {
                 InitializeComponent();
 
+                List<FileExplorerItem> FileExplorer = new List<FileExplorerItem>();
+                FileExplorer.Add( new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
+                FileExplorer.Add(new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
+                FileExplorer.Add(new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
+                FileExplorer.Add(new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
+                FileExplorer_datagrid.ItemsSource = FileExplorer;
                 #region Window visibility on startup
                 if (!Minimize_as_TaskbarIcon || !Start_with_minimized) NotifyIcon_Taskbar.Visibility = Visibility.Collapsed; //hide notifyicon when not needed
                 if (Start_with_minimized) Program_Minimize(Minimize_as_TaskbarIcon);
@@ -474,41 +516,60 @@ namespace File_Master_project
                 Settings Usersettings = new Settings();
                 Usersettings.Shortsource = false;
 
-                if (InDevelopment)
-                {
-                    Unstable_Warning();
-                }
-                HideAllMenu();
-                Backup_grid.Visibility = Visibility.Visible;
-                Main_window.Activate();
-                Startup();
-                Menu = "Backup";
-
-                #region debug
-                /*
-                List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
-                Backupdrive Drive = new Backupdrive();
-                Interval SI = new Interval("60 min");
-                Interval RWT = new Interval("10 min");
-
-                //Backupsettings_Local config = new Backupsettings_Local(true, 1, SI, true, false, false, false, true, false, 0, RWT, 3, true, false);
-                //Backupitem Item = new Backupitem(0,"source path", "destination path", CurrentTime, true, config);
-                Drive.DriveID = "02466E75";
-                //Drive.AddBackupitem(Item);
-                DataBackupdrives.Add(Drive);
-                Upload_Backupinfo(DataBackupdrives);*/
-                #endregion
-
                 Backup = LoadBackupProcess();
-                Display_Backupitems();
+                Upload_Backupinfo(Backup.Backupdrives);
             }
-            #region Runtime Error
-            catch (Exception e)
+            else
             {
-                MessageBox.Show(e.Message, "Runtime error!", MessageBoxButton.OK, MessageBoxImage.Error);
-                throw;
+                try
+                {
+                    InitializeComponent();
+
+                    #region Window visibility on startup
+                    if (!Minimize_as_TaskbarIcon || !Start_with_minimized) NotifyIcon_Taskbar.Visibility = Visibility.Collapsed; //hide notifyicon when not needed
+                    if (Start_with_minimized) Program_Minimize(Minimize_as_TaskbarIcon);
+                    else Main_window.WindowState = WindowState.Normal;
+                    #endregion
+
+                    Settings Usersettings = new Settings();
+                    Usersettings.Shortsource = false;
+
+                    if (InDevelopment)
+                    {
+                        Unstable_Warning();
+                    }
+                    HideAllMenu();
+                    Backup_grid.Visibility = Visibility.Visible;
+                    Main_window.Activate();
+                    Startup();
+                    Menu = "Backup";
+
+                    #region debug
+                    /*
+                    List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
+                    Backupdrive Drive = new Backupdrive();
+                    Interval SI = new Interval("60 min");
+                    Interval RWT = new Interval("10 min");
+
+                    //Backupsettings_Local config = new Backupsettings_Local(true, 1, SI, true, false, false, false, true, false, 0, RWT, 3, true, false);
+                    //Backupitem Item = new Backupitem(0,"source path", "destination path", CurrentTime, true, config);
+                    Drive.DriveID = "02466E75";
+                    //Drive.AddBackupitem(Item);
+                    DataBackupdrives.Add(Drive);
+                    Upload_Backupinfo(DataBackupdrives);*/
+                    #endregion
+
+                    Backup = LoadBackupProcess();
+                    Display_Backupitems();
+                }
+                #region Runtime Error
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message, "Runtime error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    throw;
+                }
+                #endregion
             }
-            #endregion
         }
 
         #region Startup
@@ -570,7 +631,7 @@ namespace File_Master_project
                 #region Add backupdrive to list
                 ListItem = new ListBoxItem();
                 string part1 = "Backup drive: ";
-                part1 += $"{Drive.DriveInformation.VolumeLabel} ({Drive.DriveInformation.Name[0]}:)";
+                part1 += $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
                 string part3 = "(5,9GB / 60GB)";
                 string part2 = "";
                 for (int i = 0; i < 80 - (part1.Length + part3.Length); i++)
@@ -700,7 +761,14 @@ namespace File_Master_project
 
         private void CheckDriveStatus(Backupdrive Drive, ref ListBoxItem ListItem)
         {
-            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+            if (Drive.IsAvailable == false)
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+            }
+            else
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            }
         }
 
         private void CheckStatus(Backupitem Item, ref ListBoxItem ListItem)//Sets warning labels, and item color
@@ -1193,7 +1261,7 @@ namespace File_Master_project
             foreach (var Drive in Backup.Backupdrives)
             {
                 CI = new ComboBoxItem();
-                CI.Content = $"{Drive.DriveInformation.VolumeLabel} ({Drive.DriveInformation.Name[0]}:)";
+                CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
                 CI.Tag = Drive.DriveID;
                 Backupdriveselect_combobox.Items.Add(CI);
             }
@@ -1641,8 +1709,9 @@ namespace File_Master_project
                 Debug_grid.Visibility = Visibility.Visible;
             }*/
             SystemSounds.Asterisk.Play();
+
             #region folder selection
-            /*Winform.FolderBrowserDialog folderDlg = new Winform.FolderBrowserDialog();
+            Winform.FolderBrowserDialog folderDlg = new Winform.FolderBrowserDialog();
             folderDlg.ShowNewFolderButton = true;
             folderDlg.RootFolder = Environment.SpecialFolder.MyComputer;
             while (true)
@@ -1657,8 +1726,9 @@ namespace File_Master_project
                 {
                     break;
                 }
-            }*/
+            }
             #endregion
+
             #region file selection
             /*Winform.OpenFileDialog openFileDialog1 = new Winform.OpenFileDialog();
             openFileDialog1.InitialDirectory = @"G:";

@@ -8,14 +8,13 @@
         mc:Ignorable="d"
         Title="File-Master" Height="700" Width="1025" Background="#FF1A1A1A" Foreground="Black" WindowStartupLocation="CenterScreen" BorderBrush="Black" BorderThickness="5,30,5,5" Visibility="Visible" WindowStyle="None" Icon="Icons/icon-recycle-10.jpg" ResizeMode="CanMinimize" MouseLeftButtonDown="Main_window_MouseLeftButtonDown" Closing="Main_window_Closing" MouseMove="Main_window_MouseMove">
     <Grid x:Name="Main_grid">
-
         <!--#region Menu items-->
         <tb:TaskbarIcon x:Name="NotifyIcon_Taskbar" IconSource="/Icons/icon-recycle-10.ico" ToolTipText="File-Master" TrayLeftMouseDown="NotifyIcon_Taskbar_TrayLeftMouseDown">
         </tb:TaskbarIcon>
         <Label x:Name="debug_label" Content="" HorizontalAlignment="Left" Margin="303,-32,0,0" VerticalAlignment="Top" Width="155" Height="31" Foreground="#FFACACAC" FontStyle="Italic"/>
         <Image x:Name="Icon_image" HorizontalAlignment="Left" Height="25" Margin="5,-27,0,0" VerticalAlignment="Top" Width="25" Source="Icons/icon-recycle-10.jpg"/>
         <Label Content="File-Master" HorizontalAlignment="Left" Margin="31,-32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="16"/>
-        <Label Content="v0.4.5" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+        <Label Content="v0.5.0" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
         <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="950,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="987,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="983,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown" RenderTransformOrigin="1.156,0.236"/>
@@ -40,8 +39,7 @@
         <!--#endregion-->
 
         <!--#region Backup -->
-
-        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="665" Margin="160,0,0,0" VerticalAlignment="Top" Width="855">
+        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="665" Margin="160,0,0,0" VerticalAlignment="Top" Width="855" Visibility="Hidden">
             <GroupBox Header="Manage selected item" HorizontalAlignment="Right" Height="288" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="790" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" FontSize="14"/>
             <Label Content="Backup drives/items:" HorizontalAlignment="Left" Margin="30,17,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold"/>
             <Label Content="Destination :" HorizontalAlignment="Right" Margin="0,370,700,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold"/>
@@ -146,11 +144,51 @@
             <!--#endregion-->
         </Grid>
         <!--#endregion-->
-
         <!--#endregion-->
 
+        <!--#region File-explorer -->
+        <Grid x:Name="Fileexplorer_grid" HorizontalAlignment="Left" Height="665" Margin="160,0,0,0" VerticalAlignment="Top" Width="855">
+            <Label Content="Currently selected path:" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <TextBox x:Name="Path_textbox" HorizontalAlignment="Left" Height="44" Margin="20,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="768" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA" Text="{Binding file, Mode=OneWay}"/>
+            <DataGrid Name="FileExplorer2_datagrid" IsReadOnly="True" AutoGenerateColumns="False" Margin="20,113,67,138" Background="#FF151515" BorderBrush="#FFAAAAAA" >
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Files, Mode = OneWay}"></DataGridTextColumn>
+                    <DataGridTextColumn Header="Size" Binding="{Binding FileExplorer}"></DataGridTextColumn>
+                    <DataGridTextColumn Header="Type" Binding="{Binding FileExplorer}"></DataGridTextColumn>
+                    <DataGridTextColumn Header="Changed" Binding="{Binding FileExplorer}"></DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <DataGrid Name="FileExplorer_datagrid" Margin="20,113,67,138" AutoGenerateColumns="False" Background="#FF151515" BorderBrush="{x:Null}" Foreground="Black" BorderThickness="1" HorizontalGridLinesBrush="Black" VerticalGridLinesBrush="Black" GridLinesVisibility="Horizontal" HeadersVisibility="Column" ColumnHeaderHeight="25" RowHeight="20" RowBackground="#FF464646" >
+                <DataGrid.Resources>
+                    <Style BasedOn="{StaticResource {x:Type DataGridColumnHeader}}" TargetType="{x:Type DataGridColumnHeader}">
+                        <Setter Property="Background" Value="#FFAAAAAA"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="#FF151515" />
+                        <Setter Property="Foreground" Value="White"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FF343434"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" MinWidth="250"></DataGridTextColumn>
+                    <DataGridTextColumn Header="Size" Binding="{Binding Size}" MinWidth="80"></DataGridTextColumn>
+                    <DataGridTextColumn Header="Type" Binding="{Binding Type}" MinWidth="100"></DataGridTextColumn>
+                    <DataGridTextColumn Header="Changed" Binding="{Binding Name}" MinWidth="150"></DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+        <!--#endregion-->
+
+        <!--#region Debug menu -->
         <Grid x:Name="Debug_grid" HorizontalAlignment="Left" Height="665" Margin="160,0,0,0" VerticalAlignment="Top" Width="855" Visibility="Hidden">
             <TextBox x:Name="Debugwindow_textbox" HorizontalAlignment="Left" Height="587" Margin="33,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="785" Background="#FF141414" Foreground="#FF23FF00" FontWeight="Bold"/>
         </Grid>
+        <!--#endregion-->
     </Grid>
 </Window>
