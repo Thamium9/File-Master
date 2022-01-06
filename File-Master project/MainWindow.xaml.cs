@@ -198,16 +198,16 @@ namespace File_Master_project
 
         class Backupitem
         {
-            public int ID;
+            [JsonProperty] public int ID;
             [JsonIgnore] public FileSystemInfo Source;
             [JsonProperty] private string SourcePath;
             [JsonIgnore] public FileSystemInfo Destination;
             [JsonProperty] private string DestinationPath;
-            public DateTime LastSaved;
-            public bool Isenabled;
+            [JsonProperty] public DateTime LastSaved;
+            [JsonProperty] public bool Isenabled;
             [JsonIgnore] public bool CanBeEnabled = true;
-            private Backupsettings_Local Configuration;
-            public string Configuration_Code; // Configuration serialized version
+            [JsonIgnore] private Backupsettings_Local Configuration;
+            [JsonProperty] public string Configuration_Code; // Configuration serialized version
 
             public Backupitem()
             {
@@ -228,6 +228,30 @@ namespace File_Master_project
             {
                 return Configuration;
             }
+
+            #region Backup process (SAVEING)
+            public void Save()
+            {
+                bool success = false;
+                try
+                {
+                    if (File.Exists(Source.FullName))
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("The operation was unsuccessful due to an error!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                if (success) MessageBox.Show("The operation was successful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Information);
+                else MessageBox.Show("The operation was unsuccessful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            #endregion
 
             #region Serialization
             public void Serialize()
@@ -364,20 +388,41 @@ namespace File_Master_project
 
         class BackupProcess
         {
-            public List<Backupdrive> Backupdrives;
+            public List<Backupdrive> Backupdrives=new List<Backupdrive>();
             public Backupsettings_Global Settings;
             private Dictionary<string, DriveInfo> AllDriveInfo=new Dictionary<string, DriveInfo>();
 
-            public BackupProcess(List<Backupdrive> backupdrives, Backupsettings_Global settings)
+            public BackupProcess()
             {
-                GetAllDriveInfo();
-                Backupdrives = backupdrives;
-                Settings = settings;
+                LoadBackupProcess();
+                GetAllDriveInfo();               
                 foreach (var Drive in Backupdrives)
                 {
                     Drive.ValidityCheck(AllDriveInfo);
                 }
             }
+            #region Data extractions
+            public Backupitem GetBackupitemFromTag(string Tag)
+            {
+                Backupitem Item = new Backupitem();
+                #region GetBackupItem from Tag
+                int ID = int.Parse(Tag);
+                foreach (var Drive in Backupdrives)
+                {
+                    Item = Drive.GetBackupitemFromID(ID);
+                    if (Item != null) break;
+                }
+                #endregion
+                return Item;
+            }
+
+            public string GetBackupType(Backupitem Item)
+            {
+                if (Directory.Exists(Item.Source.FullName)) return "Folder";
+                else if (File.Exists(Item.Source.FullName)) return "File";
+                else return "Unknown";
+            }
+            #endregion
 
             private void GetAllDriveInfo()
             {
@@ -407,14 +452,63 @@ namespace File_Master_project
                 disk.Get();
                 //Return the serial number
                 return disk["VolumeSerialNumber"].ToString();
-            }           
+            }
+
+            #region Backup Data-IN
+            private string[] Load_backupinfo()
+            {
+                string[] Backupinfo;
+                Backupinfo = File.ReadAllLines(Directory.GetCurrentDirectory() + "\\config\\backup.json");
+                #region UI-changes
+                //((MainWindow)Application.Current.MainWindow).Warning2_label.Visibility = Visibility.Hidden;
+                #endregion
+                return Backupinfo;
+            }
+
+            private void LoadBackupProcess()
+            {
+                #region Backupdrives
+                string[] Backupinfo = Load_backupinfo();
+                foreach (var item in Backupinfo)
+                {
+                    Backupdrive Drive = JsonConvert.DeserializeObject<Backupdrive>(item);
+                    Drive.Deserialize();
+                    Backupdrives.Add(Drive);
+                }
+                #endregion
+                #region BackupSettings_Global
+                Settings = new Backupsettings_Global();
+                #endregion
+            }
+            #endregion
+
+            #region Backup Data-OUT
+            public void Upload_Backupinfo()
+            {
+                File.WriteAllText(CurrentDir + "\\config\\backup.json", "");
+                foreach (var item in Backupdrives)
+                {
+                    Backupdrive Drive = item;
+                    Drive.Serialize();
+                    string Code = JsonConvert.SerializeObject(Drive);
+                    File.AppendAllText(CurrentDir + "\\config\\backup.json", Code);
+                }
+
+                Emptyconfig = false;
+
+                #region UI-changes
+                //Warning2_label.Visibility = Visibility.Hidden;
+                #endregion
+            }
+            #endregion
+
         }
 
         class FileExplorerItem
         {
             private DirectoryInfo Current;
             private FileSystemInfo Item;
-            private long Size_value;
+            private long Size_value=-1;
             
             public FileExplorerItem(FileInfo file)
             {
@@ -428,7 +522,7 @@ namespace File_Master_project
             }
 
             public string Name { get { return Item.Name; } }
-            public string Size { get { return $"{Size_value} bytes"; } }
+            public string Size { get { if (Size_value!=-1) return $"{Size_value} bytes"; else return "-"; } }
             public string Type { get { return Item.Extension; } }
         }
 
@@ -486,17 +580,17 @@ namespace File_Master_project
         private bool Hasprivileges = false;
         private bool Hasadminrights = false;
         private string Menu;
-        private bool Emptyconfig = false;
+        static private bool Emptyconfig = false;
         #endregion
 
-        private BackupProcess Backup;
+        private BackupProcess Backup=new BackupProcess();
         private DateTime CurrentTime = DateTime.Now;
         private List<string> Backupinfo_List = new List<string>(); //structure : {int index}*{char type}src<{string source_path}|dst<{string destination_path}|{interval}|{*if empty it is saved, othervise a save is required to apply changes}
-        private string CurrentDir = Directory.GetCurrentDirectory();
+        static public string CurrentDir = Directory.GetCurrentDirectory();
 
         public MainWindow()
         {         
-            bool debug = true;
+            bool debug = false;
             if (debug)
             {
                 InitializeComponent();
@@ -516,8 +610,7 @@ namespace File_Master_project
                 Settings Usersettings = new Settings();
                 Usersettings.Shortsource = false;
 
-                Backup = LoadBackupProcess();
-                Upload_Backupinfo(Backup.Backupdrives);
+                Backup.Upload_Backupinfo();
             }
             else
             {
@@ -559,7 +652,6 @@ namespace File_Master_project
                     Upload_Backupinfo(DataBackupdrives);*/
                     #endregion
 
-                    Backup = LoadBackupProcess();
                     Display_Backupitems();
                 }
                 #region Runtime Error
@@ -586,39 +678,9 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Backup feature
+        #region Backup
 
-        #region Backup Data-IN
-        private string[] Load_backupinfo()
-        {
-            string[] Backupinfo;
-            Backupinfo = File.ReadAllLines(Directory.GetCurrentDirectory() + "\\config\\backup.json");
-            #region UI-changes
-            Warning2_label.Visibility = Visibility.Hidden;
-            #endregion
-            return Backupinfo;
-        }
-
-        private BackupProcess LoadBackupProcess()
-        {
-            #region Backupdrives
-            string[] Backupinfo = Load_backupinfo();
-            List<Backupdrive> Backupdrives = new List<Backupdrive>();
-            foreach (var item in Backupinfo)
-            {
-                Backupdrive Drive = JsonConvert.DeserializeObject<Backupdrive>(item);
-                Drive.Deserialize();
-                Backupdrives.Add(Drive);
-            }
-            #endregion
-            #region BackupSettings_Global
-            Backupsettings_Global Settings = new Backupsettings_Global();
-            #endregion
-            return new BackupProcess(Backupdrives, Settings);
-        }
-        #endregion
-
-        #region Backup Data-Use
+        #region Backup Data-Display
         private void Display_Backupitems()
         {
             Backuptask_listbox.Items.Clear();
@@ -650,7 +712,7 @@ namespace File_Master_project
                     string part4 = $"-> {GetBackupType(Drive.GetBackupitem(i))}: {Drive.GetBackupitem(i).Source}{Drive.GetBackupitem(i).Source.Name} - (5,6GB)";
                     ListItem.Content = part4;
                     ListItem.Tag = $"{Drive.GetBackupitem(i).ID}";
-                    CheckStatus(Drive.GetBackupitem(i), ref ListItem);
+                    CheckBackupitemStatus(Drive.GetBackupitem(i), ref ListItem);
                     Backuptask_listbox.Items.Add(ListItem);
                 }
                 #endregion
@@ -692,7 +754,7 @@ namespace File_Master_project
             #region Get status
             bool CanRunBackupProcess;
             bool MissingSource;
-            CheckStatus(Item, out CanRunBackupProcess, out MissingSource);
+            LoadBackupitemStatus(Item, out CanRunBackupProcess, out MissingSource);
             #endregion
 
             EnableActionButtons(Item, CanRunBackupProcess, MissingSource);
@@ -771,7 +833,7 @@ namespace File_Master_project
             }
         }
 
-        private void CheckStatus(Backupitem Item, ref ListBoxItem ListItem)//Sets warning labels, and item color
+        private void CheckBackupitemStatus(Backupitem Item, ref ListBoxItem ListItem)//Sets warning labels, and item color
         {
             #region Default
             ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
@@ -810,7 +872,7 @@ namespace File_Master_project
             }
         }
 
-        private void CheckStatus(Backupitem Item, out bool CanRunBackupProcess, out bool MissingSource)//Sets Status label, and returns if it can be enabled
+        private void LoadBackupitemStatus(Backupitem Item, out bool CanRunBackupProcess, out bool MissingSource)//Sets Status label, and returns if it can be enabled
         {
             #region Default status
             CanRunBackupProcess = true;
@@ -854,26 +916,6 @@ namespace File_Master_project
                 Status_label.Content = "Status: Cannot continue the backup process due to unknown circumstances!";
                 CanRunBackupProcess = false;
             }
-        }
-        #endregion
-
-        #region Backup Data-OUT
-        private void Upload_Backupinfo(List<Backupdrive> Data)
-        {
-            File.WriteAllText(CurrentDir + "\\config\\backup.json", "");
-            foreach (var item in Data)
-            {
-                Backupdrive Drive = item;
-                Drive.Serialize();
-                string Code = JsonConvert.SerializeObject(Drive);
-                File.AppendAllText(CurrentDir + "\\config\\backup.json", Code);
-            }        
-            
-            Emptyconfig = false;
-
-            #region UI-changes
-            Warning2_label.Visibility = Visibility.Hidden;
-            #endregion
         }
         #endregion
 
@@ -975,28 +1017,6 @@ namespace File_Master_project
             }         
             if(success) MessageBox.Show("The save was successful!", "Save", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-
-        private void Save(Backupitem Item)
-        {
-            bool success = false;
-            try
-            {
-                if (File.Exists(Item.Source.FullName))
-                {
-                    
-                }
-                else
-                {
-                    
-                }
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("The operation was unsuccessful due to an error!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            if (success) MessageBox.Show("The operation was successful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
 
         private void Manualsave_button_Click(object sender, RoutedEventArgs e)
         {
@@ -1285,7 +1305,7 @@ namespace File_Master_project
                         if (Drive.DriveID==CI.Tag.ToString())
                         {
                             Drive.AddBackupitem(CreateBackupitem(Settings));
-                            Upload_Backupinfo(Backup.Backupdrives);
+                            Backup.Upload_Backupinfo();
                             break;
                         }
                     }               
@@ -1466,7 +1486,7 @@ namespace File_Master_project
                 }
                 Display_Backupitem(Tag);
             }
-            Upload_Backupinfo(Backup.Backupdrives);
+            Backup.Upload_Backupinfo();
         }
 
         #endregion
