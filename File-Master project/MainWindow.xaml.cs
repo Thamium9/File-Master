@@ -230,26 +230,51 @@ namespace File_Master_project
             }
 
             #region Backup process (SAVEING)
-            public void Save()
+            public void Save(bool isManual)
             {
                 bool success = false;
                 try
                 {
                     if (File.Exists(Source.FullName))
                     {
-
+                        SaveFile(Source, "");
                     }
                     else
                     {
-
+                        SaveDirectory(Source);
+                        foreach (var ThisDirectory in Directory.GetDirectories(Source.FullName, "*", SearchOption.AllDirectories)) 
+                        {
+                            SaveDirectory(GetPathInfo(ThisDirectory));
+                        }
                     }
+                    LastSaved = DateTime.Now;
+                    success = true;
+                    
+                    //Refresh_Backupmenu();
                 }
-                catch (Exception)
+                catch (Exception ex)
+                {   
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                if (isManual)
                 {
-                    MessageBox.Show("The operation was unsuccessful due to an error!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (success) MessageBox.Show("The operation was successful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else MessageBox.Show("The operation was unsuccessful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                if (success) MessageBox.Show("The operation was successful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Information);
-                else MessageBox.Show("The operation was unsuccessful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            private void SaveFile(FileSystemInfo ThisSource, string AdditionalPath)
+            {
+                Directory.CreateDirectory($"{Destination.FullName}{AdditionalPath}");
+                File.Copy(ThisSource.FullName, $"{Destination.FullName}{AdditionalPath}\\{ThisSource.Name}", false);
+            }
+
+            private void SaveDirectory(FileSystemInfo ThisSource)
+            {
+                foreach (var item in Directory.GetFiles(ThisSource.FullName))
+                {
+                    SaveFile(GetPathInfo(item), ThisSource.FullName.Replace(Source.FullName, $"\\{Source.Name}"));
+                }
             }
             #endregion
 
@@ -278,8 +303,8 @@ namespace File_Master_project
             [JsonProperty] private string DefaultVolumeLabel;
             [JsonIgnore] public DriveInfo DriveInformation;
             [JsonIgnore] public bool IsAvailable = true;
-            [JsonProperty] public string Itemlist_Code; // Itemlist serialized version
-            [JsonIgnore] private List<Backupitem> Itemlist = new List<Backupitem>();
+            [JsonProperty] public string Backups_Code; // Backups serialized version
+            [JsonIgnore] private List<Backupitem> Backups = new List<Backupitem>();
 
             public void ValidityCheck(Dictionary<string, DriveInfo> AllDriveInfo)
             {
@@ -292,19 +317,19 @@ namespace File_Master_project
 
             public void AddBackupitem(Backupitem Item)
             {
-                Itemlist.Add(Item);
+                Backups.Add(Item);
             }
 
             public Backupitem GetBackupitem(int index)
             {
-                return Itemlist[index];
+                return Backups[index];
             }
 
             public Backupitem GetBackupitemFromID(int ID)
             {
                 Backupitem Item;
                 Item = null;
-                foreach (var item in Itemlist)
+                foreach (var item in Backups)
                 {
                     if (item.ID == ID)
                     {
@@ -316,19 +341,19 @@ namespace File_Master_project
 
             public void RemoveBackupitem(int ID)
             {
-                foreach (var item in Itemlist)
+                foreach (var item in Backups)
                 {
                     if (item.ID == ID)
                     {
-                        Itemlist.Remove(item);
+                        Backups.Remove(item);
                         break;
                     }
                 }
             }
 
-            public void SetBackupitemState(int ID, bool State)
+            public void SetBackupitemState(bool State, int ID)
             {
-                foreach (var item in Itemlist)
+                foreach (var item in Backups)
                 {
                     if (item.ID == ID)
                     {
@@ -338,15 +363,27 @@ namespace File_Master_project
                 }
             }
 
+            public void SetBackupitemFromID(Backupitem Item, int ID)
+            {
+                for (int i = 0; i < Backups.Count; i++)
+                {
+                    if (Backups[i].ID == ID)
+                    {
+                        Backups[i] = Item;
+                        break;
+                    }
+                }
+            }
+
             public int CountItems()
             {
-                return Itemlist.Count();
+                return Backups.Count();
             }
 
             public List<int> GetIDs()
             {
                 List<int> temp = new List<int>();
-                foreach (var BackupItem in Itemlist)
+                foreach (var BackupItem in Backups)
                 {
                     temp.Add(BackupItem.ID);
                 }
@@ -368,17 +405,17 @@ namespace File_Master_project
             #region Serialization
             public void Serialize()
             {
-                foreach (var item in Itemlist)
+                foreach (var item in Backups)
                 {
                     item.Serialize();
                 }
-                Itemlist_Code = JsonConvert.SerializeObject(Itemlist);
+                Backups_Code = JsonConvert.SerializeObject(Backups);
             }
 
             public void Deserialize()
             {
-                Itemlist = JsonConvert.DeserializeObject<List<Backupitem>>(Itemlist_Code);
-                foreach (var item in Itemlist)
+                Backups = JsonConvert.DeserializeObject<List<Backupitem>>(Backups_Code);
+                foreach (var item in Backups)
                 {
                     item.Deserialize();
                 }
@@ -401,7 +438,7 @@ namespace File_Master_project
                     Drive.ValidityCheck(AllDriveInfo);
                 }
             }
-            #region Data extractions
+            #region Get Data
             public Backupitem GetBackupitemFromTag(string Tag)
             {
                 Backupitem Item = new Backupitem();
@@ -422,14 +459,13 @@ namespace File_Master_project
                 else if (File.Exists(Item.Source.FullName)) return "File";
                 else return "Unknown";
             }
-            #endregion
 
             private void GetAllDriveInfo()
             {
                 DriveInfo[] AllDrives = DriveInfo.GetDrives();
                 foreach (var Drive in AllDrives)
                 {
-                    if(Drive.IsReady)
+                    if (Drive.IsReady)
                     {
                         string Serial = GetHardDiskDSerialNumber($"{Drive.Name[0]}");
                         AllDriveInfo.Add(Serial, Drive);
@@ -453,6 +489,24 @@ namespace File_Master_project
                 //Return the serial number
                 return disk["VolumeSerialNumber"].ToString();
             }
+            #endregion
+
+            #region Set Data
+            public void SetBackupitemFromTag(Backupitem Item, string Tag)
+            {
+                #region GetBackupItem from Tag
+                int ID = int.Parse(Tag);
+                foreach (var Drive in Backupdrives)
+                {
+                    Backupitem ThisItem = Drive.GetBackupitemFromID(ID);
+                    if (ThisItem == Item)
+                    {
+                        Drive.SetBackupitemFromID(Item, ID);
+                    }
+                }
+                #endregion
+            }
+            #endregion
 
             #region Backup Data-IN
             private string[] Load_backupinfo()
@@ -589,7 +643,7 @@ namespace File_Master_project
         static public string CurrentDir = Directory.GetCurrentDirectory();
 
         public MainWindow()
-        {         
+        {
             bool debug = false;
             if (debug)
             {
@@ -709,7 +763,7 @@ namespace File_Master_project
                 for (int i = 0; i < Drive.CountItems(); i++)
                 {
                     ListItem = new ListBoxItem();
-                    string part4 = $"-> {GetBackupType(Drive.GetBackupitem(i))}: {Drive.GetBackupitem(i).Source}{Drive.GetBackupitem(i).Source.Name} - (5,6GB)";
+                    string part4 = $"-> {GetBackupType(Drive.GetBackupitem(i))}: {Drive.GetBackupitem(i).Source.FullName} - (5,6GB)";
                     ListItem.Content = part4;
                     ListItem.Tag = $"{Drive.GetBackupitem(i).ID}";
                     CheckBackupitemStatus(Drive.GetBackupitem(i), ref ListItem);
@@ -730,7 +784,7 @@ namespace File_Master_project
 
         private void Display_Backupitem(string Tag)
         {
-            Backupitem Item = GetBackupitemFromTag(Tag);
+            Backupitem Item = Backup.GetBackupitemFromTag(Tag);
 
             #region Loads interval
             Item.GetBackupsettings().GetSave_interval().Humanize();
@@ -920,18 +974,11 @@ namespace File_Master_project
         #endregion
 
         #region Backup Data-Extraction
-        private Backupitem GetBackupitemFromTag(string Tag)
+        private string GetCurrentTag()
         {
-            Backupitem Item = new Backupitem();
-            #region GetBackupItem from Tag
-            int ID = int.Parse(Tag);
-            foreach (var Drive in Backup.Backupdrives)
-            {
-                Item = Drive.GetBackupitemFromID(ID);
-                if (Item != null) break;
-            }
-            #endregion
-            return Item;
+            ListBoxItem Item = (ListBoxItem)Backuptask_listbox.SelectedItem;
+            string Tag = Item.Tag.ToString();
+            return Tag;
         }
 
         private string GetBackupType(Backupitem Item)
@@ -948,13 +995,6 @@ namespace File_Master_project
         }
 
         #region old
-        private string GetSource(int index)
-        {
-            string result;
-            result = Backupinfo_List[index].Split('|')[0].Split('<')[1];
-            return result;
-        }
-
         private string GetDestination(int index)
         {
             string result;
@@ -978,59 +1018,15 @@ namespace File_Master_project
 
         #endregion
 
-        #region Backup process (SAVEING)
-        private void Save(string sourcepath, string destinationpath, bool isFile)
-        {
-            bool success = false;
-            try
-            {
-                if (isFile)
-                {
-                    #region Filesave
-                    FileInfo Size = new FileInfo(sourcepath);
-                    if (Size.Length < Savefilesize_Limit)//if the file is smaller than 1Mb
-                    {
-                        if (File.Exists($"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}"))//if it has to overwrite
-                        {
-                            MessageBox.Show("I cannot overwrite files yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
-                        else
-                        {
-                            File.Copy(sourcepath, $"{destinationpath}\\{System.IO.Path.GetFileName(sourcepath)}", false);
-                            success = true;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("I cannot save files bigger than 1MB!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                    #endregion
-                }
-                else
-                {
-                    MessageBox.Show("I cannot save folders yet!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("The operation was unsuccessful!", "Unknown Error!", MessageBoxButton.OK, MessageBoxImage.Error);
-            }         
-            if(success) MessageBox.Show("The save was successful!", "Save", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
+        #region Manual save
         private void Manualsave_button_Click(object sender, RoutedEventArgs e)
         {
             if(Warning_Save())
             {
-                int i = Backuptask_listbox.SelectedIndex;
-                if (GetType(i) == 'F')
-                {
-                    Save(GetSource(i), GetDestination(i), true);
-                }
-                else
-                {
-                    Save(GetSource(i), GetDestination(i), false);
-                }
+                string Tag = GetCurrentTag();
+                Backupitem ManualSave = Backup.GetBackupitemFromTag(Tag);
+                ManualSave.Save(true);
+                Backup.SetBackupitemFromTag(ManualSave, Tag);
             }
         }
         #endregion
@@ -1060,8 +1056,7 @@ namespace File_Master_project
         {
             if (Backuptask_listbox.SelectedIndex != -1)//if the index is -1 there is no item selected
             {
-                ListBoxItem Item = (ListBoxItem)Backuptask_listbox.SelectedItem;
-                string Tag = Item.Tag.ToString();
+                string Tag = GetCurrentTag();
                 if (int.TryParse(Tag, out int temp))
                 {
                     Display_Backupitem(Tag);
@@ -1097,8 +1092,8 @@ namespace File_Master_project
         {
             if (MessageBox.Show("Are you sure you want to delete this item? \nIt will be deleted permanently!", "Delete", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
             {
-                ListBoxItem Item = (ListBoxItem)Backuptask_listbox.SelectedItem;
-                int ID = int.Parse(Item.Tag.ToString());
+                string Tag = GetCurrentTag();
+                int ID = int.Parse(Tag.ToString());
                 foreach (var Drive in Backup.Backupdrives)
                 {
                     Drive.RemoveBackupitem(ID);
@@ -1206,35 +1201,9 @@ namespace File_Master_project
             Intervalselection_combobox.Visibility = Visibility.Hidden;
             Interval2_label.Visibility = Visibility.Visible;
             Newitemapply_button.Visibility = Visibility.Hidden;
-            //Optionfile_radiobutton.IsEnabled = false;
-            //Optionfolder_radiobutton.IsEnabled = false;
 
             #region Data load
-            int index = Backuptask_listbox.SelectedIndex;
-            #region Loads interval
-            if (GetInterval(index).Convert_to_min() < 60)
-            {
-                Interval2_label.Content = $"{GetInterval(index).Convert_to_min()} min";
-            }
-            else if (GetInterval(index).Convert_to_hour() < 24)
-            {
-                Interval2_label.Content = $"{GetInterval(index).Convert_to_hour()} hour";
-            }
-            else
-            {
-                Interval2_label.Content = $"{GetInterval(index).Convert_to_day()} day";
-            }
-            #endregion
-            Destinationinput_textbox.Text = GetDestination(index);
-            Sourceinput_textbox.Text = GetSource(index);
-            if (GetType(index) == 'D')
-            {
-                //Optionfolder_radiobutton.IsChecked = true;
-            }
-            else
-            {
-                //Optionfile_radiobutton.IsChecked = true;
-            }
+
             #endregion
         }
         #endregion
@@ -1242,24 +1211,20 @@ namespace File_Master_project
         #region Enable/Disable backup
         private void Enablebackup_button_Click(object sender, RoutedEventArgs e)
         {
-            ListBoxItem Item = (ListBoxItem)Backuptask_listbox.SelectedItem;
-            string Tag = Item.Tag.ToString();
-            int ID = int.Parse(Tag);
+            int ID = int.Parse(GetCurrentTag());
             foreach (var Drive in Backup.Backupdrives)
             {
-                Drive.SetBackupitemState(ID, true);
+                Drive.SetBackupitemState(true, ID);
             }
             Refresh_Backupmenu();
         }
 
         private void Disablebackup_button_Click(object sender, RoutedEventArgs e)
         {
-            ListBoxItem Item = (ListBoxItem)Backuptask_listbox.SelectedItem;
-            string Tag = Item.Tag.ToString();
-            int ID = int.Parse(Tag);
+            int ID = int.Parse(GetCurrentTag());
             foreach (var Drive in Backup.Backupdrives)
             {
-                Drive.SetBackupitemState(ID, false);
+                Drive.SetBackupitemState(false, ID);
             }
             Refresh_Backupmenu();
         }
@@ -1471,12 +1436,12 @@ namespace File_Master_project
             Enablebackup_button.Opacity = 0.5;
             Display_Backupitems();
         }
+
         private void Refresh_Backupmenu()
         {
             if(Backuptask_listbox.SelectedIndex!=-1)
             {
-                ListBoxItem Item = (ListBoxItem)Backuptask_listbox.SelectedItem;
-                string Tag = Item.Tag.ToString();
+                string Tag = GetCurrentTag();
                 Display_Backupitems();
                 for (int i = 0; i < Backuptask_listbox.Items.Count; i++)
                 {
@@ -1487,7 +1452,7 @@ namespace File_Master_project
                 Display_Backupitem(Tag);
             }
             Backup.Upload_Backupinfo();
-        }
+        }   
 
         #endregion
 
@@ -1709,7 +1674,7 @@ namespace File_Master_project
         #endregion
 
         #endregion
-
+        //*/
         #endregion
 
         #region debug
