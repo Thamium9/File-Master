@@ -169,5 +169,11 @@
   <ItemGroup>
     <Resource Include="Icons\cleanup2.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\hard_drive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\usb_drive.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

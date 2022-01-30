@@ -427,17 +427,18 @@ namespace File_Master_project
         {
             public List<Backupdrive> Backupdrives=new List<Backupdrive>();
             public Backupsettings_Global Settings;
-            private Dictionary<string, DriveInfo> AllDriveInfo=new Dictionary<string, DriveInfo>();
+            private Dictionary<string, DriveInfo> AllDriveInfo=new Dictionary<string, DriveInfo>(); //key: serial number , value: DriveInfo
 
             public BackupProcess()
             {
                 LoadBackupProcess();
-                GetAllDriveInfo();               
+                LoadAllDriveInfo();               
                 foreach (var Drive in Backupdrives)
                 {
                     Drive.ValidityCheck(AllDriveInfo);
                 }
             }
+
             #region Get Data
             public Backupitem GetBackupitemFromTag(string Tag)
             {
@@ -460,18 +461,6 @@ namespace File_Master_project
                 else return "Unknown";
             }
 
-            private void GetAllDriveInfo()
-            {
-                DriveInfo[] AllDrives = DriveInfo.GetDrives();
-                foreach (var Drive in AllDrives)
-                {
-                    if (Drive.IsReady)
-                    {
-                        string Serial = GetHardDiskDSerialNumber($"{Drive.Name[0]}");
-                        AllDriveInfo.Add(Serial, Drive);
-                    }
-                }
-            }
 
             public string GetHardDiskDSerialNumber(string drive)//not my code : https://ukacademe.com/TutorialExamples/CSharp/Get_Serial_Number_of_Hard_Drive
             {
@@ -488,6 +477,16 @@ namespace File_Master_project
                 disk.Get();
                 //Return the serial number
                 return disk["VolumeSerialNumber"].ToString();
+            }
+
+            public List<DriveInfo> GetAllDriveInfo()
+            {
+                List<DriveInfo> DriveInfoList = new List<DriveInfo>();
+                foreach (var Drive in AllDriveInfo)
+                {
+                    DriveInfoList.Add(Drive.Value);
+                }
+                return DriveInfoList;
             }
             #endregion
 
@@ -508,31 +507,55 @@ namespace File_Master_project
             }
             #endregion
 
-            #region Backup Data-IN
-            private string[] Load_backupinfo()
+            #region Load Data
+            private bool Load_backupinfo(out string[] Backupinfo)
             {
-                string[] Backupinfo;
-                Backupinfo = File.ReadAllLines(Directory.GetCurrentDirectory() + "\\config\\backup.json");
+                Backupinfo=null;
+                string filepath = $"{Directory.GetCurrentDirectory()}\\config\\backup.json";
+                if(File.Exists(filepath))
+                {
+                    Backupinfo = File.ReadAllLines(filepath);
+                    return true;
+                }
+                else
+                {
+                    File.Create(filepath);
+                    return false;
+                }
                 #region UI-changes
                 //((MainWindow)Application.Current.MainWindow).Warning2_label.Visibility = Visibility.Hidden;
                 #endregion
-                return Backupinfo;
             }
 
             private void LoadBackupProcess()
             {
                 #region Backupdrives
-                string[] Backupinfo = Load_backupinfo();
-                foreach (var item in Backupinfo)
+                if(Load_backupinfo(out string[] Backupinfo))
                 {
-                    Backupdrive Drive = JsonConvert.DeserializeObject<Backupdrive>(item);
-                    Drive.Deserialize();
-                    Backupdrives.Add(Drive);
+                    foreach (var item in Backupinfo)
+                    {
+                        Backupdrive Drive = JsonConvert.DeserializeObject<Backupdrive>(item);
+                        Drive.Deserialize();
+                        Backupdrives.Add(Drive);
+                    }
                 }
                 #endregion
                 #region BackupSettings_Global
                 Settings = new Backupsettings_Global();
                 #endregion
+            }
+
+            private void LoadAllDriveInfo()
+            {
+                DriveInfo[] AllDrives = DriveInfo.GetDrives();
+                foreach (var Drive in AllDrives)
+                {
+                    if (Drive.IsReady)
+                    {
+                        string Serial = GetHardDiskDSerialNumber($"{Drive.Name[0]}");
+                        AllDriveInfo.Add(Serial, Drive);
+                    }
+                }
             }
             #endregion
 
@@ -644,17 +667,11 @@ namespace File_Master_project
 
         public MainWindow()
         {
-            bool debug = false;
+            bool debug = true;
             if (debug)
             {
                 InitializeComponent();
 
-                List<FileExplorerItem> FileExplorer = new List<FileExplorerItem>();
-                FileExplorer.Add( new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
-                FileExplorer.Add(new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
-                FileExplorer.Add(new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
-                FileExplorer.Add(new FileExplorerItem(new FileInfo("D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\App.xaml.cs")));
-                FileExplorer_datagrid.ItemsSource = FileExplorer;
                 #region Window visibility on startup
                 if (!Minimize_as_TaskbarIcon || !Start_with_minimized) NotifyIcon_Taskbar.Visibility = Visibility.Collapsed; //hide notifyicon when not needed
                 if (Start_with_minimized) Program_Minimize(Minimize_as_TaskbarIcon);
@@ -664,7 +681,92 @@ namespace File_Master_project
                 Settings Usersettings = new Settings();
                 Usersettings.Shortsource = false;
 
-                Backup.Upload_Backupinfo();
+                HideAllMenu();
+                Backup_grid.Visibility = Visibility.Visible;
+                Main_window.Activate();
+                //Startup();
+                Menu = "Backup";
+
+                #region debug
+                /*
+                List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
+                Backupdrive Drive = new Backupdrive();
+                Interval SI = new Interval("60 min");
+                Interval RWT = new Interval("10 min");
+
+                //Backupsettings_Local config = new Backupsettings_Local(true, 1, SI, true, false, false, false, true, false, 0, RWT, 3, true, false);
+                //Backupitem Item = new Backupitem(0,"source path", "destination path", CurrentTime, true, config);
+                Drive.DriveID = "02466E75";
+                //Drive.AddBackupitem(Item);
+                DataBackupdrives.Add(Drive);
+                Upload_Backupinfo(DataBackupdrives);*/
+                #endregion
+
+                Display_Backupitems();
+
+                StackPanel Drives = new StackPanel();
+                foreach (var ThisDrive in Backup.GetAllDriveInfo())
+                {
+                    #region Stackpanel
+                    StackPanel Drive = new StackPanel();
+                    Drive.Orientation = Orientation.Horizontal;
+                    Drive.Background = new SolidColorBrush(Color.FromRgb(25,25,25));
+                    Drive.Margin = new Thickness(0,5,0,5);
+                    Drive.Height = 130;
+                    #endregion
+                    #region Icon
+                    Image Icon = new Image();
+                    if(ThisDrive.DriveType==DriveType.Removable) Icon.Source = new BitmapImage(new Uri(@"/Icons/usb_drive.png", UriKind.Relative));
+                    else if(ThisDrive.DriveType == DriveType.Fixed) Icon.Source = new BitmapImage(new Uri(@"/Icons/hard_drive.png", UriKind.Relative));
+                    Icon.Width = 100;
+                    Icon.Height = 100;
+                    Icon.Margin = new Thickness(15, 0, 15, 0);
+                    Icon.VerticalAlignment = VerticalAlignment.Center;
+                    Drive.Children.Add(Icon);
+                    #endregion
+                    #region Info
+                    StackPanel Information = new StackPanel();
+                    Information.VerticalAlignment = VerticalAlignment.Center;
+                    #region Drivename
+                    Label Info = new Label();
+                    Info.Content = $"{ThisDrive.VolumeLabel} ({ThisDrive.Name})";
+                    Info.Foreground = Brushes.Goldenrod;
+                    Info.FontSize = 14;
+                    Info.FontWeight = FontWeights.Bold;
+                    Info.VerticalAlignment = VerticalAlignment.Center;
+                    Info.HorizontalAlignment = HorizontalAlignment.Left;
+                    #endregion
+                    #region FreeSpace
+                    ProgressBar Space = new ProgressBar();
+                    double value =100 - ((double)ThisDrive.AvailableFreeSpace / (double)ThisDrive.TotalSize * 100);
+                    Space.Value = value;
+                    Space.Width = 150;
+                    Space.Height = 25;
+                    Space.HorizontalAlignment = HorizontalAlignment.Left;
+                    Space.Margin = new Thickness(5, 0, 0, 0);
+                    #endregion
+                    #region FreeSpaceInfo
+                    Label SpaceInfo = new Label();
+                    SpaceInfo.Content = $"{ThisDrive.AvailableFreeSpace/1000000000} GB free of {ThisDrive.TotalSize / 1000000000} GB";
+                    SpaceInfo.Foreground = Brushes.Goldenrod;
+                    SpaceInfo.FontSize = 14;
+                    SpaceInfo.FontWeight = FontWeights.Bold;
+                    SpaceInfo.VerticalAlignment = VerticalAlignment.Center;
+                    SpaceInfo.HorizontalAlignment = HorizontalAlignment.Left;
+                    #endregion
+                    Information.Children.Add(Info);
+                    Information.Children.Add(Space);
+                    Information.Children.Add(SpaceInfo);
+                    Drive.Children.Add(Information);
+                    #endregion
+                    #region Checkbox
+                    CheckBox Enable = new CheckBox();
+                    Enable.VerticalAlignment = VerticalAlignment.Center;
+
+                    #endregion
+                    Drives.Children.Add(Drive);
+                }
+                Alldrives_scrollviewer.Content = Drives;
             }
             else
             {
@@ -688,23 +790,8 @@ namespace File_Master_project
                     HideAllMenu();
                     Backup_grid.Visibility = Visibility.Visible;
                     Main_window.Activate();
-                    Startup();
+                    //Startup();
                     Menu = "Backup";
-
-                    #region debug
-                    /*
-                    List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
-                    Backupdrive Drive = new Backupdrive();
-                    Interval SI = new Interval("60 min");
-                    Interval RWT = new Interval("10 min");
-
-                    //Backupsettings_Local config = new Backupsettings_Local(true, 1, SI, true, false, false, false, true, false, 0, RWT, 3, true, false);
-                    //Backupitem Item = new Backupitem(0,"source path", "destination path", CurrentTime, true, config);
-                    Drive.DriveID = "02466E75";
-                    //Drive.AddBackupitem(Item);
-                    DataBackupdrives.Add(Drive);
-                    Upload_Backupinfo(DataBackupdrives);*/
-                    #endregion
 
                     Display_Backupitems();
                 }
@@ -1747,5 +1834,12 @@ namespace File_Master_project
             debug_label.Content = Menu;
         }
         #endregion
+
+        private void ManageBackupDrives_button_Click(object sender, RoutedEventArgs e)
+        {
+            HideAllMenu();
+            Backupsubmenu2_grid.Visibility = Visibility.Visible;
+            Menu = "Backup.sub2";
+        }
     }
 }

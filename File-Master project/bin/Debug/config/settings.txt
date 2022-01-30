@@ -1,5 +1,0 @@
-Shortsource=true
-Minimize_as_TaskbarIcon=true
-Start_with_minimized=false
-Savefilesize_Limit = 1000000
-Savefoldersize_Limit = 1000000
