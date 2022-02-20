@@ -74,7 +74,7 @@ namespace File_Master_project
 
         public Interval GetSave_interval()
         {
-            return Save_interval;
+            return Save_interval;       
         }
 
         public Interval GetRetryWaitTime()
@@ -135,7 +135,7 @@ namespace File_Master_project
         public void Backup(bool isManual)
         {
             bool success = false;
-            if (IsEnabled)
+            if (CheckPermission())
             {
                 try
                 {
@@ -181,6 +181,11 @@ namespace File_Master_project
             {
                 SaveFile(Main.GetPathInfo(item), ThisSource.FullName.Replace(Source.FullName, $"\\{Source.Name}"));
             }
+        }
+
+        private bool CheckPermission()
+        {
+            return IsEnabled;
         }
 
         private void Backuptimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -236,11 +241,20 @@ namespace File_Master_project
         [JsonProperty] public string Backups_Code; // Backups serialized version
         [JsonIgnore] private List<Backupitem> Backups = new List<Backupitem>();
 
+        public Backupdrive()
+        {
+
+        }
+
         public void ValidityCheck(Dictionary<string, DriveInfo> AllDriveInfo)
         {
             foreach (var thisDriveInfo in AllDriveInfo)
             {
-                if (thisDriveInfo.Key == DriveID) DriveInformation = thisDriveInfo.Value;
+                if (thisDriveInfo.Key == DriveID)
+                {
+                    DriveInformation = thisDriveInfo.Value;
+                    DefaultVolumeLabel = DriveInformation.VolumeLabel;
+                }
             }
             if (DriveInformation == null) IsAvailable = false;
         }
@@ -292,18 +306,6 @@ namespace File_Master_project
             }
         }
 
-        public void SetBackupitemFromID(Backupitem Item, int ID)
-        {
-            for (int i = 0; i < Backups.Count; i++)
-            {
-                if (Backups[i].ID == ID)
-                {
-                    Backups[i] = Item;
-                    break;
-                }
-            }
-        }
-
         public int CountItems()
         {
             return Backups.Count();
@@ -327,7 +329,7 @@ namespace File_Master_project
 
         public char GetDriveLetter()
         {
-            if (DriveInformation == null) return '?';
+            if (DriveInformation == null) return DefaultVolumeLabel[0];
             else return DriveInformation.Name[0];
         }
 
@@ -377,7 +379,7 @@ namespace File_Master_project
         }
 
         #region Get Data
-        static public Backupitem GetBackupitemFromTag(string Tag)
+        static public Backupitem GetBackupitemFromTag(string Tag) //this will reference the original backupitem, so both the copy and the original will be modified on save
         {
             Backupitem Item = null;
             #region GetBackupItem from Tag
@@ -423,23 +425,6 @@ namespace File_Master_project
                 DriveInfoList.Add(Drive.Value);
             }
             return DriveInfoList;
-        }
-        #endregion
-
-        #region Set Data
-        static public void SetBackupitemFromTag(Backupitem Item, string Tag)
-        {
-            #region GetBackupItem from Tag
-            int ID = int.Parse(Tag);
-            foreach (var Drive in Backupdrives)
-            {
-                Backupitem ThisItem = Drive.GetBackupitemFromID(ID);
-                if (ThisItem == Item)
-                {
-                    Drive.SetBackupitemFromID(Item, ID);
-                }
-            }
-            #endregion
         }
         #endregion
 
@@ -508,7 +493,8 @@ namespace File_Master_project
             }
 
             #region UI-changes
-            //Warning2_label.Visibility = Visibility.Hidden;        
+            //Warning2_label.Visibility = Visibility.Hidden;
+            
             #endregion
         }
         #endregion
@@ -518,7 +504,6 @@ namespace File_Master_project
         {
             Backupitem ManualSave = GetBackupitemFromTag(Tag);
             ManualSave.Backup(true);
-            SetBackupitemFromTag(ManualSave, Tag);
         }
 
         static private void ManualsaveALL()

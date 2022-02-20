@@ -111,8 +111,6 @@ namespace File_Master_project
         static private bool Emptyconfig = false;
         #endregion
 
-        private DateTime CurrentTime = DateTime.Now;
-        private List<string> Backupinfo_List = new List<string>(); //structure : {int index}*{char type}src<{string source_path}|dst<{string destination_path}|{interval}|{*if empty it is saved, othervise a save is required to apply changes}
         static public string CurrentDir = Directory.GetCurrentDirectory();
 
         public MainWindow()
@@ -153,70 +151,6 @@ namespace File_Master_project
                 #endregion
 
                 Display_Backupitems();
-
-                StackPanel Drives = new StackPanel();
-                foreach (var ThisDrive in BackupProcess.GetAllDriveInfo())
-                {
-                    #region Stackpanel
-                    StackPanel Drive = new StackPanel();
-                    Drive.Orientation = Orientation.Horizontal;
-                    Drive.Background = new SolidColorBrush(Color.FromRgb(25,25,25));
-                    Drive.Margin = new Thickness(0,5,0,5);
-                    Drive.Height = 130;
-                    #endregion
-                    #region Icon
-                    Image Icon = new Image();
-                    if(ThisDrive.DriveType==DriveType.Removable) Icon.Source = new BitmapImage(new Uri(@"/Icons/usb_drive.png", UriKind.Relative));
-                    else if(ThisDrive.DriveType == DriveType.Fixed) Icon.Source = new BitmapImage(new Uri(@"/Icons/hard_drive.png", UriKind.Relative));
-                    Icon.Width = 100;
-                    Icon.Height = 100;
-                    Icon.Margin = new Thickness(15, 0, 15, 0);
-                    Icon.VerticalAlignment = VerticalAlignment.Center;
-                    Drive.Children.Add(Icon);
-                    #endregion
-                    #region Info
-                    StackPanel Information = new StackPanel();
-                    Information.VerticalAlignment = VerticalAlignment.Center;
-                    #region Drivename
-                    Label Info = new Label();
-                    Info.Content = $"{ThisDrive.VolumeLabel} ({ThisDrive.Name})";
-                    Info.Foreground = Brushes.Goldenrod;
-                    Info.FontSize = 14;
-                    Info.FontWeight = FontWeights.Bold;
-                    Info.VerticalAlignment = VerticalAlignment.Center;
-                    Info.HorizontalAlignment = HorizontalAlignment.Left;
-                    #endregion
-                    #region FreeSpace
-                    ProgressBar Space = new ProgressBar();
-                    double value =100 - ((double)ThisDrive.AvailableFreeSpace / (double)ThisDrive.TotalSize * 100);
-                    Space.Value = value;
-                    Space.Width = 150;
-                    Space.Height = 25;
-                    Space.HorizontalAlignment = HorizontalAlignment.Left;
-                    Space.Margin = new Thickness(5, 0, 0, 0);
-                    #endregion
-                    #region FreeSpaceInfo
-                    Label SpaceInfo = new Label();
-                    SpaceInfo.Content = $"{ThisDrive.AvailableFreeSpace/1000000000} GB free of {ThisDrive.TotalSize / 1000000000} GB";
-                    SpaceInfo.Foreground = Brushes.Goldenrod;
-                    SpaceInfo.FontSize = 14;
-                    SpaceInfo.FontWeight = FontWeights.Bold;
-                    SpaceInfo.VerticalAlignment = VerticalAlignment.Center;
-                    SpaceInfo.HorizontalAlignment = HorizontalAlignment.Left;
-                    #endregion
-                    Information.Children.Add(Info);
-                    Information.Children.Add(Space);
-                    Information.Children.Add(SpaceInfo);
-                    Drive.Children.Add(Information);
-                    #endregion
-                    #region Checkbox
-                    CheckBox Enable = new CheckBox();
-                    Enable.VerticalAlignment = VerticalAlignment.Center;
-
-                    #endregion
-                    Drives.Children.Add(Drive);
-                }
-                Alldrives_scrollviewer.Content = Drives;
             }
             else
             {
@@ -575,18 +509,15 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Modify backuptasks (submenu)
+        #region Buttons
 
-        #region Add item (submenu)
         private void Additem_button_Click(object sender, RoutedEventArgs e)
         {
             HideAllMenu();
             Backupsubmenu1_grid.Visibility = Visibility.Visible;
             Menu = "Backup.sub1";
         }
-        #endregion
 
-        #region Remove item
         private void Removeitem_button_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Are you sure you want to delete this item? \nIt will be deleted permanently!", "Delete", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
@@ -601,7 +532,6 @@ namespace File_Master_project
                 Reset_Backupmenu();
             }
         }
-        #endregion
 
         #region Restore files !
         private void Restorefiles_button_Click(object sender, RoutedEventArgs e)
@@ -689,7 +619,6 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Configuration (submenu)
         private void Configuration_button_Click(object sender, RoutedEventArgs e)
         {
             HideAllMenu();
@@ -705,9 +634,7 @@ namespace File_Master_project
 
             #endregion
         }
-        #endregion
 
-        #region Enable/Disable backup
         private void Enablebackup_button_Click(object sender, RoutedEventArgs e)
         {
             int ID = int.Parse(GetSelectedBackupitemTag());
@@ -727,7 +654,93 @@ namespace File_Master_project
             }
             Refresh_Backupmenu();
         }
-        #endregion
+
+        private void ManageBackupDrives_button_Click(object sender, RoutedEventArgs e)
+        {
+            HideAllMenu();
+            Backupsubmenu2_grid.Visibility = Visibility.Visible;
+            Menu = "Backup.sub2";
+
+            StackPanel Drives = new StackPanel();
+            Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
+            foreach (var ThisDrive in BackupProcess.GetAllDriveInfo())
+            {
+                #region Stackpanel
+                StackPanel Drive = new StackPanel();
+                Drive.Orientation = Orientation.Horizontal;
+                Drive.Background = new SolidColorBrush(Color.FromRgb(25, 25, 25));
+                Drive.Margin = new Thickness(0, 5, 0, 5);
+                Drive.Height = 130;
+                Drive.HorizontalAlignment = HorizontalAlignment.Stretch;
+                Drive.Width = Drives.Width;
+                #endregion
+                #region Icon
+                Image Icon = new Image();
+                if (ThisDrive.DriveType == DriveType.Removable) Icon.Source = new BitmapImage(new Uri(@"/Icons/usb_drive.png", UriKind.Relative));
+                else if (ThisDrive.DriveType == DriveType.Fixed) Icon.Source = new BitmapImage(new Uri(@"/Icons/hard_drive.png", UriKind.Relative));
+                Icon.Width = 100;
+                Icon.Height = 100;
+                Icon.Margin = new Thickness(15, 0, 15, 0);
+                Icon.VerticalAlignment = VerticalAlignment.Center;
+                Drive.Children.Add(Icon);
+                #endregion
+                #region Info
+                StackPanel Information = new StackPanel();
+                Information.VerticalAlignment = VerticalAlignment.Center;
+                #region Drivename
+                Label Info = new Label();
+                Info.Content = $"{ThisDrive.VolumeLabel} ({ThisDrive.Name})";
+                Info.Foreground = Brushes.Goldenrod;
+                Info.FontSize = 14;
+                Info.FontWeight = FontWeights.Bold;
+                Info.VerticalAlignment = VerticalAlignment.Center;
+                Info.HorizontalAlignment = HorizontalAlignment.Left;
+                #endregion
+                #region FreeSpace
+                ProgressBar Space = new ProgressBar();
+                double value = 100 - ((double)ThisDrive.AvailableFreeSpace / (double)ThisDrive.TotalSize * 100);
+                Space.Value = value;
+                Space.Width = 200;
+                Space.Height = 25;
+                Space.HorizontalAlignment = HorizontalAlignment.Left;
+                Space.Margin = new Thickness(5, 0, 0, 0);
+                #endregion
+                #region FreeSpaceInfo
+                Label SpaceInfo = new Label();
+                string freespace;
+                if ((double)ThisDrive.AvailableFreeSpace > Math.Pow(1000, 4)) freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1000, 4), 2)} TB";
+                else if ((double)ThisDrive.AvailableFreeSpace > Math.Pow(1000, 3)) freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1000, 3), 2)} GB";
+                else freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1000, 2), 2)} MB";
+                string totalspace;
+                if ((double)ThisDrive.TotalSize > Math.Pow(1000, 4)) totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1000, 4), 2)} TB";
+                else if ((double)ThisDrive.TotalSize > Math.Pow(1000, 3)) totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1000, 3), 2)} GB";
+                else totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1000, 2), 2)} MB";
+                SpaceInfo.Content = $"{freespace} free of {totalspace}";
+                SpaceInfo.Foreground = Brushes.Goldenrod;
+                SpaceInfo.FontSize = 14;
+                SpaceInfo.FontWeight = FontWeights.Bold;
+                SpaceInfo.VerticalAlignment = VerticalAlignment.Center;
+                SpaceInfo.HorizontalAlignment = HorizontalAlignment.Left;
+                #endregion
+                Information.Children.Add(Info);
+                Information.Children.Add(Space);
+                Information.Children.Add(SpaceInfo);
+                Drive.Children.Add(Information);
+                #endregion
+                #region Button
+                Button SetDrive = new Button();
+                SetDrive.VerticalAlignment = VerticalAlignment.Center;
+                SetDrive.HorizontalAlignment = HorizontalAlignment.Right;
+                SetDrive.Content = "Set Drive as Backupdrive";
+                SetDrive.Height = 34;
+                SetDrive.Margin = new Thickness(0, 0, 25, 0);
+                if ((double)ThisDrive.AvailableFreeSpace / (double)ThisDrive.TotalSize < 0.1 || ThisDrive.AvailableFreeSpace < 4000000000) SetDrive.IsEnabled = false;
+                Drive.Children.Add(SetDrive);
+                #endregion
+                Drives.Children.Add(Drive);
+            }
+            Alldrives_scrollviewer.Content = Drives;
+        }
 
         #endregion
 
@@ -752,10 +765,12 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Apply buttons
+        #region Buttons
+
+        #region Apply button
         private void Newitemapply_button_Click(object sender, RoutedEventArgs e)//adds the new item to the system
         {
-            if(CheckInfo())
+            if (CheckInfo())
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
@@ -766,13 +781,13 @@ namespace File_Master_project
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     foreach (var Drive in BackupProcess.Backupdrives)
                     {
-                        if (Drive.DriveID==CI.Tag.ToString())
+                        if (Drive.DriveID == CI.Tag.ToString())
                         {
                             Drive.AddBackupitem(CreateBackupitem(Settings));
                             BackupProcess.Upload_Backupinfo();
                             break;
                         }
-                    }               
+                    }
                     Reset_Backupmenu();
                     Reset_BackupSubmenu1();
                 }
@@ -834,20 +849,20 @@ namespace File_Master_project
         {
             bool IsSingleCopy = Singlecopy_radiobutton.IsChecked.Value;
             int NumberOfCopies = 1;
-            ComboBoxItem  CI = (ComboBoxItem)Intervalselection_combobox.SelectedItem;
+            ComboBoxItem CI = (ComboBoxItem)Intervalselection_combobox.SelectedItem;
             Interval Save_interval = new Interval(CI.Tag.ToString());
             bool AbsoluteCopy = true;
-            bool ManualDetermination = false; 
+            bool ManualDetermination = false;
             bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
             bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
             bool SmartSave = Smartsave_checkbox.IsChecked.Value;
             bool UseMaxStorageData = false;
-            int MaxStorageData=0; //no value if 'UseMaxStorageData' is false
+            int MaxStorageData = 0; //no value if 'UseMaxStorageData' is false
             Interval RetryWaitTime = new Interval("5 min");
             int MaxNumberOfRetries = 3;
-            bool PopupOnFail=false;
+            bool PopupOnFail = false;
             bool FileCompression = Compress_checkbox.IsChecked.Value;
-            Backupsettings_Local Settings = new Backupsettings_Local(IsSingleCopy,NumberOfCopies,Save_interval,AbsoluteCopy,ManualDetermination,StoreDeletedInRBin,PopupWhenRBinIsFull,SmartSave,UseMaxStorageData,MaxStorageData,RetryWaitTime,MaxNumberOfRetries,PopupOnFail,FileCompression);
+            Backupsettings_Local Settings = new Backupsettings_Local(IsSingleCopy, NumberOfCopies, Save_interval, AbsoluteCopy, ManualDetermination, StoreDeletedInRBin, PopupWhenRBinIsFull, SmartSave, UseMaxStorageData, MaxStorageData, RetryWaitTime, MaxNumberOfRetries, PopupOnFail, FileCompression);
             return Settings;
         }
 
@@ -862,6 +877,8 @@ namespace File_Master_project
             Reset_Backupmenu();
             Reset_BackupSubmenu1();
         }
+        #endregion
+
         #endregion
 
         #region Settings menu
@@ -901,13 +918,33 @@ namespace File_Master_project
             Interval2_label.Content = "";
             Newitemapply_button.Visibility = Visibility.Visible;
             Replaceitemapply_button.Visibility = Visibility.Hidden;
+            Reset_BackupSubmenu1Settings();
+        }
+        #endregion
+
+        #endregion
+
+        #region Submenu2
+        private void Backupsubmenu2cancel_button_Click(object sender, RoutedEventArgs e)
+        {
+            HideAllMenu();
+            Backup_grid.Visibility = Visibility.Visible;
+            Menu = "Backup";
+            Reset_Backupmenu();
+            ResetBackupSubmenu2();
+        }
+
+        #region Menu actions
+        private void ResetBackupSubmenu2()
+        {
+            Alldrives_scrollviewer.Content = null;
         }
         #endregion
 
         #endregion
 
         #region Menu actions
-        private void Reset_Backupmenu()
+        public void Reset_Backupmenu()
         {
             Backuptask_listbox.SelectedIndex = -1;
             Warning1_label.Visibility = Visibility.Visible;
@@ -976,6 +1013,7 @@ namespace File_Master_project
         {
             Backup_grid.Visibility = Visibility.Hidden;
             Backupsubmenu1_grid.Visibility = Visibility.Hidden;
+            Backupsubmenu2_grid.Visibility = Visibility.Hidden;
             Debug_grid.Visibility = Visibility.Hidden;           
         }
         #endregion
@@ -1246,12 +1284,5 @@ namespace File_Master_project
             debug_label.Content = Menu;
         }
         #endregion
-
-        private void ManageBackupDrives_button_Click(object sender, RoutedEventArgs e)
-        {
-            HideAllMenu();
-            Backupsubmenu2_grid.Visibility = Visibility.Visible;
-            Menu = "Backup.sub2";
-        }
     }
 }

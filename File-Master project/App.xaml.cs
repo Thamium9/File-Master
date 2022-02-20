@@ -13,5 +13,10 @@ namespace File_Master_project
     /// </summary>
     public partial class App : Application
     {
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            MainWindow = new MainWindow();
+            MainWindow.Show();
+        }
     }
 }
