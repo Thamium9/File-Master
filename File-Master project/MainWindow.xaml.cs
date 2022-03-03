@@ -304,15 +304,15 @@ namespace File_Master_project
             if (MissingSource)
             {
                 Repair_button.Visibility = Visibility.Visible;
-                Configuration_button.Visibility = Visibility.Hidden;
+                Modification_button.Visibility = Visibility.Hidden;
                 Restorefiles_button.Opacity = 1;
                 Restorefiles_button.IsEnabled = true;
             }
             else
             {
-                Configuration_button.Opacity = 1;
-                Configuration_button.Visibility = Visibility.Visible;
-                Configuration_button.IsEnabled = true;
+                Modification_button.Opacity = 1;
+                Modification_button.Visibility = Visibility.Visible;
+                Modification_button.IsEnabled = true;
                 Repair_button.Visibility = Visibility.Hidden;
                 Restorefiles_button.Opacity = 0.5;
                 Restorefiles_button.IsEnabled = false;
@@ -619,7 +619,7 @@ namespace File_Master_project
         }
         #endregion
 
-        private void Configuration_button_Click(object sender, RoutedEventArgs e)
+        private void Modification_button_Click(object sender, RoutedEventArgs e)
         {
             HideAllMenu();
             Backupsubmenu1_grid.Visibility = Visibility.Visible;
@@ -660,86 +660,7 @@ namespace File_Master_project
             HideAllMenu();
             Backupsubmenu2_grid.Visibility = Visibility.Visible;
             Menu = "Backup.sub2";
-
-            StackPanel Drives = new StackPanel();
-            Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
-            foreach (var ThisDrive in BackupProcess.GetAllDriveInfo())
-            {
-                #region Stackpanel
-                StackPanel Drive = new StackPanel();
-                Drive.Orientation = Orientation.Horizontal;
-                Drive.Background = new SolidColorBrush(Color.FromRgb(25, 25, 25));
-                Drive.Margin = new Thickness(0, 5, 0, 5);
-                Drive.Height = 130;
-                Drive.HorizontalAlignment = HorizontalAlignment.Stretch;
-                Drive.Width = Drives.Width;
-                #endregion
-                #region Icon
-                Image Icon = new Image();
-                if (ThisDrive.DriveType == DriveType.Removable) Icon.Source = new BitmapImage(new Uri(@"/Icons/usb_drive.png", UriKind.Relative));
-                else if (ThisDrive.DriveType == DriveType.Fixed) Icon.Source = new BitmapImage(new Uri(@"/Icons/hard_drive.png", UriKind.Relative));
-                Icon.Width = 100;
-                Icon.Height = 100;
-                Icon.Margin = new Thickness(15, 0, 15, 0);
-                Icon.VerticalAlignment = VerticalAlignment.Center;
-                Drive.Children.Add(Icon);
-                #endregion
-                #region Info
-                StackPanel Information = new StackPanel();
-                Information.VerticalAlignment = VerticalAlignment.Center;
-                #region Drivename
-                Label Info = new Label();
-                Info.Content = $"{ThisDrive.VolumeLabel} ({ThisDrive.Name})";
-                Info.Foreground = Brushes.Goldenrod;
-                Info.FontSize = 14;
-                Info.FontWeight = FontWeights.Bold;
-                Info.VerticalAlignment = VerticalAlignment.Center;
-                Info.HorizontalAlignment = HorizontalAlignment.Left;
-                #endregion
-                #region FreeSpace
-                ProgressBar Space = new ProgressBar();
-                double value = 100 - ((double)ThisDrive.AvailableFreeSpace / (double)ThisDrive.TotalSize * 100);
-                Space.Value = value;
-                Space.Width = 200;
-                Space.Height = 25;
-                Space.HorizontalAlignment = HorizontalAlignment.Left;
-                Space.Margin = new Thickness(5, 0, 0, 0);
-                #endregion
-                #region FreeSpaceInfo
-                Label SpaceInfo = new Label();
-                string freespace;
-                if ((double)ThisDrive.AvailableFreeSpace > Math.Pow(1000, 4)) freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1000, 4), 2)} TB";
-                else if ((double)ThisDrive.AvailableFreeSpace > Math.Pow(1000, 3)) freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1000, 3), 2)} GB";
-                else freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1000, 2), 2)} MB";
-                string totalspace;
-                if ((double)ThisDrive.TotalSize > Math.Pow(1000, 4)) totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1000, 4), 2)} TB";
-                else if ((double)ThisDrive.TotalSize > Math.Pow(1000, 3)) totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1000, 3), 2)} GB";
-                else totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1000, 2), 2)} MB";
-                SpaceInfo.Content = $"{freespace} free of {totalspace}";
-                SpaceInfo.Foreground = Brushes.Goldenrod;
-                SpaceInfo.FontSize = 14;
-                SpaceInfo.FontWeight = FontWeights.Bold;
-                SpaceInfo.VerticalAlignment = VerticalAlignment.Center;
-                SpaceInfo.HorizontalAlignment = HorizontalAlignment.Left;
-                #endregion
-                Information.Children.Add(Info);
-                Information.Children.Add(Space);
-                Information.Children.Add(SpaceInfo);
-                Drive.Children.Add(Information);
-                #endregion
-                #region Button
-                Button SetDrive = new Button();
-                SetDrive.VerticalAlignment = VerticalAlignment.Center;
-                SetDrive.HorizontalAlignment = HorizontalAlignment.Right;
-                SetDrive.Content = "Set Drive as Backupdrive";
-                SetDrive.Height = 34;
-                SetDrive.Margin = new Thickness(0, 0, 25, 0);
-                if ((double)ThisDrive.AvailableFreeSpace / (double)ThisDrive.TotalSize < 0.1 || ThisDrive.AvailableFreeSpace < 4000000000) SetDrive.IsEnabled = false;
-                Drive.Children.Add(SetDrive);
-                #endregion
-                Drives.Children.Add(Drive);
-            }
-            Alldrives_scrollviewer.Content = Drives;
+            UpdateSubmenu2();
         }
 
         #endregion
@@ -933,8 +854,200 @@ namespace File_Master_project
             Reset_Backupmenu();
             ResetBackupSubmenu2();
         }
+        private void Showunavailable_checkbox_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateSubmenu2();
+        }
+
+        #region Menu functions
+        private StackPanel CreateAvailableDrivesSP()
+        {
+            StackPanel Drives = new StackPanel();
+            Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
+            #region Available label
+            Label Unavailable = new Label();
+            Unavailable.Content = "Available drives: ";
+            Unavailable.Foreground = Brushes.Gray;
+            Unavailable.FontSize = 15;
+            Unavailable.FontWeight = FontWeights.Bold;
+            Unavailable.VerticalAlignment = VerticalAlignment.Center;
+            Unavailable.HorizontalAlignment = HorizontalAlignment.Left;
+            Unavailable.Margin = new Thickness(5, 20, 0, 5);
+            Drives.Children.Add(Unavailable);
+            #endregion
+            foreach (var ThisDrive in BackupProcess.GetAllDriveInfo())
+            {
+                double AvailableSpaceRatio = (double)ThisDrive.AvailableFreeSpace / (double)ThisDrive.TotalSize;
+                #region Stackpanel
+                StackPanel Drive = new StackPanel();
+                Drive.Orientation = Orientation.Horizontal;
+                Drive.Background = new SolidColorBrush(Color.FromRgb(25, 25, 25));
+                Drive.Margin = new Thickness(0, 5, 0, 5);
+                Drive.Height = 130;
+                Drive.HorizontalAlignment = HorizontalAlignment.Stretch;
+                Drive.Width = Drives.Width;
+                #endregion
+                #region Icon
+                Image Icon = new Image();
+                if (ThisDrive.DriveType == DriveType.Removable) Icon.Source = new BitmapImage(new Uri(@"/Icons/usb_drive.png", UriKind.Relative));
+                else if (ThisDrive.DriveType == DriveType.Fixed) Icon.Source = new BitmapImage(new Uri(@"/Icons/hard_drive.png", UriKind.Relative));
+                Icon.Width = 100;
+                Icon.Height = 100;
+                Icon.Margin = new Thickness(15, 0, 15, 0);
+                Icon.VerticalAlignment = VerticalAlignment.Center;
+                Drive.Children.Add(Icon);
+                #endregion
+                #region Info
+                StackPanel Information = new StackPanel();
+                Information.VerticalAlignment = VerticalAlignment.Center;
+                Information.Width = 250;
+                #region Drivename
+                Label Info = new Label();
+                Info.Content = $"{ThisDrive.VolumeLabel} ({ThisDrive.Name})";
+                Info.Foreground = Brushes.LightGray;
+                Info.FontSize = 14;
+                Info.FontWeight = FontWeights.Bold;
+                Info.VerticalAlignment = VerticalAlignment.Center;
+                Info.HorizontalAlignment = HorizontalAlignment.Left;
+                #endregion
+                #region FreeSpace
+                ProgressBar Space = new ProgressBar();
+                double value = 100 - (AvailableSpaceRatio * 100);
+                Space.Value = value;
+                Space.Width = 200;
+                Space.Height = 25;
+                Space.HorizontalAlignment = HorizontalAlignment.Left;
+                Space.Margin = new Thickness(5, 0, 0, 0);
+                if (AvailableSpaceRatio < 0.1) Space.Foreground = Brushes.Red;
+                else if (AvailableSpaceRatio < 0.2) Space.Foreground = Brushes.Orange;                
+                #endregion
+                #region FreeSpaceInfo
+                Label SpaceInfo = new Label();
+                string freespace;
+                if ((double)ThisDrive.AvailableFreeSpace > Math.Pow(1024, 4)) freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1024, 4), 2)} TB";
+                else if ((double)ThisDrive.AvailableFreeSpace > Math.Pow(1024, 3)) freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1024, 3), 2)} GB";
+                else freespace = $"{Math.Round((double)ThisDrive.AvailableFreeSpace / Math.Pow(1024, 2), 2)} MB";
+                string totalspace;
+                if ((double)ThisDrive.TotalSize > Math.Pow(1024, 4)) totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1024, 4), 2)} TB";
+                else if ((double)ThisDrive.TotalSize > Math.Pow(1024, 3)) totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1024, 3), 2)} GB";
+                else totalspace = $"{Math.Round((double)ThisDrive.TotalSize / Math.Pow(1024, 2), 2)} MB";
+                SpaceInfo.Content = $"{freespace} free of {totalspace}";
+                SpaceInfo.Foreground = Brushes.Gray;
+                SpaceInfo.FontSize = 14;
+                SpaceInfo.FontWeight = FontWeights.Bold;
+                SpaceInfo.VerticalAlignment = VerticalAlignment.Center;
+                SpaceInfo.HorizontalAlignment = HorizontalAlignment.Left;
+                #endregion
+                Information.Children.Add(Info);
+                Information.Children.Add(Space);
+                Information.Children.Add(SpaceInfo);
+                Drive.Children.Add(Information);
+                #endregion
+                #region Set size
+                StackPanel Size = new StackPanel();
+                Size.Width = 150;
+                Drive.Children.Add(Size);
+                #endregion
+                #region Button
+                StackPanel Button = new StackPanel();
+                Button.Margin = new Thickness(80, 0, 0, 0);
+                Button SetDrive = new Button();
+                SetDrive.VerticalAlignment = VerticalAlignment.Center;
+                SetDrive.HorizontalAlignment = HorizontalAlignment.Right;
+                SetDrive.Content = "Set Drive as Backupdrive";
+                SetDrive.Height = 34;
+                SetDrive.Margin = new Thickness(0, 0, 25, 0);
+                if (AvailableSpaceRatio < 0.1 || ThisDrive.AvailableFreeSpace < 4000000000) SetDrive.IsEnabled = false;
+                Button.Children.Add(SetDrive);
+                Button.VerticalAlignment = VerticalAlignment.Center;
+
+                Drive.Children.Add(Button);
+                #endregion
+                Drives.Children.Add(Drive);
+            }
+
+            return Drives;
+        }
+        private StackPanel CreateUnavailableDrivesSP()
+        {
+            StackPanel Drives = new StackPanel();
+            Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
+            #region Unavailable label
+            Label Unavailable = new Label();
+            Unavailable.Content = "Unavailable backup drives: ";
+            Unavailable.Foreground = Brushes.Gray;
+            Unavailable.FontSize = 15;
+            Unavailable.FontWeight = FontWeights.Bold;
+            Unavailable.VerticalAlignment = VerticalAlignment.Center;
+            Unavailable.HorizontalAlignment = HorizontalAlignment.Left;
+            Unavailable.Margin = new Thickness(5, 20, 0, 5);
+            Drives.Children.Add(Unavailable);
+            #endregion
+            foreach (var ThisDrive in BackupProcess.Backupdrives)
+            {
+                if (!ThisDrive.IsAvailable)
+                {
+                    #region Stackpanel
+                    StackPanel Drive = new StackPanel();
+                    Drive.Orientation = Orientation.Horizontal;
+                    Drive.Background = new SolidColorBrush(Color.FromRgb(25, 25, 25));
+                    Drive.Margin = new Thickness(0, 5, 0, 5);
+                    Drive.Height = 130;
+                    Drive.HorizontalAlignment = HorizontalAlignment.Stretch;
+                    Drive.Width = Drives.Width;
+                    #endregion
+                    #region Icon
+                    Image Icon = new Image();
+                    //Icon.Source = new BitmapImage(new Uri(@"/Icons/unknown_drive.png", UriKind.Relative));
+                    Icon.Width = 100;
+                    Icon.Height = 100;
+                    Icon.Margin = new Thickness(15, 0, 15, 0);
+                    Icon.VerticalAlignment = VerticalAlignment.Center;
+                    Drive.Children.Add(Icon);
+                    #endregion
+                    #region Info
+                    StackPanel Information = new StackPanel();
+                    Information.VerticalAlignment = VerticalAlignment.Center;
+                    #region Drivename
+                    Label Info = new Label();
+                    Info.Content = $"{ThisDrive.GetVolumeLabel()} ({ThisDrive.GetDriveLetter()})";
+                    Info.Foreground = Brushes.DarkRed;
+                    Info.FontSize = 14;
+                    Info.FontWeight = FontWeights.Bold;
+                    Info.VerticalAlignment = VerticalAlignment.Center;
+                    Info.HorizontalAlignment = HorizontalAlignment.Left;
+                    #endregion
+                    Information.Children.Add(Info);
+                    Drive.Children.Add(Information);
+                    #endregion
+                    #region Button
+                    Button SetDrive = new Button();
+                    SetDrive.VerticalAlignment = VerticalAlignment.Center;
+                    SetDrive.HorizontalAlignment = HorizontalAlignment.Right;
+                    SetDrive.Content = "Set Drive as Backupdrive";
+                    SetDrive.Height = 34;
+                    SetDrive.Margin = new Thickness(0, 0, 25, 0);
+                    SetDrive.IsEnabled = false;
+                    Drive.Children.Add(SetDrive);
+                    #endregion
+                    Drives.Children.Add(Drive);
+                }
+            }
+
+            return Drives;
+        }
+
+        #endregion
 
         #region Menu actions
+        private void UpdateSubmenu2()
+        {
+            StackPanel Drives = new StackPanel();
+            Drives.Children.Add(CreateAvailableDrivesSP());
+            if (Showunavailable_checkbox.IsChecked.Value) Drives.Children.Add(CreateUnavailableDrivesSP());
+
+            Alldrives_scrollviewer.Content = Drives;
+        }
         private void ResetBackupSubmenu2()
         {
             Alldrives_scrollviewer.Content = null;
@@ -959,9 +1072,9 @@ namespace File_Master_project
             Removeitem_button.Opacity = 0.5;
             Restorefiles_button.IsEnabled = false;
             Restorefiles_button.Opacity = 0.5;
-            Configuration_button.IsEnabled = false;
-            Configuration_button.Opacity = 0.5;
-            Configuration_button.Visibility = Visibility.Visible;
+            Modification_button.IsEnabled = false;
+            Modification_button.Opacity = 0.5;
+            Modification_button.Visibility = Visibility.Visible;
             Repair_button.Visibility = Visibility.Hidden;
             Manualsave_button.IsEnabled = false;
             Manualsave_button.Opacity = 0.5;

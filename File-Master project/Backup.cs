@@ -257,6 +257,7 @@ namespace File_Master_project
                 }
             }
             if (DriveInformation == null) IsAvailable = false;
+            BackupProcess.Upload_Backupinfo();
         }
 
         public void AddBackupitem(Backupitem Item)
@@ -323,13 +324,21 @@ namespace File_Master_project
 
         public string GetVolumeLabel()
         {
-            if (DriveInformation == null) return DefaultVolumeLabel;
+            if (DriveInformation == null)
+            {
+                if (DefaultVolumeLabel == null)
+                {
+                    return "?";
+                }
+                return DefaultVolumeLabel;
+            }
+
             else return DriveInformation.VolumeLabel;
         }
 
         public char GetDriveLetter()
         {
-            if (DriveInformation == null) return DefaultVolumeLabel[0];
+            if (DriveInformation == null) return '?';
             else return DriveInformation.Name[0];
         }
 
