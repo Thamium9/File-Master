@@ -14,7 +14,7 @@
         <Label x:Name="debug_label" Content="" HorizontalAlignment="Left" Margin="303,-32,0,0" VerticalAlignment="Top" Width="155" Height="31" Foreground="#FFACACAC" FontStyle="Italic"/>
         <Image x:Name="Icon_image" HorizontalAlignment="Left" Height="25" Margin="5,-27,0,0" VerticalAlignment="Top" Width="25" Source="Icons/icon-recycle-10.jpg"/>
         <Label Content="File-Master" HorizontalAlignment="Left" Margin="31,-32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="16"/>
-        <Label Content="v0.6.2" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+        <Label Content="v0.6.3" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
         <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="950,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="987,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="983,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown" RenderTransformOrigin="1.156,0.236"/>
@@ -39,7 +39,7 @@
         <!--#endregion-->
 
         <!--#region Backup -->
-        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865">
+        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865" Visibility="Hidden">
             <GroupBox Header="Manage selected item" HorizontalAlignment="Right" Height="288" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="800" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" FontSize="14"/>
             <Label Content="Backup drives/items:" HorizontalAlignment="Left" Margin="30,17,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold"/>
             <Label Content="Destination :" HorizontalAlignment="Right" Margin="0,370,711,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold"/>
@@ -85,7 +85,7 @@
         </Grid>
 
         <!--#region Submenu1 -->
-        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865" Visibility="Hidden">
+        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865">
             <GroupBox Header="Settings" HorizontalAlignment="Left" Height="334" Margin="364,111,0,0" VerticalAlignment="Top" Width="456" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB"/>
             <Grid x:Name="Backupsubmenu1_settings1_grid" HorizontalAlignment="Left" Height="312" VerticalAlignment="Top" Width="446"  Margin="369,127,0,0">
                 <Label Content="Method:" HorizontalAlignment="Left" Margin="30,58,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="0.647,1.625"/>
@@ -110,11 +110,10 @@
                 <RadioButton x:Name="temp_Copy2" Content="Manual determination" HorizontalAlignment="Left" Margin="52,50,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro" GroupName="forget files" IsEnabled="False" Opacity="0.25"/>
                 <RadioButton x:Name="temp_Copy3" Content="Store them in 'temp' folder" HorizontalAlignment="Left" Margin="52,73,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" IsChecked="True" Background="Gainsboro" GroupName="forget files" IsEnabled="False" Opacity="0.25"/>
                 <CheckBox x:Name="Smartsave_checkbox" Content="Only save when data is modified (recommended)" HorizontalAlignment="Left" Margin="19,100,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsChecked="True"/>
-                <CheckBox x:Name="temp1_Copy1" Content="Use maximum storage usage" HorizontalAlignment="Left" Margin="19,133,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+                <CheckBox x:Name="temp1_Copy1" Content="Use backup size limit" HorizontalAlignment="Left" Margin="19,133,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
                 <TextBox HorizontalAlignment="Left" Height="23" Margin="91,156,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="57" Background="#FF151515" Foreground="#FFACACAC" HorizontalContentAlignment="Right" IsEnabled="False"/>
                 <Label Content="MB" HorizontalAlignment="Left" Margin="148,153,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
                 <Label Content="Limit:" HorizontalAlignment="Left" Margin="48,153,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-                <Label Content="(The backup file's size won't be allowed to exceed this limit)" HorizontalAlignment="Left" Margin="216,127,0,0" VerticalAlignment="Top" Foreground="#FF707070" Width="324"/>
                 <CheckBox x:Name="Compress_checkbox" Content="Compress backup files (.zip)" HorizontalAlignment="Left" Margin="19,265,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
                 <Label Content="If backup fails:" HorizontalAlignment="Left" Margin="19,187,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
             </Grid>
@@ -138,7 +137,7 @@
                 <ComboBoxItem Content="Select a backup drive!" Tag="none"/>
             </ComboBox>
             <!--#region New destination -->
-            <Label Content="New destination path (folder):" HorizontalAlignment="Left" Margin="21,471,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <Label Content="Destination path (folder):" HorizontalAlignment="Left" Margin="21,471,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
             <TextBox x:Name="Destinationinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,505,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="768" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
             <Button x:Name="Destinationpathselect_button" Content="..." HorizontalAlignment="Left" Margin="788,504.334,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False" Padding="1,1,1,5"/>
             <!--#endregion-->

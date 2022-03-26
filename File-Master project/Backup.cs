@@ -238,6 +238,7 @@ namespace File_Master_project
         [JsonProperty] private string DefaultVolumeLabel;
         [JsonIgnore] public DriveInfo DriveInformation;
         [JsonIgnore] public bool IsAvailable = true;
+        [JsonProperty] public int SizeLimit; //bytes
         [JsonProperty] public string Backups_Code; // Backups serialized version
         [JsonIgnore] private List<Backupitem> Backups = new List<Backupitem>();
 
@@ -246,8 +247,17 @@ namespace File_Master_project
 
         }
 
-        public void ValidityCheck(Dictionary<string, DriveInfo> AllDriveInfo)
+        public Backupdrive(string driveID, string defaultVolumeLabel, int sizeLimit)
         {
+            DriveID = driveID;
+            DefaultVolumeLabel = defaultVolumeLabel;
+            SizeLimit = sizeLimit;
+            ValidityCheck();
+        }
+
+        public void ValidityCheck()
+        {
+            Dictionary<string, DriveInfo> AllDriveInfo = BackupProcess.AllDriveInfo;
             foreach (var thisDriveInfo in AllDriveInfo)
             {
                 if (thisDriveInfo.Key == DriveID)
@@ -373,19 +383,38 @@ namespace File_Master_project
 
     static class BackupProcess 
     {
-        static public List<Backupdrive> Backupdrives = new List<Backupdrive>();
-        static public Backupsettings_Global Settings;
-        static private Dictionary<string, DriveInfo> AllDriveInfo = new Dictionary<string, DriveInfo>(); //key: serial number , value: DriveInfo
+        static public List<Backupdrive> Backupdrives { get; private set; }
+        static public Backupsettings_Global Settings { get; set; }
+        static public Dictionary<string, DriveInfo> AllDriveInfo { get; } = new Dictionary<string, DriveInfo>(); //key: serial number , value: DriveInfo
 
         static BackupProcess()
         {
-            LoadBackupProcess();
+            Backupdrives = new List<Backupdrive>();
             LoadAllDriveInfo();
+            LoadBackupProcess();
             foreach (var Drive in Backupdrives)
             {
-                Drive.ValidityCheck(AllDriveInfo);
+                Drive.ValidityCheck();
             }
         }
+
+        #region Actions
+        static public void ActivateBackupdrive(string Serial, int SizeLimit)
+        {
+            AllDriveInfo.TryGetValue(Serial, out DriveInfo Drive);
+            Backupdrives.Add(new Backupdrive(Serial, Drive.VolumeLabel, SizeLimit));
+            Upload_Backupinfo();
+        }
+
+        static public void DeactivateBackupdrive(string Serial)
+        {
+            if (MessageBox.Show("Are you sure you want to remove this Backupdrive?\nAll of its backup tasks will be deleted, but not the bakcup files!", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+            {
+                Backupdrives.Remove(GetBackupdriveFromSerial(Serial));
+                Upload_Backupinfo();
+            }
+        }
+        #endregion
 
         #region Get Data
         static public Backupitem GetBackupitemFromTag(string Tag) //this will reference the original backupitem, so both the copy and the original will be modified on save
@@ -435,40 +464,64 @@ namespace File_Master_project
             }
             return DriveInfoList;
         }
+
+        static Backupdrive GetBackupdriveFromSerial(string Serial)
+        {
+            Backupdrive result = null;
+            foreach (var Drive in Backupdrives)
+            {
+                if (Drive.DriveID == Serial) result = Drive;
+            }
+            return result;
+        }
+
+        static public bool IsBackupdrive(string serial)
+        {
+            foreach (var Drive in Backupdrives)
+            {
+                if (Drive.DriveID == serial) return true;
+            }
+            return false;
+        }
+
         #endregion
 
         #region Load Data
         static private void LoadBackupProcess()
         {
-            #region Backupdrives
-            if (Load_backupinfo(out string[] Backupinfo))
+            #region Backupdrives           
+            Load_backupinfo(out string Backupinfo);
+            try
             {
-                foreach (var item in Backupinfo)
+                Backupdrives = JsonConvert.DeserializeObject<List<Backupdrive>>(Backupinfo);
+                foreach (var Drive in Backupdrives)
                 {
-                    Backupdrive Drive = JsonConvert.DeserializeObject<Backupdrive>(item);
                     Drive.Deserialize();
-                    Backupdrives.Add(Drive);
                 }
             }
+            catch (Exception)
+            {
+                MessageBox.Show("Unable to load in the user data due to data corruption!\nAll backup settings are deleted!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+                Upload_Backupinfo();
+            }
             #endregion
+
             #region BackupSettings_Global
             Settings = new Backupsettings_Global();
             #endregion
         }
 
-        static private bool Load_backupinfo(out string[] Backupinfo)
+        static private void Load_backupinfo(out string Backupinfo)
         {
-            Backupinfo = null;
+            Backupinfo = "[]";
             string filepath = $"{Directory.GetCurrentDirectory()}\\config\\backup.json";
             if (File.Exists(filepath))
             {
-                Backupinfo = File.ReadAllLines(filepath);
-                return true;
+                Backupinfo = File.ReadAllText(filepath);
             }
             else
             {
-                File.Create(filepath);
-                return false;
+                File.WriteAllText(filepath, Backupinfo);
             }
             #region UI-changes
             //((MainWindow)Application.Current.MainWindow).Warning2_label.Visibility = Visibility.Hidden;
@@ -492,18 +545,16 @@ namespace File_Master_project
         #region Upload Data
         static public void Upload_Backupinfo()
         {
-            File.WriteAllText(CurrentDir + "\\config\\backup.json", "");
-            foreach (var item in Backupdrives)
+            foreach (var Drive in Backupdrives)
             {
-                Backupdrive Drive = item;
                 Drive.Serialize();
-                string Code = JsonConvert.SerializeObject(Drive);
-                File.AppendAllText(CurrentDir + "\\config\\backup.json", Code);
             }
+            string Code = JsonConvert.SerializeObject(Backupdrives);
+            File.WriteAllText(CurrentDir + "\\config\\backup.json", Code);
 
             #region UI-changes
             //Warning2_label.Visibility = Visibility.Hidden;
-            
+
             #endregion
         }
         #endregion
