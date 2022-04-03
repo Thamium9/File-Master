@@ -238,7 +238,7 @@ namespace File_Master_project
         [JsonProperty] private string DefaultVolumeLabel;
         [JsonIgnore] public DriveInfo DriveInformation;
         [JsonIgnore] public bool IsAvailable = true;
-        [JsonProperty] public int SizeLimit; //bytes
+        [JsonProperty] public DiskSpace SizeLimit { get; set; } //bytes
         [JsonProperty] public string Backups_Code; // Backups serialized version
         [JsonIgnore] private List<Backupitem> Backups = new List<Backupitem>();
 
@@ -247,7 +247,7 @@ namespace File_Master_project
 
         }
 
-        public Backupdrive(string driveID, string defaultVolumeLabel, int sizeLimit)
+        public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
         {
             DriveID = driveID;
             DefaultVolumeLabel = defaultVolumeLabel;
@@ -399,7 +399,7 @@ namespace File_Master_project
         }
 
         #region Actions
-        static public void ActivateBackupdrive(string Serial, int SizeLimit)
+        static public void ActivateBackupdrive(string Serial, DiskSpace SizeLimit)
         {
             AllDriveInfo.TryGetValue(Serial, out DriveInfo Drive);
             Backupdrives.Add(new Backupdrive(Serial, Drive.VolumeLabel, SizeLimit));
@@ -465,7 +465,7 @@ namespace File_Master_project
             return DriveInfoList;
         }
 
-        static Backupdrive GetBackupdriveFromSerial(string Serial)
+        static public Backupdrive GetBackupdriveFromSerial(string Serial)
         {
             Backupdrive result = null;
             foreach (var Drive in Backupdrives)

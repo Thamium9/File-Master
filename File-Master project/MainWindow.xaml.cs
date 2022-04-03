@@ -151,6 +151,7 @@ namespace File_Master_project
                 #endregion
 
                 Display_Backupitems();
+
             }
             else
             {
@@ -516,6 +517,7 @@ namespace File_Master_project
             HideAllMenu();
             Backupsubmenu1_grid.Visibility = Visibility.Visible;
             Menu = "Backup.sub1";
+            Newitemapply_button.Visibility = Visibility.Visible;
         }
 
         private void Removeitem_button_Click(object sender, RoutedEventArgs e)
@@ -831,13 +833,14 @@ namespace File_Master_project
             Destinationinput_textbox.Text = "";
             Intervalselection_combobox.SelectedIndex = -1;
             MSettings_radiobutton.IsChecked = true;
+            Backupdriveselect_combobox.SelectedIndex = 0;
 
             Destinationinput_textbox.IsEnabled = true;
             Sourceinput_textbox.IsEnabled = true;
             Intervalselection_combobox.Visibility = Visibility.Visible;
             Interval2_label.Visibility = Visibility.Hidden;
             Interval2_label.Content = "";
-            Newitemapply_button.Visibility = Visibility.Visible;
+            Newitemapply_button.Visibility = Visibility.Hidden;
             Replaceitemapply_button.Visibility = Visibility.Hidden;
             Reset_BackupSubmenu1Settings();
         }
@@ -846,23 +849,53 @@ namespace File_Master_project
         #endregion
 
         #region Submenu2
-        private void Showunavailable_checkbox_Click(object sender, RoutedEventArgs e)
+
+
+        #region Actions
+        private void Showunavailable_checkbox_click(object sender, RoutedEventArgs e)
         {
             UpdateSubmenu2();
         }
 
-        #region Buttons
+        private void RefreshBackupSubmenu2(object sender, RoutedEventArgs e)
+        {
+            TextBox item = (TextBox)sender;
+            string Data = $"{item.Tag} {item.Text}";
+            UpdateSubmenu2(Data);
+        }
+
         private void ActivateDrive_Click(object sender, RoutedEventArgs e)
         {
-            BackupProcess.ActivateBackupdrive(((Button)sender).Tag.ToString(), 1024 * 1024);
+            BackupProcess.ActivateBackupdrive(((Button)sender).Tag.ToString(), new DiskSpace(1024 * 1024 * 1024));
+            UpdateSubmenu2();
+        }
+
+        private void UpdateDrive_Click(object sender, RoutedEventArgs e)
+        {
+            string[] Data = ((Button)sender).Tag.ToString().Split(' ');
+            BackupProcess.GetBackupdriveFromSerial(Data[0]).SizeLimit.Gigabytes = long.Parse(Data[1]);
+            BackupProcess.Upload_Backupinfo();
             UpdateSubmenu2();
         }
 
         private void DeactivateDrive_Click(object sender, RoutedEventArgs e)
         {
-            BackupProcess.DeactivateBackupdrive(((Button)sender).Tag.ToString());
+            BackupProcess.DeactivateBackupdrive(((Image)sender).Tag.ToString());
             UpdateSubmenu2();
         }
+
+        private void Delete_mouseenter(object sender, RoutedEventArgs e)
+        {
+            Image item = (Image)sender;
+            item.Opacity = 1;
+        }
+
+        private void Delete_mouseleave(object sender, RoutedEventArgs e)
+        {
+            Image item = (Image)sender;
+            item.Opacity = 0.3;
+        }
+
         private void Backupsubmenu2cancel_button_Click(object sender, RoutedEventArgs e)
         {
             HideAllMenu();
@@ -875,7 +908,7 @@ namespace File_Master_project
         #endregion
 
         #region Menu functions
-        private StackPanel CreateAvailableDrivesSP()
+        private StackPanel CreateAvailableDrivesSP(string data)
         {
             StackPanel Drives = new StackPanel();
             Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -887,13 +920,15 @@ namespace File_Master_project
             Unavailable.FontWeight = FontWeights.Bold;
             Unavailable.VerticalAlignment = VerticalAlignment.Center;
             Unavailable.HorizontalAlignment = HorizontalAlignment.Left;
-            Unavailable.Margin = new Thickness(5, 20, 0, 5);
+            Unavailable.Margin = new Thickness(5, 40, 0, 5);
             Drives.Children.Add(Unavailable);
             #endregion
             foreach (var ThisDrive in BackupProcess.AllDriveInfo)
             {
                 var ThisDriveSerial = ThisDrive.Key;
                 var ThisDriveInfo = ThisDrive.Value;
+                bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);
+
                 double AvailableSpaceRatio = (double)ThisDriveInfo.AvailableFreeSpace / (double)ThisDriveInfo.TotalSize;
                 #region Stackpanel
                 StackPanel Drive = new StackPanel();
@@ -963,11 +998,34 @@ namespace File_Master_project
                 #endregion
                 #region Set size
                 StackPanel Size = new StackPanel();
+                Size.VerticalAlignment = VerticalAlignment.Center;
                 Size.Width = 150;
+                Size.Orientation = Orientation.Horizontal;
+                TextBox DiskSpaceLimit = new TextBox();
+                DiskSpaceLimit.Width = 80;
+                DiskSpaceLimit.Height = 25;
+                DiskSpaceLimit.Background = new SolidColorBrush(Color.FromRgb(21,21,21));
+                DiskSpaceLimit.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                DiskSpaceLimit.VerticalContentAlignment = VerticalAlignment.Center;
+                DiskSpaceLimit.HorizontalContentAlignment = HorizontalAlignment.Right;
+                DiskSpaceLimit.Margin = new Thickness(40, 0, 0, 0);
+                DiskSpaceLimit.Tag = ThisDriveSerial;
+                if (isBackupEnabled) 
+                {
+                    if (data != null && data.Split(' ')[0] == ThisDriveSerial) { DiskSpaceLimit.Text = data.Split(' ')[1]; DiskSpaceLimit.Focus(); }
+                    else DiskSpaceLimit.Text = BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes.ToString(); 
+                }
+                DiskSpaceLimit.TextChanged += RefreshBackupSubmenu2;
+                Label Unit = new Label();
+                Unit.Content = "GB";
+                Unit.HorizontalAlignment = HorizontalAlignment.Center;
+                Unit.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                Size.Children.Add(DiskSpaceLimit);
+                Size.Children.Add(Unit);
                 Drive.Children.Add(Size);
                 #endregion
-                #region Button
 
+                #region Button
                 StackPanel Button = new StackPanel();
                 Button.Margin = new Thickness(80, 0, 0, 0);
                 Button SetDrive = new Button();
@@ -976,28 +1034,51 @@ namespace File_Master_project
                 SetDrive.FontWeight = FontWeights.Bold;
                 SetDrive.Height = 34;
                 SetDrive.Width = 100;
-                SetDrive.Margin = new Thickness(0, 0, 25, 0);
+                SetDrive.Margin = new Thickness(0, 0, 15, 0);
                 SetDrive.FontSize = 14;
 
-                if (!BackupProcess.IsBackupdrive(ThisDriveSerial))
+                if (!isBackupEnabled)
                 {
                     SetDrive.Content = "Activate";
                     if (AvailableSpaceRatio < 0.1 || ThisDriveInfo.AvailableFreeSpace < 4000000000) { SetDrive.IsEnabled = false; SetDrive.Opacity = 0.5; }
                     SetDrive.Tag = ThisDriveSerial;
+                    SetDrive.ToolTip = "use this drive for backups";
                     SetDrive.Click += ActivateDrive_Click;
                 }
 
-                else
+                else 
                 {
-                    SetDrive.Content = "Deactivate";
-                    SetDrive.Tag = ThisDriveSerial;
-                    SetDrive.Click += DeactivateDrive_Click;
+                    if (BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes == double.Parse(DiskSpaceLimit.Text))
+                    {
+                        SetDrive.IsEnabled = false;
+                        SetDrive.Opacity = 0.5;
+                    }
+                    SetDrive.Tag = $"{ThisDriveSerial} {DiskSpaceLimit.Text}";
+                    SetDrive.Content = "Update limit";
+                    SetDrive.Click += UpdateDrive_Click;
                 }
 
                 Button.Children.Add(SetDrive);
                 Button.VerticalAlignment = VerticalAlignment.Center;
                 Drive.Children.Add(Button);
                 #endregion
+
+                if(isBackupEnabled)
+                {
+                    Image Delete = new Image();
+                    Delete.Source = new BitmapImage(new Uri(@"/Icons/Delete icon.png", UriKind.Relative));
+                    Delete.Width = 25;
+                    Delete.Height = 25;
+                    Delete.VerticalAlignment = VerticalAlignment.Center;
+                    Delete.Opacity = 0.3;
+                    Delete.MouseEnter += Delete_mouseenter;
+                    Delete.MouseLeave += Delete_mouseleave;
+                    Delete.MouseLeftButtonDown += DeactivateDrive_Click;
+                    Delete.Tag = ThisDriveSerial;
+                    Delete.ToolTip = "stop using this drive for backups";
+                    Drive.Children.Add(Delete);
+                }
+
                 Drives.Children.Add(Drive);
             }
 
@@ -1065,10 +1146,10 @@ namespace File_Master_project
         #endregion
 
         #region Menu actions
-        private void UpdateSubmenu2()
+        private void UpdateSubmenu2(string data = null)// data is for transfering new drive size limit
         {
             StackPanel Drives = new StackPanel();
-            Drives.Children.Add(CreateAvailableDrivesSP());
+            Drives.Children.Add(CreateAvailableDrivesSP(data));
             if (Showunavailable_checkbox.IsChecked.Value) Drives.Children.Add(CreateUnavailableDrivesSP());
 
             Alldrives_scrollviewer.Content = Drives;

@@ -8,6 +8,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("icons/usb_drive.png")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("icons/delete%20icon.png")]
 
 
