@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace File_Master_project
 {
     class DiskSpace
     {
-        public long Bytes { get; set; }
-        public double Kilobytes { get { return (double)Bytes / Math.Pow(1024, 1); } set { Bytes = (long)(value * Math.Pow(1024, 1)); } }
-        public double Megabytes { get { return (double)Bytes / Math.Pow(1024, 2); } set { Bytes = (long)(value * Math.Pow(1024, 2)); } }
-        public double Gigabytes { get { return (double)Bytes / Math.Pow(1024, 3); } set { Bytes = (long)(value * Math.Pow(1024, 3)); } }
-        public double Terrabytes { get { return (double)Bytes / Math.Pow(1024, 4); } set { Bytes = (long)(value * Math.Pow(1024, 4)); } }
+        [JsonProperty] public long Bytes { get; set; }
+        [JsonIgnore] public double Kilobytes { get { return (double)Bytes / Math.Pow(1024, 1); } set { Bytes = (long)(value * Math.Pow(1024, 1)); } }
+        [JsonIgnore] public double Megabytes { get { return (double)Bytes / Math.Pow(1024, 2); } set { Bytes = (long)(value * Math.Pow(1024, 2)); } }
+        [JsonIgnore] public double Gigabytes { get { return (double)Bytes / Math.Pow(1024, 3); } set { Bytes = (long)(value * Math.Pow(1024, 3)); } }
+        [JsonIgnore] public double Terrabytes { get { return (double)Bytes / Math.Pow(1024, 4); } set { Bytes = (long)(value * Math.Pow(1024, 4)); } }
 
         public DiskSpace(long bytes)
         {

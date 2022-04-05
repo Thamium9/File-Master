@@ -26,6 +26,11 @@ namespace File_Master_project
 {
     static class Main
     {
+        #region Bakcup -> Manage backup drives
+        static public Dictionary<string, TextBox> BackupDriveSizeLimits { get; set; } = new Dictionary<string, TextBox>();
+        static public Dictionary<string, Button> BackupDriveUpdateButtons { get; set; } = new Dictionary<string, Button>();
+        #endregion
+
         static public string GetBackupType(Backupitem Item)
         {
             if (Directory.Exists(Item.Source.FullName)) return "Folder";

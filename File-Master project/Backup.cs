@@ -111,7 +111,6 @@ namespace File_Master_project
         [JsonProperty] public string Configuration_Code; // Configuration serialized version
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
 
-
         public Backupitem(int id, FileSystemInfo source, FileSystemInfo destination, DateTime lastSaved, bool isenabled, Backupsettings_Local settings)
         {
             ID = id;
@@ -121,6 +120,8 @@ namespace File_Master_project
             IsEnabled = isenabled;
             Configuration = settings;
         }
+
+        #region Get data
         public Backupsettings_Local GetBackupsettings()
         {
             return Configuration;
@@ -131,11 +132,27 @@ namespace File_Master_project
             return LastSaved.AddTicks(Configuration.GetSave_interval().Convert_to_ticks());
         }
 
+        public DiskSpace GetBackupSize()
+        {
+            DiskSpace space = new DiskSpace(0);
+            FileInfo backup = new FileInfo($@"{Destination.FullName}\{Source.Name}");
+            if ((backup.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+            {
+                foreach (var item in Directory.GetFiles(backup.FullName, "*", SearchOption.AllDirectories))
+                {
+                    space.Bytes += new FileInfo(item).Length;
+                }
+            }
+            else space.Bytes += backup.Length;
+            return space;
+        }
+        #endregion
+
         #region Backup process (SAVEING)
         public void Backup(bool isManual)
         {
             bool success = false;
-            if (CheckPermission())
+            if (CheckPermission(isManual))
             {
                 try
                 {
@@ -172,20 +189,25 @@ namespace File_Master_project
         private void SaveFile(FileSystemInfo ThisSource, string AdditionalPath = "")
         {
             Directory.CreateDirectory($"{Destination.FullName}{AdditionalPath}");
-            File.Copy(ThisSource.FullName, $"{Destination.FullName}{AdditionalPath}\\{ThisSource.Name}", false);
+            File.Copy(ThisSource.FullName, $@"{Destination.FullName}{AdditionalPath}\{ThisSource.Name}", false);
         }
 
         private void SaveDirectory(FileSystemInfo ThisSource)
         {
             foreach (var item in Directory.GetFiles(ThisSource.FullName))
             {
-                SaveFile(Main.GetPathInfo(item), ThisSource.FullName.Replace(Source.FullName, $"\\{Source.Name}"));
+                SaveFile(Main.GetPathInfo(item), ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}"));
             }
         }
 
-        private bool CheckPermission()
+        private bool CheckPermission(bool isManual)
         {
-            return IsEnabled;
+            bool result = true;
+            if(!isManual)
+            {
+                if (!IsEnabled) result = false;
+            }
+            return result;
         }
 
         private void Backuptimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -208,6 +230,13 @@ namespace File_Master_project
             Backuptimer.Elapsed += Backuptimer_Elapsed;
             Backuptimer.AutoReset = false;
             Backuptimer.Start();
+        }
+        #endregion
+
+        #region UI
+        public void SetListItem(ref ListItem item)
+        {
+
         }
         #endregion
 
@@ -237,14 +266,21 @@ namespace File_Master_project
         [JsonProperty] public string DriveID;
         [JsonProperty] private string DefaultVolumeLabel;
         [JsonIgnore] public DriveInfo DriveInformation;
-        [JsonIgnore] public bool IsAvailable = true;
-        [JsonProperty] public DiskSpace SizeLimit { get; set; } //bytes
+        [JsonIgnore] public bool IsAvailable;
+        [JsonIgnore] public bool IsOutOfSpace;
+        [JsonProperty] public DiskSpace SizeLimit { get; set; }       
         [JsonProperty] public string Backups_Code; // Backups serialized version
-        [JsonIgnore] private List<Backupitem> Backups = new List<Backupitem>();
+        [JsonIgnore] public List<Backupitem> Backups { get; private set; } = new List<Backupitem>();
 
-        public Backupdrive()
+        [JsonConstructor] public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit, string backups_Code)
         {
-
+            DriveID = driveID;
+            DefaultVolumeLabel = defaultVolumeLabel;
+            SizeLimit = sizeLimit;
+            Backups_Code = backups_Code;
+            Deserialize();
+            ValidityCheck();
+            LimitCheck();
         }
 
         public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
@@ -253,10 +289,14 @@ namespace File_Master_project
             DefaultVolumeLabel = defaultVolumeLabel;
             SizeLimit = sizeLimit;
             ValidityCheck();
+            LimitCheck();
+            BackupProcess.Upload_Backupinfo();
         }
 
+        #region Checks
         public void ValidityCheck()
         {
+            IsAvailable = true;
             Dictionary<string, DriveInfo> AllDriveInfo = BackupProcess.AllDriveInfo;
             foreach (var thisDriveInfo in AllDriveInfo)
             {
@@ -266,31 +306,19 @@ namespace File_Master_project
                     DefaultVolumeLabel = DriveInformation.VolumeLabel;
                 }
             }
-            if (DriveInformation == null) IsAvailable = false;
-            BackupProcess.Upload_Backupinfo();
+            if (DriveInformation == null) IsAvailable = false;            
         }
 
+        private void LimitCheck()
+        {
+            if (GetBackupSize().Bytes > SizeLimit.Bytes) IsOutOfSpace = true;
+        }
+        #endregion
+
+        #region Modify backupitems
         public void AddBackupitem(Backupitem Item)
         {
             Backups.Add(Item);
-        }
-
-        public Backupitem GetBackupitem(int index)
-        {
-            return Backups[index];
-        }
-
-        public Backupitem GetBackupitemFromID(int ID)
-        {
-            Backupitem Item = null;
-            foreach (var item in Backups)
-            {
-                if (item.ID == ID)
-                {
-                    Item = item;
-                }
-            }
-            return Item;
         }
 
         public void RemoveBackupitem(int ID)
@@ -315,6 +343,21 @@ namespace File_Master_project
                     break;
                 }
             }
+        }
+        #endregion
+
+        #region Get data
+        public Backupitem GetBackupitemFromID(int ID)
+        {
+            Backupitem Item = null;
+            foreach (var item in Backups)
+            {
+                if (item.ID == ID)
+                {
+                    Item = item;
+                }
+            }
+            return Item;
         }
 
         public int CountItems()
@@ -352,6 +395,18 @@ namespace File_Master_project
             else return DriveInformation.Name[0];
         }
 
+        public DiskSpace GetBackupSize()
+        {
+            DiskSpace space = new DiskSpace(0);
+            foreach (var item in Backups)
+            {
+                space.Bytes += item.GetBackupSize().Bytes;
+            }
+            return space;
+        }
+        #endregion
+
+        #region Backup
         public void Backup()
         {
             foreach (var item in Backups)
@@ -359,6 +414,42 @@ namespace File_Master_project
                 item.Backup(true);
             }
         }
+
+        #endregion
+
+        #region UI
+        public void SetDriveNameTextbox(ref TextBox Item, ref ListBoxItem ListItem)
+        {
+            if (IsAvailable == false)
+            {
+                Item.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                ListItem.BorderBrush = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+            }
+            else
+            {
+                Item.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+                ListItem.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            }
+        }
+
+        public void SetDriveSpaceTextbox(ref TextBox Item)
+        {
+            if (IsOutOfSpace == true)
+            {
+                Item.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+            }
+
+            else if (IsAvailable == false)
+            {
+                Item.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+            }
+
+            else
+            {
+                Item.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            }
+        }
+        #endregion
 
         #region Serialization
         public void Serialize()
@@ -392,10 +483,7 @@ namespace File_Master_project
             Backupdrives = new List<Backupdrive>();
             LoadAllDriveInfo();
             LoadBackupProcess();
-            foreach (var Drive in Backupdrives)
-            {
-                Drive.ValidityCheck();
-            }
+            Upload_Backupinfo();
         }
 
         #region Actions
@@ -494,12 +582,8 @@ namespace File_Master_project
             try
             {
                 Backupdrives = JsonConvert.DeserializeObject<List<Backupdrive>>(Backupinfo);
-                foreach (var Drive in Backupdrives)
-                {
-                    Drive.Deserialize();
-                }
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 MessageBox.Show("Unable to load in the user data due to data corruption!\nAll backup settings are deleted!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
                 Upload_Backupinfo();
@@ -553,8 +637,7 @@ namespace File_Master_project
             File.WriteAllText(CurrentDir + "\\config\\backup.json", Code);
 
             #region UI-changes
-            //Warning2_label.Visibility = Visibility.Hidden;
-
+            
             #endregion
         }
         #endregion

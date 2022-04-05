@@ -151,7 +151,7 @@ namespace File_Master_project
                 #endregion
 
                 Display_Backupitems();
-
+                
             }
             else
             {
@@ -204,27 +204,42 @@ namespace File_Master_project
             {
                 #region Add backupdrive to list
                 ListItem = new ListBoxItem();
-                string part1 = "Backup drive: ";
-                part1 += $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
-                string part3 = "(5,9GB / 60GB)";
-                string part2 = "";
-                for (int i = 0; i < 80 - (part1.Length + part3.Length); i++)
-                {
-                    part2 += "-";
-                }
-                ListItem.Content = part1 + part2 + part3;
-                ListItem.Tag = Drive.DriveID;
-                CheckDriveStatus(Drive, ref ListItem);
+                DockPanel Drive_dockpanel = new DockPanel();
+                TextBox drivename = new TextBox();
+                TextBox drivespace = new TextBox();
+                drivename.Text = $"Backup drive: {Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+                drivespace.Text = $"({Drive.GetBackupSize().Humanize()} / {Drive.SizeLimit.Gigabytes} GB)";
+                Drive_dockpanel.Children.Add(drivename);
+                Drive_dockpanel.Children.Add(drivespace);
+                #region Custumization
+                DockPanel.SetDock(drivespace, Dock.Right);
+                Drive_dockpanel.Width = 480;
+                Drive_dockpanel.LastChildFill = false;
+                drivename.Background = Brushes.Transparent;
+                drivespace.Background = Brushes.Transparent;
+                drivename.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                drivespace.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                drivename.BorderThickness = new Thickness(0);
+                drivespace.BorderThickness = new Thickness(0);
+                drivename.Focusable = false;
+                drivespace.Focusable = false;
+                ListItem.BorderThickness = new Thickness(0, 0, 0, 1);
+                ListItem.Margin = new Thickness(0, 5, 0, 0);
+                #endregion
+                Drive.SetDriveNameTextbox(ref drivename, ref ListItem);
+                Drive.SetDriveSpaceTextbox(ref drivespace);
+                ListItem.Content = Drive_dockpanel;
+                ListItem.Tag = Drive.DriveID;                
                 Backuptask_listbox.Items.Add(ListItem);
                 #endregion
                 #region Add backupitems of backupdrive
-                for (int i = 0; i < Drive.CountItems(); i++)
+                foreach (var Backupitem in Drive.Backups)
                 {
                     ListItem = new ListBoxItem();
-                    string part4 = $"-> {GetBackupType(Drive.GetBackupitem(i))}: {Drive.GetBackupitem(i).Source.FullName} - (5,6GB)";
-                    ListItem.Content = part4;
-                    ListItem.Tag = $"{Drive.GetBackupitem(i).ID}";
-                    CheckBackupitemStatus(Drive.GetBackupitem(i), ref ListItem);
+                    ListItem.Opacity = 0.8;
+                    ListItem.Content = $"-> {GetBackupType(Backupitem)}: {Backupitem.Source.FullName} - ({Backupitem.GetBackupSize().Humanize()})";
+                    ListItem.Tag = $"{Backupitem.ID}";
+                    CheckBackupitemStatus(Backupitem, ref ListItem);
                     Backuptask_listbox.Items.Add(ListItem);
                 }
                 #endregion
@@ -267,6 +282,10 @@ namespace File_Master_project
             bool CanRunBackupProcess;
             bool MissingSource;
             LoadBackupitemStatus(Item, out CanRunBackupProcess, out MissingSource);
+            #endregion
+
+            #region Loads backup file size
+            Backupfilesize_label.Content = $"Backup file size: {Item.GetBackupSize().Humanize()}";
             #endregion
 
             EnableActionButtons(Item, CanRunBackupProcess, MissingSource);
@@ -333,18 +352,6 @@ namespace File_Master_project
             #endregion
         }
 
-        private void CheckDriveStatus(Backupdrive Drive, ref ListBoxItem ListItem)
-        {
-            if (Drive.IsAvailable == false)
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-            }
-            else
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            }
-        }
-
         private void CheckBackupitemStatus(Backupitem Item, ref ListBoxItem ListItem)//Sets warning labels, and item color
         {
             #region Default
@@ -376,11 +383,6 @@ namespace File_Master_project
                     ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
                     Warning4_label.Visibility = Visibility.Visible;
                 }
-            }
-            if (false)//Item.CanBeEnabled == false
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                Warning4_label.Visibility = Visibility.Visible;
             }
         }
 
@@ -850,7 +852,6 @@ namespace File_Master_project
 
         #region Submenu2
 
-
         #region Actions
         private void Showunavailable_checkbox_click(object sender, RoutedEventArgs e)
         {
@@ -859,21 +860,26 @@ namespace File_Master_project
 
         private void RefreshBackupSubmenu2(object sender, RoutedEventArgs e)
         {
-            TextBox item = (TextBox)sender;
-            string Data = $"{item.Tag} {item.Text}";
-            UpdateSubmenu2(Data);
+            TextBox Data = (TextBox)sender;
+            Main.BackupDriveSizeLimits[Data.Tag.ToString()] = Data;
+            Main.BackupDriveUpdateButtons[Data.Tag.ToString()].IsEnabled = true;
+            Main.BackupDriveUpdateButtons[Data.Tag.ToString()].Opacity = 1;
         }
 
         private void ActivateDrive_Click(object sender, RoutedEventArgs e)
         {
-            BackupProcess.ActivateBackupdrive(((Button)sender).Tag.ToString(), new DiskSpace(1024 * 1024 * 1024));
+            string serial = ((Button)sender).Tag.ToString();
+            DiskSpace limit = new DiskSpace(0);
+            limit.Gigabytes = long.Parse(Main.BackupDriveSizeLimits[serial].Text);
+            BackupProcess.ActivateBackupdrive(serial, limit);
             UpdateSubmenu2();
         }
 
         private void UpdateDrive_Click(object sender, RoutedEventArgs e)
         {
-            string[] Data = ((Button)sender).Tag.ToString().Split(' ');
-            BackupProcess.GetBackupdriveFromSerial(Data[0]).SizeLimit.Gigabytes = long.Parse(Data[1]);
+            string Data = ((Button)sender).Tag.ToString();
+            TextBox SizeLimit = Main.BackupDriveSizeLimits[Data];
+            BackupProcess.GetBackupdriveFromSerial(Data).SizeLimit.Gigabytes = long.Parse(SizeLimit.Text);
             BackupProcess.Upload_Backupinfo();
             UpdateSubmenu2();
         }
@@ -908,7 +914,7 @@ namespace File_Master_project
         #endregion
 
         #region Menu functions
-        private StackPanel CreateAvailableDrivesSP(string data)
+        private StackPanel CreateAvailableDrivesSP()
         {
             StackPanel Drives = new StackPanel();
             Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -927,7 +933,7 @@ namespace File_Master_project
             {
                 var ThisDriveSerial = ThisDrive.Key;
                 var ThisDriveInfo = ThisDrive.Value;
-                bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);
+                bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);                
 
                 double AvailableSpaceRatio = (double)ThisDriveInfo.AvailableFreeSpace / (double)ThisDriveInfo.TotalSize;
                 #region Stackpanel
@@ -1010,12 +1016,14 @@ namespace File_Master_project
                 DiskSpaceLimit.HorizontalContentAlignment = HorizontalAlignment.Right;
                 DiskSpaceLimit.Margin = new Thickness(40, 0, 0, 0);
                 DiskSpaceLimit.Tag = ThisDriveSerial;
-                if (isBackupEnabled) 
+                if (isBackupEnabled)
                 {
-                    if (data != null && data.Split(' ')[0] == ThisDriveSerial) { DiskSpaceLimit.Text = data.Split(' ')[1]; DiskSpaceLimit.Focus(); }
-                    else DiskSpaceLimit.Text = BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes.ToString(); 
+                    if (!Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial)) DiskSpaceLimit.Text = BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes.ToString();
+                    else DiskSpaceLimit.Text = Main.BackupDriveSizeLimits[ThisDriveSerial].Text;
                 }
                 DiskSpaceLimit.TextChanged += RefreshBackupSubmenu2;
+                if (Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial)) Main.BackupDriveSizeLimits[ThisDriveSerial] = DiskSpaceLimit;
+                else Main.BackupDriveSizeLimits.Add(ThisDriveSerial, DiskSpaceLimit);
                 Label Unit = new Label();
                 Unit.Content = "GB";
                 Unit.HorizontalAlignment = HorizontalAlignment.Center;
@@ -1024,8 +1032,7 @@ namespace File_Master_project
                 Size.Children.Add(Unit);
                 Drive.Children.Add(Size);
                 #endregion
-
-                #region Button
+                #region Apply/Modify button
                 StackPanel Button = new StackPanel();
                 Button.Margin = new Thickness(80, 0, 0, 0);
                 Button SetDrive = new Button();
@@ -1036,12 +1043,12 @@ namespace File_Master_project
                 SetDrive.Width = 100;
                 SetDrive.Margin = new Thickness(0, 0, 15, 0);
                 SetDrive.FontSize = 14;
+                SetDrive.Tag = ThisDriveSerial;
 
                 if (!isBackupEnabled)
                 {
                     SetDrive.Content = "Activate";
-                    if (AvailableSpaceRatio < 0.1 || ThisDriveInfo.AvailableFreeSpace < 4000000000) { SetDrive.IsEnabled = false; SetDrive.Opacity = 0.5; }
-                    SetDrive.Tag = ThisDriveSerial;
+                    if (AvailableSpaceRatio < 0.1 || new DiskSpace(ThisDriveInfo.AvailableFreeSpace).Gigabytes < 5) { SetDrive.IsEnabled = false; SetDrive.Opacity = 0.5; }
                     SetDrive.ToolTip = "use this drive for backups";
                     SetDrive.Click += ActivateDrive_Click;
                 }
@@ -1053,17 +1060,17 @@ namespace File_Master_project
                         SetDrive.IsEnabled = false;
                         SetDrive.Opacity = 0.5;
                     }
-                    SetDrive.Tag = $"{ThisDriveSerial} {DiskSpaceLimit.Text}";
                     SetDrive.Content = "Update limit";
                     SetDrive.Click += UpdateDrive_Click;
                 }
-
+                if (!Main.BackupDriveUpdateButtons.ContainsKey(ThisDriveSerial)) Main.BackupDriveUpdateButtons.Add(ThisDriveSerial, SetDrive);
+                else Main.BackupDriveUpdateButtons[ThisDriveSerial] = SetDrive;
                 Button.Children.Add(SetDrive);
                 Button.VerticalAlignment = VerticalAlignment.Center;
                 Drive.Children.Add(Button);
                 #endregion
-
-                if(isBackupEnabled)
+                #region Delete button
+                if (isBackupEnabled)
                 {
                     Image Delete = new Image();
                     Delete.Source = new BitmapImage(new Uri(@"/Icons/Delete icon.png", UriKind.Relative));
@@ -1078,7 +1085,7 @@ namespace File_Master_project
                     Delete.ToolTip = "stop using this drive for backups";
                     Drive.Children.Add(Delete);
                 }
-
+                #endregion
                 Drives.Children.Add(Drive);
             }
 
@@ -1139,17 +1146,16 @@ namespace File_Master_project
                     Drives.Children.Add(Drive);
                 }
             }
-
             return Drives;
         }
 
         #endregion
 
         #region Menu actions
-        private void UpdateSubmenu2(string data = null)// data is for transfering new drive size limit
+        private void UpdateSubmenu2()// data is for transfering new drive size limit
         {
             StackPanel Drives = new StackPanel();
-            Drives.Children.Add(CreateAvailableDrivesSP(data));
+            Drives.Children.Add(CreateAvailableDrivesSP());
             if (Showunavailable_checkbox.IsChecked.Value) Drives.Children.Add(CreateUnavailableDrivesSP());
 
             Alldrives_scrollviewer.Content = Drives;
@@ -1174,6 +1180,7 @@ namespace File_Master_project
             Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
             Smartsave_label.Content = "Smart save:";
             Lastsaved_label.Content = "Last saved:";
+            Backupfilesize_label.Content = "Backup file size: ";
             Removeitem_button.IsEnabled = false;
             Removeitem_button.Opacity = 0.5;
             Restorefiles_button.IsEnabled = false;
