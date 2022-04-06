@@ -213,7 +213,7 @@ namespace File_Master_project
                 Drive_dockpanel.Children.Add(drivespace);
                 #region Custumization
                 DockPanel.SetDock(drivespace, Dock.Right);
-                Drive_dockpanel.Width = 480;
+                Drive_dockpanel.Width = 475;
                 Drive_dockpanel.LastChildFill = false;
                 drivename.Background = Brushes.Transparent;
                 drivespace.Background = Brushes.Transparent;
@@ -858,20 +858,24 @@ namespace File_Master_project
             UpdateSubmenu2();
         }
 
-        private void RefreshBackupSubmenu2(object sender, RoutedEventArgs e)
+        private void SetLimitChange(object sender, RoutedEventArgs e)
         {
             TextBox Data = (TextBox)sender;
             Main.BackupDriveSizeLimits[Data.Tag.ToString()] = Data;
-            Main.BackupDriveUpdateButtons[Data.Tag.ToString()].IsEnabled = true;
-            Main.BackupDriveUpdateButtons[Data.Tag.ToString()].Opacity = 1;
+            Button temp = Main.BackupDriveUpdateButtons[Data.Tag.ToString()];
+            if (temp.Content.ToString() == "Update limit")
+            {
+                temp.IsEnabled = true;
+                temp.Opacity = 1;
+            }            
         }
 
         private void ActivateDrive_Click(object sender, RoutedEventArgs e)
         {
             string serial = ((Button)sender).Tag.ToString();
-            DiskSpace limit = new DiskSpace(0);
-            limit.Gigabytes = long.Parse(Main.BackupDriveSizeLimits[serial].Text);
-            BackupProcess.ActivateBackupdrive(serial, limit);
+            DiskSpace Space = new DiskSpace(0);
+            if (double.TryParse(Main.BackupDriveSizeLimits[serial].Text, out double limit)) Space.Gigabytes = limit;
+            BackupProcess.ActivateBackupdrive(serial, Space);
             UpdateSubmenu2();
         }
 
@@ -879,7 +883,8 @@ namespace File_Master_project
         {
             string Data = ((Button)sender).Tag.ToString();
             TextBox SizeLimit = Main.BackupDriveSizeLimits[Data];
-            BackupProcess.GetBackupdriveFromSerial(Data).SizeLimit.Gigabytes = long.Parse(SizeLimit.Text);
+            if(double.TryParse(SizeLimit.Text, out double limit)) BackupProcess.GetBackupdriveFromSerial(Data).SizeLimit.Gigabytes = limit;
+            else BackupProcess.GetBackupdriveFromSerial(Data).SizeLimit.Gigabytes = 0;
             BackupProcess.Upload_Backupinfo();
             UpdateSubmenu2();
         }
@@ -936,6 +941,14 @@ namespace File_Master_project
                 bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);                
 
                 double AvailableSpaceRatio = (double)ThisDriveInfo.AvailableFreeSpace / (double)ThisDriveInfo.TotalSize;
+                double BackupUsedSpaceRatio = 0;
+                double BackupSpaceRatio = 0;
+                if (isBackupEnabled)
+                {
+                    BackupUsedSpaceRatio += (double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).GetBackupSize().Bytes / (double)ThisDriveInfo.TotalFreeSpace;
+                    BackupSpaceRatio += ((double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Bytes / (double)ThisDriveInfo.TotalFreeSpace) - BackupUsedSpaceRatio;
+                    if (0 > BackupSpaceRatio) BackupSpaceRatio = 0;
+                }
                 #region Stackpanel
                 StackPanel Drive = new StackPanel();
                 Drive.Orientation = Orientation.Horizontal;
@@ -970,15 +983,38 @@ namespace File_Master_project
                 Info.HorizontalAlignment = HorizontalAlignment.Left;
                 #endregion
                 #region FreeSpace
-                ProgressBar Space = new ProgressBar();
-                double value = 100 - (AvailableSpaceRatio * 100);
-                Space.Value = value;
+                #region SpaceStackpanel
+                StackPanel Space = new StackPanel();
                 Space.Width = 200;
                 Space.Height = 25;
+                Space.Background = Brushes.White;
+                Space.Orientation = Orientation.Horizontal;
                 Space.HorizontalAlignment = HorizontalAlignment.Left;
                 Space.Margin = new Thickness(5, 0, 0, 0);
-                if (AvailableSpaceRatio < 0.1) Space.Foreground = Brushes.Red;
-                else if (AvailableSpaceRatio < 0.2) Space.Foreground = Brushes.Orange;                
+                #endregion
+                #region UsedUpSpace
+                Rectangle UsedUpSpace = new Rectangle();
+                double value = 200 - ((AvailableSpaceRatio + BackupUsedSpaceRatio)* 200);
+                UsedUpSpace.Width = value;
+                if (AvailableSpaceRatio < 0.1) UsedUpSpace.Fill = Brushes.Red;
+                else if (AvailableSpaceRatio < 0.2) UsedUpSpace.Fill = Brushes.Orange;
+                else UsedUpSpace.Fill = Brushes.LimeGreen;
+                #endregion
+                #region BackupUsedSpace
+                Rectangle BackupUsedSpace = new Rectangle();
+                double value2 = BackupUsedSpaceRatio * 200;
+                BackupUsedSpace.Width = value2;
+                BackupUsedSpace.Fill = Brushes.Teal;
+                #endregion
+                #region BackupSpace
+                Rectangle BackupSpace = new Rectangle();
+                double value3 = BackupSpaceRatio * 200;
+                BackupSpace.Width = value3;
+                BackupSpace.Fill = new SolidColorBrush(Color.FromRgb(80, 180, 255));
+                #endregion
+                Space.Children.Add(UsedUpSpace);
+                Space.Children.Add(BackupUsedSpace);
+                Space.Children.Add(BackupSpace);
                 #endregion
                 #region FreeSpaceInfo
                 Label SpaceInfo = new Label();
@@ -1021,7 +1057,7 @@ namespace File_Master_project
                     if (!Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial)) DiskSpaceLimit.Text = BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes.ToString();
                     else DiskSpaceLimit.Text = Main.BackupDriveSizeLimits[ThisDriveSerial].Text;
                 }
-                DiskSpaceLimit.TextChanged += RefreshBackupSubmenu2;
+                DiskSpaceLimit.TextChanged += SetLimitChange;
                 if (Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial)) Main.BackupDriveSizeLimits[ThisDriveSerial] = DiskSpaceLimit;
                 else Main.BackupDriveSizeLimits.Add(ThisDriveSerial, DiskSpaceLimit);
                 Label Unit = new Label();
@@ -1055,7 +1091,8 @@ namespace File_Master_project
 
                 else 
                 {
-                    if (BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes == double.Parse(DiskSpaceLimit.Text))
+                    double.TryParse(DiskSpaceLimit.Text, out double limit);
+                    if (BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes == limit)
                     {
                         SetDrive.IsEnabled = false;
                         SetDrive.Opacity = 0.5;
