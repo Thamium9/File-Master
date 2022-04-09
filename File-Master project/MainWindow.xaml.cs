@@ -202,13 +202,15 @@ namespace File_Master_project
             ListBoxItem ListItem;
             foreach (var Drive in BackupProcess.Backupdrives)
             {
+                Drive.LimitCheck();
                 #region Add backupdrive to list
                 ListItem = new ListBoxItem();
                 DockPanel Drive_dockpanel = new DockPanel();
                 TextBox drivename = new TextBox();
                 TextBox drivespace = new TextBox();
                 drivename.Text = $"Backup drive: {Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
-                drivespace.Text = $"({Drive.GetBackupSize().Humanize()} / {Drive.SizeLimit.Gigabytes} GB)";
+                if(Drive.SizeLimit.Gigabytes == 0) drivespace.Text = $"{Drive.GetBackupSize().Humanize()}";
+                else drivespace.Text = $"{Drive.GetBackupSize().Humanize()} / {Drive.SizeLimit.Gigabytes} GB";
                 Drive_dockpanel.Children.Add(drivename);
                 Drive_dockpanel.Children.Add(drivespace);
                 #region Custumization
@@ -260,8 +262,8 @@ namespace File_Master_project
             Backupitem Item = BackupProcess.GetBackupitemFromTag(Tag);
 
             #region Loads interval
-            Item.GetBackupsettings().GetSave_interval().Humanize();
-            Interval_label.Content = Item.GetBackupsettings().GetSave_interval().GetTime();
+            Item.Configuration.Save_interval.Humanize();
+            Interval_label.Content = Item.Configuration.Save_interval.GetTime();
             #endregion
 
             #region Loads destination
@@ -269,7 +271,7 @@ namespace File_Master_project
             #endregion
 
             #region Loads Smart save
-            if (Item.GetBackupsettings().SmartSave) Smartsave_label.Content = "Smart save: ON";
+            if (Item.Configuration.SmartSave) Smartsave_label.Content = "Smart save: ON";
             else Smartsave_label.Content = "Smart save: OFF";
             #endregion
 
@@ -447,13 +449,6 @@ namespace File_Master_project
             else if (File.Exists(Item.Source.FullName)) return "File";
             else return "Unknown";
         }
-
-        static public FileSystemInfo GetPathInfo(string Path)
-        {
-            if (Directory.Exists(Path)) return new DirectoryInfo(Path);
-            else return new FileInfo(Path);
-        }
-
         #endregion
 
         #region Manual save
@@ -764,8 +759,8 @@ namespace File_Master_project
                 }
             }
             #endregion          
-            FileSystemInfo Source = GetPathInfo(Sourceinput_textbox.Text);
-            FileSystemInfo Destination = GetPathInfo(Destinationinput_textbox.Text);
+            string Source = Sourceinput_textbox.Text;
+            string Destination = Destinationinput_textbox.Text;
             Backupitem Item = new Backupitem(newID, Source, Destination, DateTime.MinValue, false, Settings);
             return Item;
         }
@@ -867,24 +862,51 @@ namespace File_Master_project
             {
                 temp.IsEnabled = true;
                 temp.Opacity = 1;
-            }            
+            }
         }
 
         private void ActivateDrive_Click(object sender, RoutedEventArgs e)
         {
             string serial = ((Button)sender).Tag.ToString();
             DiskSpace Space = new DiskSpace(0);
-            if (double.TryParse(Main.BackupDriveSizeLimits[serial].Text, out double limit)) Space.Gigabytes = limit;
+            TextBox SizeLimit = Main.BackupDriveSizeLimits[serial];
+            if ((double.TryParse(SizeLimit.Text, out double limit) && limit > 0) || SizeLimit.Text == "")
+            {
+                Space.Gigabytes = limit;
+            }
+            else
+            {
+                MessageBox.Show("Invalid limit!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Main.BackupDriveSizeLimits[serial].Text = "";
+            }
             BackupProcess.ActivateBackupdrive(serial, Space);
+            if (BackupProcess.GetBackupdriveFromSerial(serial).SizeLimitCheck(out double result))
+            {
+                MessageBox.Show("The set limit cannot be this big!\nIt will be set to the maximum allowed amount!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Main.BackupDriveSizeLimits[serial].Text = result.ToString();
+            }
             UpdateSubmenu2();
         }
 
         private void UpdateDrive_Click(object sender, RoutedEventArgs e)
         {
-            string Data = ((Button)sender).Tag.ToString();
-            TextBox SizeLimit = Main.BackupDriveSizeLimits[Data];
-            if(double.TryParse(SizeLimit.Text, out double limit)) BackupProcess.GetBackupdriveFromSerial(Data).SizeLimit.Gigabytes = limit;
-            else BackupProcess.GetBackupdriveFromSerial(Data).SizeLimit.Gigabytes = 0;
+            string serial = ((Button)sender).Tag.ToString();
+            TextBox SizeLimit = Main.BackupDriveSizeLimits[serial];
+            if (double.TryParse(SizeLimit.Text, out double limit) && limit > 0)
+            {
+                BackupProcess.GetBackupdriveFromSerial(serial).SizeLimit.Gigabytes = limit;
+                if(BackupProcess.GetBackupdriveFromSerial(serial).SizeLimitCheck(out double result))
+                {
+                    MessageBox.Show("The set limit cannot be this big!\nIt will be set to the maximum allowed amount!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Main.BackupDriveSizeLimits[serial].Text = result.ToString();
+                }
+            }
+            else
+            {
+                BackupProcess.GetBackupdriveFromSerial(serial).SizeLimit.Gigabytes = 0;
+                MessageBox.Show("Invalid limit!\nThe limit has been removed!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Main.BackupDriveSizeLimits[serial].Text = "";
+            }
             BackupProcess.Upload_Backupinfo();
             UpdateSubmenu2();
         }
@@ -938,15 +960,15 @@ namespace File_Master_project
             {
                 var ThisDriveSerial = ThisDrive.Key;
                 var ThisDriveInfo = ThisDrive.Value;
-                bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);                
+                bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);
 
                 double AvailableSpaceRatio = (double)ThisDriveInfo.AvailableFreeSpace / (double)ThisDriveInfo.TotalSize;
                 double BackupUsedSpaceRatio = 0;
                 double BackupSpaceRatio = 0;
                 if (isBackupEnabled)
                 {
-                    BackupUsedSpaceRatio += (double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).GetBackupSize().Bytes / (double)ThisDriveInfo.TotalFreeSpace;
-                    BackupSpaceRatio += ((double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Bytes / (double)ThisDriveInfo.TotalFreeSpace) - BackupUsedSpaceRatio;
+                    BackupUsedSpaceRatio += (double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).GetBackupSize().Bytes / (double)ThisDriveInfo.TotalSize;
+                    BackupSpaceRatio += ((double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Bytes / (double)ThisDriveInfo.TotalSize) - BackupUsedSpaceRatio;
                     if (0 > BackupSpaceRatio) BackupSpaceRatio = 0;
                 }
                 #region Stackpanel
@@ -1054,8 +1076,12 @@ namespace File_Master_project
                 DiskSpaceLimit.Tag = ThisDriveSerial;
                 if (isBackupEnabled)
                 {
-                    if (!Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial)) DiskSpaceLimit.Text = BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes.ToString();
-                    else DiskSpaceLimit.Text = Main.BackupDriveSizeLimits[ThisDriveSerial].Text;
+                    if (Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial))
+                    {
+                        DiskSpaceLimit.Text = Main.BackupDriveSizeLimits[ThisDriveSerial].Text;
+                    }
+                    else DiskSpaceLimit.Text = BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Gigabytes.ToString();
+                    if (DiskSpaceLimit.Text == "0") DiskSpaceLimit.Text = "";
                 }
                 DiskSpaceLimit.TextChanged += SetLimitChange;
                 if (Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial)) Main.BackupDriveSizeLimits[ThisDriveSerial] = DiskSpaceLimit;
@@ -1251,13 +1277,11 @@ namespace File_Master_project
                 Display_Backupitem(Tag);
             }
             BackupProcess.Upload_Backupinfo();
-        }   
+        }
 
         #endregion
 
         #endregion
-
-
 
 
 

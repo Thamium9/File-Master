@@ -22,8 +22,7 @@ namespace File_Master_project
 
         public string Humanize()
         {
-            if (Kilobytes < 1) return $"{Bytes} Byte";
-            else if (Megabytes < 1) return $"{Math.Round(Kilobytes, 2)} KB";
+            if (Megabytes < 1) return $"{Math.Round(Kilobytes, 2)} KB";
             else if (Gigabytes < 1) return $"{Math.Round(Megabytes, 2)} MB";
             else if (Terrabytes < 1) return $"{Math.Round(Gigabytes, 2)} GB";
             else return $"{Math.Round(Terrabytes, 2)} TB";

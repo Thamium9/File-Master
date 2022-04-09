@@ -1,1 +1,48 @@
-[{"DriveID":"3A380DA4","DefaultVolumeLabel":"HDD-K02","Backups_Code":"[{\"SourcePath\":\"C:\\\\Users\\\\Dani PC\\\\Desktop\\\\Source\",\"DestinationPath\":\"C:\\\\Users\\\\Dani PC\\\\Desktop\\\\Destination\",\"LastSaved\":\"0001-01-01T00:00:00\",\"Configuration_Code\":\"{\\\"IsSingleCopy\\\":true,\\\"NumberOfCopies\\\":1,\\\"Save_interval_Code\\\":\\\"{\\\\\\\"Time\\\\\\\":10.0,\\\\\\\"Unit\\\\\\\":\\\\\\\"day\\\\\\\"}\\\",\\\"AbsoluteCopy\\\":true,\\\"ManualDetermination\\\":false,\\\"StoreDeletedInRBin\\\":false,\\\"PopupWhenRBinIsFull\\\":false,\\\"SmartSave\\\":true,\\\"UseMaxStorageData\\\":false,\\\"MaxStorageData\\\":0,\\\"RetryWaitTime_Code\\\":\\\"{\\\\\\\"Time\\\\\\\":5.0,\\\\\\\"Unit\\\\\\\":\\\\\\\"min\\\\\\\"}\\\",\\\"MaxNumberOfRetries\\\":3,\\\"PopupOnFail\\\":false,\\\"FileCompression\\\":false}\",\"ID\":0,\"IsEnabled\":false}]","SizeLimit":{"Bytes":536870912000}},{"DriveID":"02466E75","DefaultVolumeLabel":"HDD-K01","Backups_Code":"[]","SizeLimit":{"Bytes":10737418240}}]
+[
+  {
+    "DriveID": "3A380DA4",
+    "DefaultVolumeLabel": "HDD-K02",
+    "SizeLimit": {
+      "Bytes": 2147483648
+    },
+    "Backups": [
+      {
+        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
+        "DestinationPath": "C:\\Users\\Dani PC\\Desktop\\Destination",
+        "LastSaved": "0001-01-01T00:00:00",
+        "Configuration": {
+          "IsSingleCopy": true,
+          "NumberOfCopies": 1,
+          "Save_interval": {
+            "Time": 10.0,
+            "Unit": "day"
+          },
+          "AbsoluteCopy": true,
+          "ManualDetermination": false,
+          "StoreDeletedInRBin": false,
+          "PopupWhenRBinIsFull": false,
+          "SmartSave": true,
+          "UseMaxStorageData": false,
+          "MaxStorageData": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "min"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        },
+        "ID": 0,
+        "IsEnabled": true
+      }
+    ]
+  },
+  {
+    "DriveID": "02466E75",
+    "DefaultVolumeLabel": "HDD-K01",
+    "SizeLimit": {
+      "Bytes": 314606354432
+    },
+    "Backups": []
+  }
+]

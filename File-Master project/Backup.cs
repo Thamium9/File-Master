@@ -33,22 +33,20 @@ namespace File_Master_project
 
     class Backupsettings_Local
     {
-        public bool IsSingleCopy;
-        public int NumberOfCopies; //automatically 1 if 'IsSingleCopy' is true
-        private Interval Save_interval;
-        public string Save_interval_Code; // Save_interval serialized version
-        public bool AbsoluteCopy;
-        public bool ManualDetermination = false; //automatically false when 'AbsoluteCopy' is true or 'IsSingleCopy' is false
-        public bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
-        public bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
-        public bool SmartSave;
-        public bool UseMaxStorageData;
-        public int MaxStorageData; //no value if 'UseMaxStorageData' is false
-        private Interval RetryWaitTime;
-        public string RetryWaitTime_Code; // RetryWaitTime serialized version
-        public int MaxNumberOfRetries;
-        public bool PopupOnFail;
-        public bool FileCompression;
+        [JsonProperty] public bool IsSingleCopy;
+        [JsonProperty] public int NumberOfCopies; //automatically 1 if 'IsSingleCopy' is true
+        [JsonProperty] public Interval Save_interval;
+        [JsonProperty] public bool AbsoluteCopy;
+        [JsonProperty] public bool ManualDetermination = false; //automatically false when 'AbsoluteCopy' is true or 'IsSingleCopy' is false
+        [JsonProperty] public bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
+        [JsonProperty] public bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
+        [JsonProperty] public bool SmartSave;
+        [JsonProperty] public bool UseMaxStorageData;
+        [JsonProperty] public int MaxStorageData; //no value if 'UseMaxStorageData' is false
+        [JsonProperty] public Interval RetryWaitTime;
+        [JsonProperty] public int MaxNumberOfRetries;
+        [JsonProperty] public bool PopupOnFail;
+        [JsonProperty] public bool FileCompression;
 
         public Backupsettings_Local(bool isSingleCopy, int numberOfCopies, Interval save_interval, bool absoluteCopy, bool manualDetermination, bool storeDeletedInRBin, bool popupWhenRBinIsFull, bool smartSave, bool useMaxStorageData, int maxStorageData, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
@@ -71,30 +69,6 @@ namespace File_Master_project
             PopupOnFail = popupOnFail;
             FileCompression = fileCompression;
         }
-
-        public Interval GetSave_interval()
-        {
-            return Save_interval;       
-        }
-
-        public Interval GetRetryWaitTime()
-        {
-            return RetryWaitTime;
-        }
-
-        #region Serialization
-        public void Serialize()
-        {
-            Save_interval_Code = JsonConvert.SerializeObject(Save_interval);
-            RetryWaitTime_Code = JsonConvert.SerializeObject(RetryWaitTime);
-        }
-
-        public void Deserialize()
-        {
-            Save_interval = JsonConvert.DeserializeObject<Interval>(Save_interval_Code);
-            RetryWaitTime = JsonConvert.DeserializeObject<Interval>(RetryWaitTime_Code);
-        }
-        #endregion
     }
 
     class Backupitem
@@ -107,44 +81,51 @@ namespace File_Master_project
         [JsonProperty] public DateTime LastSaved;
         [JsonProperty] public bool IsEnabled { get; set; }
         [JsonIgnore] public bool CanBeEnabled { get; set; } = true;
-        [JsonIgnore] private Backupsettings_Local Configuration;
-        [JsonProperty] public string Configuration_Code; // Configuration serialized version
+        [JsonProperty] public Backupsettings_Local Configuration;
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
 
-        public Backupitem(int id, FileSystemInfo source, FileSystemInfo destination, DateTime lastSaved, bool isenabled, Backupsettings_Local settings)
+        [JsonConstructor] public Backupitem(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, Backupsettings_Local configuration)
         {
-            ID = id;
-            Source = source;
-            Destination = destination;
+            ID = iD;
+            SourcePath = sourcePath;
+            DestinationPath = destinationPath;
             LastSaved = lastSaved;
-            IsEnabled = isenabled;
-            Configuration = settings;
+            IsEnabled = isEnabled;
+            Configuration = configuration;
+            Destination = GetPathInfo(DestinationPath);
+            Source = GetPathInfo(SourcePath);
+            // start timer
         }
 
         #region Get data
-        public Backupsettings_Local GetBackupsettings()
-        {
-            return Configuration;
-        }
-
         private DateTime GetNextCallTime()
         {
-            return LastSaved.AddTicks(Configuration.GetSave_interval().Convert_to_ticks());
+            return LastSaved.AddTicks(Configuration.Save_interval.Convert_to_ticks());
         }
 
         public DiskSpace GetBackupSize()
         {
             DiskSpace space = new DiskSpace(0);
-            FileInfo backup = new FileInfo($@"{Destination.FullName}\{Source.Name}");
-            if ((backup.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+            if((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
             {
+                DirectoryInfo backup = new DirectoryInfo($@"{Destination.FullName}\{Source.Name}");
                 foreach (var item in Directory.GetFiles(backup.FullName, "*", SearchOption.AllDirectories))
                 {
                     space.Bytes += new FileInfo(item).Length;
                 }
             }
-            else space.Bytes += backup.Length;
+            else
+            {
+                FileInfo backup = new FileInfo($@"{Destination.FullName}\{Source.Name}");
+                space.Bytes += backup.Length;
+            }
             return space;
+        }
+
+        private FileSystemInfo GetPathInfo(string Path)
+        {
+            if (Directory.Exists(Path)) return new DirectoryInfo(Path);
+            else return new FileInfo(Path);
         }
         #endregion
 
@@ -224,7 +205,7 @@ namespace File_Master_project
 
         private void StartTimer()
         {
-            DateTime NextCall = LastSaved.AddTicks(Configuration.GetSave_interval().Convert_to_ticks()); //this is the date when the next backup will happen
+            DateTime NextCall = LastSaved.AddTicks(Configuration.Save_interval.Convert_to_ticks()); //this is the date when the next backup will happen
             TimeSpan diff = (NextCall - DateTime.Now);
             Backuptimer.Interval = Math.Min(Math.Max(60000, diff.Ticks / 10000), 2147483647); //the interval cannot be less than a second (or in this case 10000000 ticks or 1000 miliseconds)  AND  the interval cannot be more than 2147483647 miliseconds
             Backuptimer.Elapsed += Backuptimer_Elapsed;
@@ -239,26 +220,6 @@ namespace File_Master_project
 
         }
         #endregion
-
-        #region Serialization
-        public void Serialize()
-        {
-            Configuration.Serialize();
-            Configuration_Code = JsonConvert.SerializeObject(Configuration);
-            SourcePath = Source.FullName;
-            DestinationPath = Destination.FullName;
-        }
-
-        public void Deserialize()
-        {
-            Configuration = JsonConvert.DeserializeObject<Backupsettings_Local>(Configuration_Code);
-            Configuration.Deserialize();
-            Source = Main.GetPathInfo(SourcePath);
-            Destination = Main.GetPathInfo(DestinationPath);
-
-            StartTimer();
-        }
-        #endregion
     }
 
     class Backupdrive
@@ -268,19 +229,18 @@ namespace File_Master_project
         [JsonIgnore] public DriveInfo DriveInformation;
         [JsonIgnore] public bool IsAvailable;
         [JsonIgnore] public bool IsOutOfSpace;
-        [JsonProperty] public DiskSpace SizeLimit { get; set; }       
-        [JsonProperty] public string Backups_Code; // Backups serialized version
-        [JsonIgnore] public List<Backupitem> Backups { get; private set; } = new List<Backupitem>();
+        [JsonProperty] public DiskSpace SizeLimit { get; set; }
+        [JsonProperty] public List<Backupitem> Backups { get; private set; } = new List<Backupitem>();
 
-        [JsonConstructor] public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit, string backups_Code)
+        [JsonConstructor] public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit, List<Backupitem> backups)
         {
             DriveID = driveID;
             DefaultVolumeLabel = defaultVolumeLabel;
+            Backups = backups;
             SizeLimit = sizeLimit;
-            Backups_Code = backups_Code;
-            Deserialize();
             ValidityCheck();
             LimitCheck();
+            SizeLimitCheck();
         }
 
         public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
@@ -289,7 +249,7 @@ namespace File_Master_project
             DefaultVolumeLabel = defaultVolumeLabel;
             SizeLimit = sizeLimit;
             ValidityCheck();
-            LimitCheck();
+            LimitCheck();         
             BackupProcess.Upload_Backupinfo();
         }
 
@@ -309,9 +269,40 @@ namespace File_Master_project
             if (DriveInformation == null) IsAvailable = false;            
         }
 
-        private void LimitCheck()
+        public void LimitCheck()
         {
-            if (GetBackupSize().Bytes > SizeLimit.Bytes) IsOutOfSpace = true;
+            if (SizeLimit.Bytes > 0 && GetBackupSize().Bytes > SizeLimit.Bytes) IsOutOfSpace = true;
+            else IsOutOfSpace = false;
+        }
+
+        public bool SizeLimitCheck(out double result)
+        {
+            result = 0;
+            if (((double)DriveInformation.TotalSize * 0.1) > ((double)DriveInformation.AvailableFreeSpace - SizeLimit.Bytes))
+            {
+                SizeLimit.Bytes = (long)Math.Max((DriveInformation.AvailableFreeSpace - ((double)DriveInformation.TotalSize * 0.1)), 0);
+                SizeLimit.Gigabytes = Math.Floor(SizeLimit.Gigabytes);
+                result = SizeLimit.Gigabytes;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool SizeLimitCheck()
+        {
+            if (((double)DriveInformation.TotalSize * 0.1) > ((double)DriveInformation.AvailableFreeSpace - SizeLimit.Bytes))
+            {
+                SizeLimit.Bytes = (long)Math.Max((DriveInformation.AvailableFreeSpace - ((double)DriveInformation.TotalSize * 0.1)), 0);
+                SizeLimit.Gigabytes = Math.Floor(SizeLimit.Gigabytes);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         #endregion
 
@@ -447,26 +438,6 @@ namespace File_Master_project
             else
             {
                 Item.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            }
-        }
-        #endregion
-
-        #region Serialization
-        public void Serialize()
-        {
-            foreach (var item in Backups)
-            {
-                item.Serialize();
-            }
-            Backups_Code = JsonConvert.SerializeObject(Backups);
-        }
-
-        public void Deserialize()
-        {
-            Backups = JsonConvert.DeserializeObject<List<Backupitem>>(Backups_Code);
-            foreach (var item in Backups)
-            {
-                item.Deserialize();
             }
         }
         #endregion
@@ -629,11 +600,7 @@ namespace File_Master_project
         #region Upload Data
         static public void Upload_Backupinfo()
         {
-            foreach (var Drive in Backupdrives)
-            {
-                Drive.Serialize();
-            }
-            string Code = JsonConvert.SerializeObject(Backupdrives);
+            string Code = JsonConvert.SerializeObject(Backupdrives, Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText(CurrentDir + "\\config\\backup.json", Code);
 
             #region UI-changes
