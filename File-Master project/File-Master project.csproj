@@ -145,27 +145,11 @@
     <Resource Include="Icons\icon-recycle-10.jpg" />
     <Resource Include="Icons\icons8-close-window-64v2.png" />
     <Resource Include="Icons\icons8-minimize-window-64v2.png" />
-    <Resource Include="Icons\icons8-save%28blue%29.png" />
-    <Resource Include="Icons\icons8-save%28green%29.png" />
     <Resource Include="Icons\icons8-save%28grey%29.png" />
     <Resource Include="Icons\icons8-save%28grey-dark%29.png" />
     <Resource Include="Icons\icons8-save%28orange%29.png" />
     <Resource Include="Icons\icons8-save%28orange-dark%29.png" />
     <Resource Include="Icons\icons8-settings-48.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Icons\backup.png" />
-    <Resource Include="Icons\categorization.png" />
-    <Resource Include="Icons\cleanup.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Icons\categorization2.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Icons\backup2.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Icons\categorization3.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Icons\backup3.png" />
@@ -181,6 +165,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Icons\Delete icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\pendrive.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

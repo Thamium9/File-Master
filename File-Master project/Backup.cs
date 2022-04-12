@@ -106,18 +106,24 @@ namespace File_Master_project
         public DiskSpace GetBackupSize()
         {
             DiskSpace space = new DiskSpace(0);
-            if((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+            if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
             {
                 DirectoryInfo backup = new DirectoryInfo($@"{Destination.FullName}\{Source.Name}");
-                foreach (var item in Directory.GetFiles(backup.FullName, "*", SearchOption.AllDirectories))
+                if (backup.Exists)
                 {
-                    space.Bytes += new FileInfo(item).Length;
+                    foreach (var item in Directory.GetFiles(backup.FullName, "*", SearchOption.AllDirectories))
+                    {
+                        space.Bytes += new FileInfo(item).Length;
+                    }
                 }
             }
             else
             {
                 FileInfo backup = new FileInfo($@"{Destination.FullName}\{Source.Name}");
-                space.Bytes += backup.Length;
+                if (backup.Exists)
+                {
+                    space.Bytes += backup.Length;
+                }
             }
             return space;
         }
@@ -151,7 +157,6 @@ namespace File_Master_project
                     }
                     LastSaved = DateTime.Now;
                     success = true;
-                    //Refresh_Backupmenu();
                     BackupProcess.Upload_Backupinfo();
                 }
                 catch (Exception ex)
@@ -249,7 +254,7 @@ namespace File_Master_project
             DefaultVolumeLabel = defaultVolumeLabel;
             SizeLimit = sizeLimit;
             ValidityCheck();
-            LimitCheck();         
+            LimitCheck();
             BackupProcess.Upload_Backupinfo();
         }
 
@@ -257,12 +262,11 @@ namespace File_Master_project
         public void ValidityCheck()
         {
             IsAvailable = true;
-            Dictionary<string, DriveInfo> AllDriveInfo = BackupProcess.AllDriveInfo;
-            foreach (var thisDriveInfo in AllDriveInfo)
+            foreach (var thisDriveInfo in BackupProcess.AllDriveInfo)
             {
                 if (thisDriveInfo.Key == DriveID)
                 {
-                    DriveInformation = thisDriveInfo.Value;
+                    DriveInformation = thisDriveInfo.Value.DriveInformation;
                     DefaultVolumeLabel = DriveInformation.VolumeLabel;
                 }
             }
@@ -447,7 +451,8 @@ namespace File_Master_project
     {
         static public List<Backupdrive> Backupdrives { get; private set; }
         static public Backupsettings_Global Settings { get; set; }
-        static public Dictionary<string, DriveInfo> AllDriveInfo { get; } = new Dictionary<string, DriveInfo>(); //key: serial number , value: DriveInfo
+        static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } = new Dictionary<string, AdvancedDriveInfo>(); //key: serial number , value: DriveInfo
+        public delegate void UIChanges();
 
         static BackupProcess()
         {
@@ -460,8 +465,8 @@ namespace File_Master_project
         #region Actions
         static public void ActivateBackupdrive(string Serial, DiskSpace SizeLimit)
         {
-            AllDriveInfo.TryGetValue(Serial, out DriveInfo Drive);
-            Backupdrives.Add(new Backupdrive(Serial, Drive.VolumeLabel, SizeLimit));
+            AllDriveInfo.TryGetValue(Serial, out AdvancedDriveInfo Value);
+            Backupdrives.Add(new Backupdrive(Serial, Value.DriveInformation.VolumeLabel, SizeLimit));
             Upload_Backupinfo();
         }
 
@@ -519,7 +524,7 @@ namespace File_Master_project
             List<DriveInfo> DriveInfoList = new List<DriveInfo>();
             foreach (var Drive in AllDriveInfo)
             {
-                DriveInfoList.Add(Drive.Value);
+                DriveInfoList.Add(Drive.Value.DriveInformation);
             }
             return DriveInfoList;
         }
@@ -591,7 +596,7 @@ namespace File_Master_project
                 if (Drive.IsReady)
                 {
                     string Serial = GetHardDiskDSerialNumber($"{Drive.Name[0]}");
-                    AllDriveInfo.Add(Serial, Drive);
+                    AllDriveInfo.Add(Serial, new AdvancedDriveInfo(Drive, Serial));
                 }
             }
         }
@@ -626,5 +631,62 @@ namespace File_Master_project
         #endregion
 
         static public string CurrentDir = Directory.GetCurrentDirectory();
+    }
+
+    public class AdvancedDriveInfo
+    {
+        public DriveInfo DriveInformation;
+        public string MediaType 
+        { 
+            get 
+            {
+                if (_MediaType == null)
+                {
+                    _MediaType = GetMediaType();
+                    return _MediaType;
+                }
+                else return _MediaType;
+            }
+        }
+        private string _MediaType;
+        private string Serial;
+
+        public AdvancedDriveInfo(DriveInfo drive, string serial)
+        {
+            DriveInformation = drive;
+            Serial = serial;
+        }
+
+        public string GetMediaType() //code from: https://gist.github.com/MiloszKrajewski/352dc8b8eb132d3a2bc7
+        {
+            try
+            {
+                var driveQuery = new ManagementObjectSearcher("select * from Win32_DiskDrive");
+                foreach (ManagementObject d in driveQuery.Get())
+                {
+                    var partitionQueryText = string.Format("associators of {{{0}}} where AssocClass = Win32_DiskDriveToDiskPartition", d.Path.RelativePath);
+                    var partitionQuery = new ManagementObjectSearcher(partitionQueryText);
+                    foreach (ManagementObject p in partitionQuery.Get())
+                    {
+                        var logicalDriveQueryText = string.Format("associators of {{{0}}} where AssocClass = Win32_LogicalDiskToPartition", p.Path.RelativePath);
+                        var logicalDriveQuery = new ManagementObjectSearcher(logicalDriveQueryText);
+                        foreach (ManagementObject ld in logicalDriveQuery.Get())
+                        {
+                            var volumeSerial = Convert.ToString(ld.Properties["VolumeSerialNumber"].Value); // 12345678
+                            var mediaType = Convert.ToString(d.Properties["MediaType"].Value);
+                            if (volumeSerial == Serial)
+                            {
+                                return mediaType;
+                            }
+                        }
+                    }
+                }
+                return "";
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
     }
 }

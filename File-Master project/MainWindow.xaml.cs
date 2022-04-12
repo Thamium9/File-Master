@@ -132,7 +132,6 @@ namespace File_Master_project
                 HideAllMenu();
                 Backup_grid.Visibility = Visibility.Visible;
                 Main_window.Activate();
-                //Startup();
                 Menu = "Backup";
 
                 #region debug
@@ -151,7 +150,6 @@ namespace File_Master_project
                 #endregion
 
                 Display_Backupitems();
-                
             }
             else
             {
@@ -175,7 +173,6 @@ namespace File_Master_project
                     HideAllMenu();
                     Backup_grid.Visibility = Visibility.Visible;
                     Main_window.Activate();
-                    //Startup();
                     Menu = "Backup";
 
                     Display_Backupitems();
@@ -192,249 +189,6 @@ namespace File_Master_project
 
         #region Backup
 
-        #region Backup Data-Display
-        private void Display_Backupitems()
-        {
-            Backuptask_listbox.Items.Clear();
-            Warning2_label.Visibility = Visibility.Hidden;
-            Warning3_label.Visibility = Visibility.Hidden;
-            Warning4_label.Visibility = Visibility.Hidden;
-            ListBoxItem ListItem;
-            foreach (var Drive in BackupProcess.Backupdrives)
-            {
-                Drive.LimitCheck();
-                #region Add backupdrive to list
-                ListItem = new ListBoxItem();
-                DockPanel Drive_dockpanel = new DockPanel();
-                TextBox drivename = new TextBox();
-                TextBox drivespace = new TextBox();
-                drivename.Text = $"Backup drive: {Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
-                if(Drive.SizeLimit.Gigabytes == 0) drivespace.Text = $"{Drive.GetBackupSize().Humanize()}";
-                else drivespace.Text = $"{Drive.GetBackupSize().Humanize()} / {Drive.SizeLimit.Gigabytes} GB";
-                Drive_dockpanel.Children.Add(drivename);
-                Drive_dockpanel.Children.Add(drivespace);
-                #region Custumization
-                DockPanel.SetDock(drivespace, Dock.Right);
-                Drive_dockpanel.Width = 475;
-                Drive_dockpanel.LastChildFill = false;
-                drivename.Background = Brushes.Transparent;
-                drivespace.Background = Brushes.Transparent;
-                drivename.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                drivespace.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                drivename.BorderThickness = new Thickness(0);
-                drivespace.BorderThickness = new Thickness(0);
-                drivename.Focusable = false;
-                drivespace.Focusable = false;
-                ListItem.BorderThickness = new Thickness(0, 0, 0, 1);
-                ListItem.Margin = new Thickness(0, 5, 0, 0);
-                #endregion
-                Drive.SetDriveNameTextbox(ref drivename, ref ListItem);
-                Drive.SetDriveSpaceTextbox(ref drivespace);
-                ListItem.Content = Drive_dockpanel;
-                ListItem.Tag = Drive.DriveID;                
-                Backuptask_listbox.Items.Add(ListItem);
-                #endregion
-                #region Add backupitems of backupdrive
-                foreach (var Backupitem in Drive.Backups)
-                {
-                    ListItem = new ListBoxItem();
-                    ListItem.Opacity = 0.8;
-                    ListItem.Content = $"-> {GetBackupType(Backupitem)}: {Backupitem.Source.FullName} - ({Backupitem.GetBackupSize().Humanize()})";
-                    ListItem.Tag = $"{Backupitem.ID}";
-                    CheckBackupitemStatus(Backupitem, ref ListItem);
-                    Backuptask_listbox.Items.Add(ListItem);
-                }
-                #endregion
-            }
-            #region Add 'Add new task' button
-            ListItem = new ListBoxItem();
-            ListItem.Content = "➕ Add new task";
-            ListItem.FontWeight = FontWeights.Normal;
-            ListItem.HorizontalAlignment = HorizontalAlignment.Left;
-            ListItem.Tag = "add";
-            ListItem.MouseLeftButtonUp += new MouseButtonEventHandler(Additem_button_Click);
-            Backuptask_listbox.Items.Add(ListItem);
-            #endregion
-        }
-
-        private void Display_Backupitem(string Tag)
-        {
-            Backupitem Item = BackupProcess.GetBackupitemFromTag(Tag);
-
-            #region Loads interval
-            Item.Configuration.Save_interval.Humanize();
-            Interval_label.Content = Item.Configuration.Save_interval.GetTime();
-            #endregion
-
-            #region Loads destination
-            Destination_textbox.Text = Item.Destination.FullName;
-            #endregion
-
-            #region Loads Smart save
-            if (Item.Configuration.SmartSave) Smartsave_label.Content = "Smart save: ON";
-            else Smartsave_label.Content = "Smart save: OFF";
-            #endregion
-
-            #region Loads Last saved
-            if(Item.LastSaved==DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
-            else Lastsaved_label.Content = $"Last saved: {Item.LastSaved}";
-            #endregion
-
-            #region Get status
-            bool CanRunBackupProcess;
-            bool MissingSource;
-            LoadBackupitemStatus(Item, out CanRunBackupProcess, out MissingSource);
-            #endregion
-
-            #region Loads backup file size
-            Backupfilesize_label.Content = $"Backup file size: {Item.GetBackupSize().Humanize()}";
-            #endregion
-
-            EnableActionButtons(Item, CanRunBackupProcess, MissingSource);
-        }
-
-        private void EnableActionButtons(Backupitem Item, bool CanRunBackupProcess, bool MissingSource)
-        {
-            #region Remove item
-            Removeitem_button.IsEnabled = true;
-            Removeitem_button.Opacity = 1;
-            #endregion
-            #region Enable/Disable backup
-            if (Item.IsEnabled)
-            {
-                Enablebackup_button.Visibility = Visibility.Hidden;
-                Disablebackup_button.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                Disablebackup_button.Visibility = Visibility.Hidden;
-                if (CanRunBackupProcess)
-                {
-                    Enablebackup_button.IsEnabled = true;
-                    Enablebackup_button.Visibility = Visibility.Visible;
-                    Enablebackup_button.Opacity = 1;
-                }
-                else
-                {
-                    Enablebackup_button.IsEnabled = false;
-                    Enablebackup_button.Visibility = Visibility.Visible;
-                    Enablebackup_button.Opacity = 0.5;
-                }
-            }
-            #endregion
-            #region Configuration/Repair/Restore
-            if (MissingSource)
-            {
-                Repair_button.Visibility = Visibility.Visible;
-                Modification_button.Visibility = Visibility.Hidden;
-                Restorefiles_button.Opacity = 1;
-                Restorefiles_button.IsEnabled = true;
-            }
-            else
-            {
-                Modification_button.Opacity = 1;
-                Modification_button.Visibility = Visibility.Visible;
-                Modification_button.IsEnabled = true;
-                Repair_button.Visibility = Visibility.Hidden;
-                Restorefiles_button.Opacity = 0.5;
-                Restorefiles_button.IsEnabled = false;
-            }
-            #endregion
-            #region Manual save
-            if (CanRunBackupProcess)
-            {
-                Manualsave_button.IsEnabled = true;
-                Manualsave_button.Opacity = 1;
-            }
-            else
-            {
-                Manualsave_button.IsEnabled = false;
-                Manualsave_button.Opacity = 0.5;
-            }
-            #endregion
-        }
-
-        private void CheckBackupitemStatus(Backupitem Item, ref ListBoxItem ListItem)//Sets warning labels, and item color
-        {
-            #region Default
-            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            #endregion
-            if (!Item.IsEnabled)
-            {
-                Warning2_label.Visibility = Visibility.Visible;
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-            }
-            if (GetBackupType(Item) == "Unknown")
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-                Warning3_label.Visibility = Visibility.Visible;
-            }
-            if (false)//unknown issue
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                Warning4_label.Visibility = Visibility.Visible;
-            }
-            if (!Item.CanBeEnabled)
-            {
-                if (false)//Can save to temp-drive temp
-                {
-                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                }
-                else
-                {
-                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Warning4_label.Visibility = Visibility.Visible;
-                }
-            }
-        }
-
-        private void LoadBackupitemStatus(Backupitem Item, out bool CanRunBackupProcess, out bool MissingSource)//Sets Status label, and returns if it can be enabled
-        {
-            #region Default status
-            CanRunBackupProcess = true;
-            MissingSource = false;
-            Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            Status_label.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            Status_label.Content = "Status: OK!";
-            #endregion
-            if (!Item.IsEnabled)
-            {
-                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-                Status_label.Content = "Status: The backup item is disabled!";
-            }
-            if (GetBackupType(Item) == "Unknown")
-            {
-                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-                Status_label.Content = "Status: The source is missing, cannot continue the backup process!";
-                CanRunBackupProcess = false;
-                MissingSource = true;
-            }
-            if (!Item.CanBeEnabled)
-            {
-                if (false)//Can save to temp-drive temp
-                {
-                    Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                    Status_label.Content = "Status: OK (alternative destination)!";
-                    CanRunBackupProcess = false;
-                }
-                else
-                {
-                    Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status_label.Content = "Status: The destination is unreachable, cannot continue the backup process!";
-                    CanRunBackupProcess = false;
-                }          
-            }
-            else if(false)//unknown issue
-            {
-                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                Status_label.Content = "Status: Cannot continue the backup process due to unknown circumstances!";
-                CanRunBackupProcess = false;
-            }
-        }
-        #endregion
-
         #region Backup Data-Extraction
         public string GetSelectedBackupitemTag()
         {
@@ -448,17 +202,6 @@ namespace File_Master_project
             if (Directory.Exists(Item.Source.FullName)) return "Folder";
             else if (File.Exists(Item.Source.FullName)) return "File";
             else return "Unknown";
-        }
-        #endregion
-
-        #region Manual save
-        private void Manualsave_button_Click(object sender, RoutedEventArgs e)
-        {
-            if (Warning_Save())
-            {
-                string Tag = GetSelectedBackupitemTag();
-                BackupProcess.Manualsave(Tag);
-            }
         }
         #endregion
 
@@ -527,7 +270,6 @@ namespace File_Master_project
                 {
                     Drive.RemoveBackupitem(ID);
                 }
-
                 Reset_Backupmenu();
             }
         }
@@ -641,7 +383,8 @@ namespace File_Master_project
             {
                 Drive.SetBackupitemState(true, ID);
             }
-            Refresh_Backupmenu();
+            Update_Backupmenu();
+            BackupProcess.Upload_Backupinfo();
         }
 
         private void Disablebackup_button_Click(object sender, RoutedEventArgs e)
@@ -651,7 +394,19 @@ namespace File_Master_project
             {
                 Drive.SetBackupitemState(false, ID);
             }
-            Refresh_Backupmenu();
+            Update_Backupmenu();
+            BackupProcess.Upload_Backupinfo();
+        }
+
+        private void Manualsave_button_Click(object sender, RoutedEventArgs e)
+        {
+            if (Warning_Save())
+            {
+                string Tag = GetSelectedBackupitemTag();
+                BackupProcess.Manualsave(Tag);
+                Update_Backupmenu();
+                BackupProcess.Upload_Backupinfo();
+            }
         }
 
         private void ManageBackupDrives_button_Click(object sender, RoutedEventArgs e)
@@ -941,7 +696,7 @@ namespace File_Master_project
         #endregion
 
         #region Menu functions
-        private StackPanel CreateAvailableDrivesSP()
+        private async Task<StackPanel> CreateAvailableDrivesSP_Async()
         {
             StackPanel Drives = new StackPanel();
             Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -958,8 +713,11 @@ namespace File_Master_project
             #endregion
             foreach (var ThisDrive in BackupProcess.AllDriveInfo)
             {
+                var MediaType = ThisDrive.Value.MediaType;
+                if (MediaType == "") break;
                 var ThisDriveSerial = ThisDrive.Key;
-                var ThisDriveInfo = ThisDrive.Value;
+                var ThisDriveInfo = ThisDrive.Value.DriveInformation;
+                
                 bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);
 
                 double AvailableSpaceRatio = (double)ThisDriveInfo.AvailableFreeSpace / (double)ThisDriveInfo.TotalSize;
@@ -971,7 +729,7 @@ namespace File_Master_project
                     BackupSpaceRatio += ((double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Bytes / (double)ThisDriveInfo.TotalSize) - BackupUsedSpaceRatio;
                     if (0 > BackupSpaceRatio) BackupSpaceRatio = 0;
                 }
-                #region Stackpanel
+                #region Stackpanel                  
                 StackPanel Drive = new StackPanel();
                 Drive.Orientation = Orientation.Horizontal;
                 if (BackupProcess.IsBackupdrive(ThisDriveSerial)) Drive.Background = new SolidColorBrush(Color.FromRgb(25, 50, 30));
@@ -983,8 +741,9 @@ namespace File_Master_project
                 #endregion
                 #region Icon
                 Image Icon = new Image();
-                if (ThisDriveInfo.DriveType == DriveType.Removable) Icon.Source = new BitmapImage(new Uri(@"/Icons/usb_drive.png", UriKind.Relative));
-                else if (ThisDriveInfo.DriveType == DriveType.Fixed) Icon.Source = new BitmapImage(new Uri(@"/Icons/hard_drive.png", UriKind.Relative));
+                if (MediaType == "Fixed hard disk media") Icon.Source = new BitmapImage(new Uri(@"/Icons/hard_drive.png", UriKind.Relative));
+                else if (MediaType == "External hard disk media") Icon.Source = new BitmapImage(new Uri(@"/Icons/usb_drive.png", UriKind.Relative));
+                else if (MediaType == "Removable Media") Icon.Source = new BitmapImage(new Uri(@"/Icons/pendrive.png", UriKind.Relative));
                 Icon.Width = 100;
                 Icon.Height = 100;
                 Icon.Margin = new Thickness(15, 0, 15, 0);
@@ -1218,7 +977,7 @@ namespace File_Master_project
         private void UpdateSubmenu2()// data is for transfering new drive size limit
         {
             StackPanel Drives = new StackPanel();
-            Drives.Children.Add(CreateAvailableDrivesSP());
+            Drives.Children.Add(CreateAvailableDrivesSP_Async().Result);
             if (Showunavailable_checkbox.IsChecked.Value) Drives.Children.Add(CreateUnavailableDrivesSP());
 
             Alldrives_scrollviewer.Content = Drives;
@@ -1262,7 +1021,7 @@ namespace File_Master_project
             Display_Backupitems();
         }
 
-        public void Refresh_Backupmenu()
+        public void Update_Backupmenu()
         {
             if(Backuptask_listbox.SelectedIndex!=-1)
             {
@@ -1276,8 +1035,254 @@ namespace File_Master_project
                 }
                 Display_Backupitem(Tag);
             }
-            BackupProcess.Upload_Backupinfo();
+            else
+            {
+                Display_Backupitems();
+            }
         }
+
+        #region Backup Data-Display
+        private void Display_Backupitems()
+        {
+            Backuptask_listbox.Items.Clear();
+            Warning2_label.Visibility = Visibility.Hidden;
+            Warning3_label.Visibility = Visibility.Hidden;
+            Warning4_label.Visibility = Visibility.Hidden;
+            ListBoxItem ListItem;
+            foreach (var Drive in BackupProcess.Backupdrives)
+            {
+                Drive.LimitCheck();
+                #region Add backupdrive to list
+                ListItem = new ListBoxItem();
+                DockPanel Drive_dockpanel = new DockPanel();
+                TextBox drivename = new TextBox();
+                TextBox drivespace = new TextBox();
+                drivename.Text = $"Backup drive: {Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+                if (Drive.SizeLimit.Gigabytes == 0) drivespace.Text = $"{Drive.GetBackupSize().Humanize()}";
+                else drivespace.Text = $"{Drive.GetBackupSize().Humanize()} / {Drive.SizeLimit.Gigabytes} GB";
+                Drive_dockpanel.Children.Add(drivename);
+                Drive_dockpanel.Children.Add(drivespace);
+                #region Custumization
+                DockPanel.SetDock(drivespace, Dock.Right);
+                Drive_dockpanel.Width = 475;
+                Drive_dockpanel.LastChildFill = false;
+                drivename.Background = Brushes.Transparent;
+                drivespace.Background = Brushes.Transparent;
+                drivename.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                drivespace.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                drivename.BorderThickness = new Thickness(0);
+                drivespace.BorderThickness = new Thickness(0);
+                drivename.Focusable = false;
+                drivespace.Focusable = false;
+                ListItem.BorderThickness = new Thickness(0, 0, 0, 1);
+                ListItem.Margin = new Thickness(0, 5, 0, 0);
+                #endregion
+                Drive.SetDriveNameTextbox(ref drivename, ref ListItem);
+                Drive.SetDriveSpaceTextbox(ref drivespace);
+                ListItem.Content = Drive_dockpanel;
+                ListItem.Tag = Drive.DriveID;
+                Backuptask_listbox.Items.Add(ListItem);
+                #endregion
+                #region Add backupitems of backupdrive
+                foreach (var Backupitem in Drive.Backups)
+                {
+                    ListItem = new ListBoxItem();
+                    ListItem.Opacity = 0.8;
+                    ListItem.Content = $"-> {GetBackupType(Backupitem)}: {Backupitem.Source.FullName} - ({Backupitem.GetBackupSize().Humanize()})";
+                    ListItem.Tag = $"{Backupitem.ID}";
+                    CheckBackupitemStatus(Backupitem, ref ListItem);
+                    Backuptask_listbox.Items.Add(ListItem);
+                }
+                #endregion
+            }
+            #region Add 'Add new task' button
+            ListItem = new ListBoxItem();
+            ListItem.Content = "➕ Add new task";
+            ListItem.FontWeight = FontWeights.Normal;
+            ListItem.HorizontalAlignment = HorizontalAlignment.Left;
+            ListItem.Tag = "add";
+            ListItem.MouseLeftButtonUp += new MouseButtonEventHandler(Additem_button_Click);
+            Backuptask_listbox.Items.Add(ListItem);
+            #endregion
+        }
+
+        private void Display_Backupitem(string Tag)
+        {
+            Backupitem Item = BackupProcess.GetBackupitemFromTag(Tag);
+
+            #region Loads interval
+            Item.Configuration.Save_interval.Humanize();
+            Interval_label.Content = Item.Configuration.Save_interval.GetTime();
+            #endregion
+
+            #region Loads destination
+            Destination_textbox.Text = Item.Destination.FullName;
+            #endregion
+
+            #region Loads Smart save
+            if (Item.Configuration.SmartSave) Smartsave_label.Content = "Smart save: ON";
+            else Smartsave_label.Content = "Smart save: OFF";
+            #endregion
+
+            #region Loads Last saved
+            if (Item.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
+            else Lastsaved_label.Content = $"Last saved: {Item.LastSaved}";
+            #endregion
+
+            #region Get status
+            bool CanRunBackupProcess;
+            bool MissingSource;
+            LoadBackupitemStatus(Item, out CanRunBackupProcess, out MissingSource);
+            #endregion
+
+            #region Loads backup file size
+            Backupfilesize_label.Content = $"Backup file size: {Item.GetBackupSize().Humanize()}";
+            #endregion
+
+            EnableActionButtons(Item, CanRunBackupProcess, MissingSource);
+        }
+
+        private void EnableActionButtons(Backupitem Item, bool CanRunBackupProcess, bool MissingSource)
+        {
+            #region Remove item
+            Removeitem_button.IsEnabled = true;
+            Removeitem_button.Opacity = 1;
+            #endregion
+            #region Enable/Disable backup
+            if (Item.IsEnabled)
+            {
+                Enablebackup_button.Visibility = Visibility.Hidden;
+                Disablebackup_button.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                Disablebackup_button.Visibility = Visibility.Hidden;
+                if (CanRunBackupProcess)
+                {
+                    Enablebackup_button.IsEnabled = true;
+                    Enablebackup_button.Visibility = Visibility.Visible;
+                    Enablebackup_button.Opacity = 1;
+                }
+                else
+                {
+                    Enablebackup_button.IsEnabled = false;
+                    Enablebackup_button.Visibility = Visibility.Visible;
+                    Enablebackup_button.Opacity = 0.5;
+                }
+            }
+            #endregion
+            #region Configuration/Repair/Restore
+            if (MissingSource)
+            {
+                Repair_button.Visibility = Visibility.Visible;
+                Modification_button.Visibility = Visibility.Hidden;
+                Restorefiles_button.Opacity = 1;
+                Restorefiles_button.IsEnabled = true;
+            }
+            else
+            {
+                Modification_button.Opacity = 1;
+                Modification_button.Visibility = Visibility.Visible;
+                Modification_button.IsEnabled = true;
+                Repair_button.Visibility = Visibility.Hidden;
+                Restorefiles_button.Opacity = 0.5;
+                Restorefiles_button.IsEnabled = false;
+            }
+            #endregion
+            #region Manual save
+            if (CanRunBackupProcess)
+            {
+                Manualsave_button.IsEnabled = true;
+                Manualsave_button.Opacity = 1;
+            }
+            else
+            {
+                Manualsave_button.IsEnabled = false;
+                Manualsave_button.Opacity = 0.5;
+            }
+            #endregion
+        }
+
+        private void CheckBackupitemStatus(Backupitem Item, ref ListBoxItem ListItem)//Sets warning labels, and item color
+        {
+            #region Default
+            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            #endregion
+            if (!Item.IsEnabled)
+            {
+                Warning2_label.Visibility = Visibility.Visible;
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
+            }
+            if (GetBackupType(Item) == "Unknown")
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
+                Warning3_label.Visibility = Visibility.Visible;
+            }
+            if (false)//unknown issue
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                Warning4_label.Visibility = Visibility.Visible;
+            }
+            if (!Item.CanBeEnabled)
+            {
+                if (false)//Can save to temp-drive temp
+                {
+                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                }
+                else
+                {
+                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                    Warning4_label.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private void LoadBackupitemStatus(Backupitem Item, out bool CanRunBackupProcess, out bool MissingSource)//Sets Status label, and returns if it can be enabled
+        {
+            #region Default status
+            CanRunBackupProcess = true;
+            MissingSource = false;
+            Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            Status_label.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            Status_label.Content = "Status: OK!";
+            #endregion
+            if (!Item.IsEnabled)
+            {
+                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
+                Status_label.Content = "Status: The backup item is disabled!";
+            }
+            if (GetBackupType(Item) == "Unknown")
+            {
+                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
+                Status_label.Content = "Status: The source is missing, cannot continue the backup process!";
+                CanRunBackupProcess = false;
+                MissingSource = true;
+            }
+            if (!Item.CanBeEnabled)
+            {
+                if (false)//Can save to temp-drive temp
+                {
+                    Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                    Status_label.Content = "Status: OK (alternative destination)!";
+                    CanRunBackupProcess = false;
+                }
+                else
+                {
+                    Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                    Status_label.Content = "Status: The destination is unreachable, cannot continue the backup process!";
+                    CanRunBackupProcess = false;
+                }
+            }
+            else if (false)//unknown issue
+            {
+                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                Status_label.Content = "Status: Cannot continue the backup process due to unknown circumstances!";
+                CanRunBackupProcess = false;
+            }
+        }
+        #endregion
 
         #endregion
 
@@ -1439,7 +1444,7 @@ namespace File_Master_project
 
         private void Main_window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (!MessageBox.Show("Are you sure you want to close the program? \nIf you close it, all unsaved changes will be lost!", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
+            if (!MessageBox.Show("Are you sure you want to close the program?\nAll processes will be halted!", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
             {
                 e.Cancel = true;
             }
@@ -1498,7 +1503,7 @@ namespace File_Master_project
         #endregion
 
         #endregion
-        //*/
+
         #endregion
 
         #region debug

@@ -3,7 +3,7 @@
     "DriveID": "3A380DA4",
     "DefaultVolumeLabel": "HDD-K02",
     "SizeLimit": {
-      "Bytes": 2147483648
+      "Bytes": 300647710720
     },
     "Backups": [
       {
@@ -34,15 +34,94 @@
         },
         "ID": 0,
         "IsEnabled": true
+      },
+      {
+        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
+        "DestinationPath": "E:\\Telepítők",
+        "LastSaved": "0001-01-01T00:00:00",
+        "Configuration": {
+          "IsSingleCopy": true,
+          "NumberOfCopies": 1,
+          "Save_interval": {
+            "Time": 5.0,
+            "Unit": "hour"
+          },
+          "AbsoluteCopy": true,
+          "ManualDetermination": false,
+          "StoreDeletedInRBin": false,
+          "PopupWhenRBinIsFull": false,
+          "SmartSave": true,
+          "UseMaxStorageData": false,
+          "MaxStorageData": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "min"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        },
+        "ID": 1,
+        "IsEnabled": false
+      },
+      {
+        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source\\Torrentek",
+        "DestinationPath": "E:\\Telepítők",
+        "LastSaved": "0001-01-01T00:00:00",
+        "Configuration": {
+          "IsSingleCopy": true,
+          "NumberOfCopies": 1,
+          "Save_interval": {
+            "Time": 10.0,
+            "Unit": "hour"
+          },
+          "AbsoluteCopy": true,
+          "ManualDetermination": false,
+          "StoreDeletedInRBin": false,
+          "PopupWhenRBinIsFull": false,
+          "SmartSave": true,
+          "UseMaxStorageData": false,
+          "MaxStorageData": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "min"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        },
+        "ID": 2,
+        "IsEnabled": false
+      },
+      {
+        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
+        "DestinationPath": "C:\\Users\\Dani PC\\Desktop\\Destination\\Source",
+        "LastSaved": "2022-04-13T01:24:01.4987672+02:00",
+        "Configuration": {
+          "IsSingleCopy": true,
+          "NumberOfCopies": 1,
+          "Save_interval": {
+            "Time": 10.0,
+            "Unit": "hour"
+          },
+          "AbsoluteCopy": true,
+          "ManualDetermination": false,
+          "StoreDeletedInRBin": false,
+          "PopupWhenRBinIsFull": false,
+          "SmartSave": true,
+          "UseMaxStorageData": false,
+          "MaxStorageData": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "min"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        },
+        "ID": 3,
+        "IsEnabled": true
       }
     ]
-  },
-  {
-    "DriveID": "02466E75",
-    "DefaultVolumeLabel": "HDD-K01",
-    "SizeLimit": {
-      "Bytes": 314606354432
-    },
-    "Backups": []
   }
 ]
