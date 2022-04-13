@@ -187,26 +187,6 @@ namespace File_Master_project
             }
         }
 
-        #region Backup
-
-        #region Backup Data-Extraction
-        public string GetSelectedBackupitemTag()
-        {
-            ListBoxItem Item = (ListBoxItem)Backuptask_listbox.SelectedItem;
-            string Tag = Item.Tag.ToString();
-            return Tag;
-        }
-
-        private string GetBackupType(Backupitem Item)
-        {           
-            if (Directory.Exists(Item.Source.FullName)) return "Folder";
-            else if (File.Exists(Item.Source.FullName)) return "File";
-            else return "Unknown";
-        }
-        #endregion
-
-        #endregion
-
         #region UI
 
         #region Warnings
@@ -225,15 +205,28 @@ namespace File_Master_project
 
         #region Backup menu
 
+        #region Menu functions
+        public Backupitem GetSelectedBackupitem()
+        {
+            Backupitem Item = null;
+            ListBoxItem Selection = (ListBoxItem)Backuptask_listbox.SelectedItem;
+            if(Selection.Tag.GetType() == typeof(Backupitem))
+            {
+                Item = (Backupitem)Selection.Tag;
+            }
+            return Item;
+        }
+        #endregion
+
         #region Select backuptask
         private void Backuptask_listbox_SelectionChanged(object sender, SelectionChangedEventArgs e)//changes when you select an item from the source list
         {
             if (Backuptask_listbox.SelectedIndex != -1)//if the index is -1 there is no item selected
             {
-                string Tag = GetSelectedBackupitemTag();
-                if (int.TryParse(Tag, out int temp))
+                Backupitem Item = GetSelectedBackupitem();
+                if(Item != null)
                 {
-                    Display_Backupitem(Tag);
+                    Display_Backupitem(Item);
                     #region UI-changes
                     Warning1_label.Visibility = Visibility.Hidden;
                     #endregion
@@ -264,13 +257,13 @@ namespace File_Master_project
         {
             if (MessageBox.Show("Are you sure you want to delete this item? \nIt will be deleted permanently!", "Delete", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
             {
-                string Tag = GetSelectedBackupitemTag();
-                int ID = int.Parse(Tag.ToString());
+                Backupitem Item = GetSelectedBackupitem();
                 foreach (var Drive in BackupProcess.Backupdrives)
                 {
-                    Drive.RemoveBackupitem(ID);
+                    Drive.RemoveBackupitem(Item);
                 }
                 Reset_Backupmenu();
+                BackupProcess.Upload_Backupinfo();
             }
         }
 
@@ -378,10 +371,10 @@ namespace File_Master_project
 
         private void Enablebackup_button_Click(object sender, RoutedEventArgs e)
         {
-            int ID = int.Parse(GetSelectedBackupitemTag());
+            Backupitem Item = GetSelectedBackupitem();
             foreach (var Drive in BackupProcess.Backupdrives)
             {
-                Drive.SetBackupitemState(true, ID);
+                Drive.SetBackupitemState(true, Item);
             }
             Update_Backupmenu();
             BackupProcess.Upload_Backupinfo();
@@ -389,10 +382,10 @@ namespace File_Master_project
 
         private void Disablebackup_button_Click(object sender, RoutedEventArgs e)
         {
-            int ID = int.Parse(GetSelectedBackupitemTag());
+            Backupitem Item = GetSelectedBackupitem();
             foreach (var Drive in BackupProcess.Backupdrives)
             {
-                Drive.SetBackupitemState(false, ID);
+                Drive.SetBackupitemState(false, Item);
             }
             Update_Backupmenu();
             BackupProcess.Upload_Backupinfo();
@@ -402,8 +395,8 @@ namespace File_Master_project
         {
             if (Warning_Save())
             {
-                string Tag = GetSelectedBackupitemTag();
-                BackupProcess.Manualsave(Tag);
+                Backupitem Item = GetSelectedBackupitem();
+                BackupProcess.Manualsave(Item);
                 Update_Backupmenu();
                 BackupProcess.Upload_Backupinfo();
             }
@@ -434,7 +427,7 @@ namespace File_Master_project
             {
                 CI = new ComboBoxItem();
                 CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
-                CI.Tag = Drive.DriveID;
+                CI.Tag = Drive;
                 Backupdriveselect_combobox.Items.Add(CI);
             }
         }
@@ -454,15 +447,9 @@ namespace File_Master_project
                     Menu = "Backup";
                     Backupsettings_Local Settings = CreateBackupsettings_Local();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
-                    foreach (var Drive in BackupProcess.Backupdrives)
-                    {
-                        if (Drive.DriveID == CI.Tag.ToString())
-                        {
-                            Drive.AddBackupitem(CreateBackupitem(Settings));
-                            BackupProcess.Upload_Backupinfo();
-                            break;
-                        }
-                    }
+                    Backupdrive Target = (Backupdrive)CI.Tag;
+                    Target.AddBackupitem(CreateBackupitem(Settings));
+                    BackupProcess.Upload_Backupinfo();
                     Reset_Backupmenu();
                     Reset_BackupSubmenu1();
                 }
@@ -471,6 +458,8 @@ namespace File_Master_project
 
         private bool CheckInfo()
         {
+            ComboBoxItem Selection = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
+            Backupdrive Target = (Backupdrive)Selection.Tag;
             if (Sourceinput_textbox.Text == "" || Destinationinput_textbox.Text == "" || Intervalselection_combobox.SelectedIndex == -1 || Backupdriveselect_combobox.SelectedIndex == 0)
             {
                 MessageBox.Show("You have to provide more information!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -483,6 +472,10 @@ namespace File_Master_project
             {
                 MessageBox.Show("The destination doesn't exists!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            else if (Destinationinput_textbox.Text.Split('\\')[0][0] != Target.GetDriveLetter())
+            {
+                MessageBox.Show("The destination is not located in the selected backup drive!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             else
             {
                 return true;
@@ -491,32 +484,10 @@ namespace File_Master_project
         }
 
         private Backupitem CreateBackupitem(Backupsettings_Local Settings)
-        {
-            #region Get newID
-            List<int> IDs = new List<int>();
-            foreach (var Drive in BackupProcess.Backupdrives)
-            {
-                foreach (var ID in Drive.GetIDs())
-                {
-                    IDs.Add(ID);
-                }
-            }
-            int newID = 0;
-            foreach (var ID in IDs)
-            {
-                if (newID == ID)
-                {
-                    newID++;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            #endregion          
+        {         
             string Source = Sourceinput_textbox.Text;
             string Destination = Destinationinput_textbox.Text;
-            Backupitem Item = new Backupitem(newID, Source, Destination, DateTime.MinValue, false, Settings);
+            Backupitem Item = new Backupitem(BackupProcess.GetNewBackupID(), Source, Destination, DateTime.MinValue, false, Settings);
             return Item;
         }
 
@@ -713,6 +684,8 @@ namespace File_Master_project
             #endregion
             foreach (var ThisDrive in BackupProcess.AllDriveInfo)
             {
+                //await Task.Run(() =>
+                {
                 var MediaType = ThisDrive.Value.MediaType;
                 if (MediaType == "") break;
                 var ThisDriveSerial = ThisDrive.Key;
@@ -909,6 +882,8 @@ namespace File_Master_project
                 }
                 #endregion
                 Drives.Children.Add(Drive);
+                }
+                //);
             }
 
             return Drives;
@@ -1025,15 +1000,15 @@ namespace File_Master_project
         {
             if(Backuptask_listbox.SelectedIndex!=-1)
             {
-                string Tag = GetSelectedBackupitemTag();
+                Backupitem Item = GetSelectedBackupitem();
                 Display_Backupitems();
                 for (int i = 0; i < Backuptask_listbox.Items.Count; i++)
                 {
                     ListBoxItem temp = (ListBoxItem)Backuptask_listbox.Items[i];
-                    string tag = temp.Tag.ToString();
-                    if (tag == Tag) Backuptask_listbox.SelectedIndex = i;
+                    var ThisItem = temp.Tag;
+                    if (ThisItem == Item) Backuptask_listbox.SelectedIndex = i;
                 }
-                Display_Backupitem(Tag);
+                Display_Backupitem(Item);
             }
             else
             {
@@ -1088,8 +1063,8 @@ namespace File_Master_project
                 {
                     ListItem = new ListBoxItem();
                     ListItem.Opacity = 0.8;
-                    ListItem.Content = $"-> {GetBackupType(Backupitem)}: {Backupitem.Source.FullName} - ({Backupitem.GetBackupSize().Humanize()})";
-                    ListItem.Tag = $"{Backupitem.ID}";
+                    ListItem.Content = $"-> {BackupProcess.GetBackupType(Backupitem)}: {Backupitem.Source.FullName} - ({Backupitem.GetBackupSize().Humanize()})";
+                    ListItem.Tag = Backupitem;
                     CheckBackupitemStatus(Backupitem, ref ListItem);
                     Backuptask_listbox.Items.Add(ListItem);
                 }
@@ -1106,10 +1081,8 @@ namespace File_Master_project
             #endregion
         }
 
-        private void Display_Backupitem(string Tag)
+        private void Display_Backupitem(Backupitem Item)
         {
-            Backupitem Item = BackupProcess.GetBackupitemFromTag(Tag);
-
             #region Loads interval
             Item.Configuration.Save_interval.Humanize();
             Interval_label.Content = Item.Configuration.Save_interval.GetTime();
@@ -1213,7 +1186,7 @@ namespace File_Master_project
                 Warning2_label.Visibility = Visibility.Visible;
                 ListItem.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
             }
-            if (GetBackupType(Item) == "Unknown")
+            if (BackupProcess.GetBackupType(Item) == "Unknown")
             {
                 ListItem.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
                 Warning3_label.Visibility = Visibility.Visible;
@@ -1251,7 +1224,7 @@ namespace File_Master_project
                 Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
                 Status_label.Content = "Status: The backup item is disabled!";
             }
-            if (GetBackupType(Item) == "Unknown")
+            if (BackupProcess.GetBackupType(Item) == "Unknown")
             {
                 Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
                 Status_label.Content = "Status: The source is missing, cannot continue the backup process!";
@@ -1287,14 +1260,6 @@ namespace File_Master_project
         #endregion
 
         #endregion
-
-
-
-
-
-
-
-
 
         #region Categorization menu
 

@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace File_Master_project
 {
-    class Interval
+    public class Interval
     {
         [JsonProperty] private double Time;
         [JsonProperty] private string Unit;

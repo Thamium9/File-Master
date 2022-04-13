@@ -25,13 +25,13 @@ using WTimer = System.Threading.Timer;
 
 namespace File_Master_project
 {
-    class Backupsettings_Global
+    public class Backupsettings_Global
     {
         public bool IsTempfolderEnabled;
         public DirectoryInfo TempFolder;
     }
 
-    class Backupsettings_Local
+    public class Backupsettings_Local
     {
         [JsonProperty] public bool IsSingleCopy;
         [JsonProperty] public int NumberOfCopies; //automatically 1 if 'IsSingleCopy' is true
@@ -71,7 +71,7 @@ namespace File_Master_project
         }
     }
 
-    class Backupitem
+    public class Backupitem
     {
         [JsonProperty] public int ID { get; set; }
         [JsonIgnore] public FileSystemInfo Source { get; set; }
@@ -227,7 +227,7 @@ namespace File_Master_project
         #endregion
     }
 
-    class Backupdrive
+    public class Backupdrive
     {
         [JsonProperty] public string DriveID;
         [JsonProperty] private string DefaultVolumeLabel;
@@ -316,50 +316,18 @@ namespace File_Master_project
             Backups.Add(Item);
         }
 
-        public void RemoveBackupitem(int ID)
+        public void RemoveBackupitem(Backupitem Item)
         {
-            foreach (var item in Backups)
-            {
-                if (item.ID == ID)
-                {
-                    Backups.Remove(item);
-                    break;
-                }
-            }
+            Backups.Remove(Item);
         }
 
-        public void SetBackupitemState(bool State, int ID)
+        public void SetBackupitemState(bool State, Backupitem Item)
         {
-            foreach (var item in Backups)
-            {
-                if (item.ID == ID)
-                {
-                    item.IsEnabled = State;
-                    break;
-                }
-            }
+            Item.IsEnabled = State;
         }
         #endregion
 
         #region Get data
-        public Backupitem GetBackupitemFromID(int ID)
-        {
-            Backupitem Item = null;
-            foreach (var item in Backups)
-            {
-                if (item.ID == ID)
-                {
-                    Item = item;
-                }
-            }
-            return Item;
-        }
-
-        public int CountItems()
-        {
-            return Backups.Count();
-        }
-
         public List<int> GetIDs()
         {
             List<int> temp = new List<int>();
@@ -447,7 +415,7 @@ namespace File_Master_project
         #endregion
     }
 
-    static class BackupProcess 
+    static public class BackupProcess 
     {
         static public List<Backupdrive> Backupdrives { get; private set; }
         static public Backupsettings_Global Settings { get; set; }
@@ -481,20 +449,6 @@ namespace File_Master_project
         #endregion
 
         #region Get Data
-        static public Backupitem GetBackupitemFromTag(string Tag) //this will reference the original backupitem, so both the copy and the original will be modified on save
-        {
-            Backupitem Item = null;
-            #region GetBackupItem from Tag
-            int ID = int.Parse(Tag);
-            foreach (var Drive in Backupdrives)
-            {
-                Item = Drive.GetBackupitemFromID(ID);
-                if (Item != null) break;
-            }
-            #endregion
-            return Item;
-        }
-
         static public string GetBackupType(Backupitem Item)
         {
             if (Directory.Exists(Item.Source.FullName)) return "Folder";
@@ -519,16 +473,6 @@ namespace File_Master_project
             return disk["VolumeSerialNumber"].ToString();
         }
 
-        static public List<DriveInfo> GetAllDriveInfo()
-        {
-            List<DriveInfo> DriveInfoList = new List<DriveInfo>();
-            foreach (var Drive in AllDriveInfo)
-            {
-                DriveInfoList.Add(Drive.Value.DriveInformation);
-            }
-            return DriveInfoList;
-        }
-
         static public Backupdrive GetBackupdriveFromSerial(string Serial)
         {
             Backupdrive result = null;
@@ -546,6 +490,31 @@ namespace File_Master_project
                 if (Drive.DriveID == serial) return true;
             }
             return false;
+        }
+
+        static public int GetNewBackupID()
+        {
+            List<int> IDs = new List<int>();
+            foreach (var Drive in Backupdrives)
+            {
+                foreach (var ID in Drive.GetIDs())
+                {
+                    IDs.Add(ID);
+                }
+            }
+            int newID = 0;
+            foreach (var ID in IDs)
+            {
+                if (newID == ID)
+                {
+                    newID++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return newID;
         }
 
         #endregion
@@ -615,10 +584,9 @@ namespace File_Master_project
         #endregion
 
         #region Backup(Manualsave)
-        static public void Manualsave(string Tag)
+        static public void Manualsave(Backupitem Item)
         {
-            Backupitem ManualSave = GetBackupitemFromTag(Tag);
-            ManualSave.Backup(true);
+            Item.Backup(true);
         }
 
         static private void ManualsaveALL()

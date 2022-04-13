@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace File_Master_project
 {
-    class DiskSpace
+    public class DiskSpace
     {
         [JsonProperty] public long Bytes { get; set; }
         [JsonIgnore] public double Kilobytes { get { return (double)Bytes / Math.Pow(1024, 1); } set { Bytes = (long)(value * Math.Pow(1024, 1)); } }
