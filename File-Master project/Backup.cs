@@ -27,7 +27,7 @@ namespace File_Master_project
 {
     public class Backupsettings_Global
     {
-        public bool IsTempfolderEnabled;
+        public bool IsTempfolderEnabled = false;
         public DirectoryInfo TempFolder;
     }
 
@@ -80,7 +80,8 @@ namespace File_Master_project
         [JsonProperty] private string DestinationPath;
         [JsonProperty] public DateTime LastSaved;
         [JsonProperty] public bool IsEnabled { get; set; }
-        [JsonIgnore] public bool CanBeEnabled { get; set; } = true;
+        [JsonIgnore] public bool IsAvailable { get; set; } = true;
+        [JsonIgnore] public bool IsOutOfSpace { get; set; } = false;
         [JsonProperty] public Backupsettings_Local Configuration;
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
 
@@ -133,6 +134,13 @@ namespace File_Master_project
             if (Directory.Exists(Path)) return new DirectoryInfo(Path);
             else return new FileInfo(Path);
         }
+
+        private string GetBackupType()
+        {
+            if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
+            else if (Source.GetType() == typeof(FileInfo)) return "File";
+            else return "Unknown";
+        }
         #endregion
 
         #region Backup process (SAVEING)
@@ -143,21 +151,28 @@ namespace File_Master_project
             {
                 try
                 {
-                    if (File.Exists(Source.FullName))
+                    if(((Source.Attributes & FileAttributes.System) != FileAttributes.System))
                     {
-                        SaveFile(Source);
+                        if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+                        {
+                            SaveDirectory(Source);
+                            foreach (var ThisDirectory in Directory.GetDirectories(Source.FullName, "*", SearchOption.AllDirectories))
+                            {
+                                SaveDirectory(Main.GetPathInfo(ThisDirectory));
+                            }         
+                        }
+                        else
+                        {
+                            SaveFile(Source);
+                        }
+                        LastSaved = DateTime.Now;
+                        success = true;
+                        BackupProcess.Upload_Backupinfo();
                     }
                     else
                     {
-                        SaveDirectory(Source);
-                        foreach (var ThisDirectory in Directory.GetDirectories(Source.FullName, "*", SearchOption.AllDirectories))
-                        {
-                            SaveDirectory(Main.GetPathInfo(ThisDirectory));
-                        }
+                        MessageBox.Show("System files are not allowed to be accessed!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                    LastSaved = DateTime.Now;
-                    success = true;
-                    BackupProcess.Upload_Backupinfo();
                 }
                 catch (Exception ex)
                 {
@@ -165,8 +180,8 @@ namespace File_Master_project
                 }
                 if (isManual)
                 {
-                    if (success) MessageBox.Show("The operation was successful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Information);
-                    else MessageBox.Show("The operation was unsuccessful!", "Manual Save", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (success) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             StartTimer();
@@ -189,10 +204,11 @@ namespace File_Master_project
         private bool CheckPermission(bool isManual)
         {
             bool result = true;
-            if(!isManual)
+            if (!isManual)
             {
                 if (!IsEnabled) result = false;
             }
+            if (!IsAvailable) result = false;
             return result;
         }
 
@@ -220,9 +236,179 @@ namespace File_Master_project
         #endregion
 
         #region UI
-        public void SetListItem(ref ListItem item)
+        public ListBoxItem GetListBoxItem()
         {
+            ListBoxItem ListItem = new ListBoxItem();
+            ListItem.Opacity = 0.8;
+            ListItem.Content = $"-> {GetBackupType()}: {Source.FullName} - ({GetBackupSize().Humanize()})";
+            ListItem.Tag = this;
+            #region Item color
+            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            if (!IsEnabled)
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
+            }
+            if (!Source.Exists)
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
+            }
+            else if (IsOutOfSpace || !IsAvailable) //destination is unusable
+            {
+                if (BackupProcess.Settings.IsTempfolderEnabled)//Can save to temp-drive temp
+                {
+                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                }
+                else
+                {
+                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                }
+            }
+            if (false)//unknown issue
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+            }
+            #endregion
+            return ListItem;
+        }
 
+        public void SetStatusInfo(ref Label Status)
+        {
+            #region Default status
+            Status.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            Status.Content = "Status: OK!";
+            #endregion
+            if (!IsEnabled)
+            {
+                Status.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
+                Status.Content = "Status: The backup item is disabled!";
+            }
+            if (!Source.Exists)
+            {
+                Status.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
+                Status.Content = "Status: The source is missing!";
+            }
+            else if(IsOutOfSpace || !IsAvailable) //destination is unusable
+            {
+                if (BackupProcess.Settings.IsTempfolderEnabled)//Can save to temp-drive temp
+                {
+                    Status.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                    Status.Content = "Status: OK (alternative destination)!";
+                }
+                else if (!IsAvailable)
+                {
+                    Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                    Status.Content = "Status: The destination is unreachable!";
+                }
+                else
+                {
+                    Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                    Status.Content = "Status: The backup drive has reached its space limit!";
+                }
+            }
+            else if (false)//unknown issue
+            {
+                Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                Status.Content = "Status: Unknown issue has occurred!";
+            }
+        }
+
+        public void SetDestinationTBox(ref TextBox Dest)
+        {
+            Dest.Text = Destination.FullName;
+            Dest.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            if (!IsAvailable || IsOutOfSpace)
+            {
+                if (BackupProcess.Settings.IsTempfolderEnabled)
+                {
+                    Dest.Text = BackupProcess.Settings.TempFolder.FullName;
+                    Dest.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                }
+                else
+                {
+                    Dest.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                }
+            }
+        }
+
+        public void UpdateWarnings(ref Label Warning2, ref Label Warning3, ref Label Warning4)
+        {
+            if (!IsEnabled) Warning2.Visibility = Visibility.Visible;
+            if (!Source.Exists) Warning3.Visibility = Visibility.Visible;
+            if (!IsAvailable || IsOutOfSpace) Warning4.Visibility = Visibility.Visible;
+        }
+
+        public void EnableActionButtons(ref Button Remove, ref Button Enable, ref Button Disable, ref Button Modify, ref Button Repair, ref Button Restore, ref Button ManualSave, ref Button ViewDestination)
+        {
+            #region Remove item
+            Remove.IsEnabled = true;
+            Remove.Opacity = 1;
+            #endregion
+            #region Enable/Disable backup
+            if (IsAvailable && !IsOutOfSpace)
+            {
+                if (!IsEnabled)
+                {
+                    Disable.Visibility = Visibility.Hidden;
+                    Enable.IsEnabled = true;
+                    Enable.Visibility = Visibility.Visible;
+                    Enable.Opacity = 1;
+                }
+                else
+                {
+                    Disable.Visibility = Visibility.Visible;
+                    Enable.Visibility = Visibility.Hidden;
+                }              
+            }
+            else
+            {
+                Disable.Visibility = Visibility.Hidden;
+                Enable.IsEnabled = false;
+                Enable.Visibility = Visibility.Visible;
+                Enable.Opacity = 0.5;
+            }
+            #endregion
+            #region Configuration/Repair/Restore
+            if (!Source.Exists)
+            {
+                Repair.Visibility = Visibility.Visible;
+                Modify.Visibility = Visibility.Hidden;
+                Restore.Opacity = 1;
+                Restore.IsEnabled = true;
+            }
+            else
+            {
+                Modify.Opacity = 1;
+                Modify.Visibility = Visibility.Visible;
+                Modify.IsEnabled = true;
+                Repair.Visibility = Visibility.Hidden;
+                Restore.Opacity = 0.5;
+                Restore.IsEnabled = false;
+            }
+            #endregion
+            #region Manual save
+            if (IsAvailable && !IsOutOfSpace)
+            {
+                ManualSave.IsEnabled = true;
+                ManualSave.Opacity = 1;
+            }
+            else
+            {
+                ManualSave.IsEnabled = false;
+                ManualSave.Opacity = 0.5;
+            }
+            #endregion
+            #region ViewDestination
+            if (IsAvailable)
+            {
+                ViewDestination.IsEnabled = true;
+                ViewDestination.Opacity = 1;
+            }
+            else
+            {
+                ViewDestination.IsEnabled = false;
+                ViewDestination.Opacity = 0.5;
+            }
+            #endregion
         }
         #endregion
     }
@@ -232,8 +418,10 @@ namespace File_Master_project
         [JsonProperty] public string DriveID;
         [JsonProperty] private string DefaultVolumeLabel;
         [JsonIgnore] public DriveInfo DriveInformation;
-        [JsonIgnore] public bool IsAvailable;
-        [JsonIgnore] public bool IsOutOfSpace;
+        [JsonIgnore] public bool IsAvailable { get { return _IsAvailable; } private set { _IsAvailable = value; SetBackupsAvailability(); } }
+        [JsonIgnore] private bool _IsAvailable;
+        [JsonIgnore] public bool IsOutOfSpace { get { return _IsOutOfSpace; } private set { _IsOutOfSpace = value; SetBackupsAvailableSpaceState(); } }
+        [JsonIgnore] private bool _IsOutOfSpace;
         [JsonProperty] public DiskSpace SizeLimit { get; set; }
         [JsonProperty] public List<Backupitem> Backups { get; private set; } = new List<Backupitem>();
 
@@ -270,7 +458,7 @@ namespace File_Master_project
                     DefaultVolumeLabel = DriveInformation.VolumeLabel;
                 }
             }
-            if (DriveInformation == null) IsAvailable = false;            
+            if (DriveInformation == null) IsAvailable = false;
         }
 
         public void LimitCheck()
@@ -325,6 +513,22 @@ namespace File_Master_project
         {
             Item.IsEnabled = State;
         }
+
+        public void SetBackupsAvailableSpaceState()
+        {
+            foreach (var item in Backups)
+            {
+                item.IsOutOfSpace = IsOutOfSpace;
+            }
+        }
+
+        private void SetBackupsAvailability()
+        {
+            foreach (var item in Backups)
+            {
+                item.IsAvailable = IsAvailable;
+            }
+        }
         #endregion
 
         #region Get data
@@ -377,7 +581,6 @@ namespace File_Master_project
                 item.Backup(true);
             }
         }
-
         #endregion
 
         #region UI
@@ -449,13 +652,6 @@ namespace File_Master_project
         #endregion
 
         #region Get Data
-        static public string GetBackupType(Backupitem Item)
-        {
-            if (Directory.Exists(Item.Source.FullName)) return "Folder";
-            else if (File.Exists(Item.Source.FullName)) return "File";
-            else return "Unknown";
-        }
-
         static public string GetHardDiskDSerialNumber(string drive)//not my code : https://ukacademe.com/TutorialExamples/CSharp/Get_Serial_Number_of_Hard_Drive
         {
             //Check to see if the user provided a drive letter
@@ -516,7 +712,6 @@ namespace File_Master_project
             }
             return newID;
         }
-
         #endregion
 
         #region Load Data
@@ -527,6 +722,11 @@ namespace File_Master_project
             try
             {
                 Backupdrives = JsonConvert.DeserializeObject<List<Backupdrive>>(Backupinfo);
+                if (Backupdrives == null)
+                {
+                    Backupdrives = new List<Backupdrive>();
+                    throw null;
+                }
             }
             catch (Exception e)
             {

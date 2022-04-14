@@ -149,7 +149,7 @@ namespace File_Master_project
                 Upload_Backupinfo(DataBackupdrives);*/
                 #endregion
 
-                Display_Backupitems();
+                Display_Backups();
             }
             else
             {
@@ -175,7 +175,7 @@ namespace File_Master_project
                     Main_window.Activate();
                     Menu = "Backup";
 
-                    Display_Backupitems();
+                    Display_Backups();
                 }
                 #region Runtime Error
                 catch (Exception e)
@@ -410,6 +410,10 @@ namespace File_Master_project
             UpdateSubmenu2();
         }
 
+        private void ViewDestination_button_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(GetSelectedBackupitem().Destination.FullName);
+        }
         #endregion
 
         #region Submenu1
@@ -993,7 +997,9 @@ namespace File_Master_project
             Enablebackup_button.IsEnabled = false;
             Enablebackup_button.Visibility = Visibility.Visible;
             Enablebackup_button.Opacity = 0.5;
-            Display_Backupitems();
+            ViewDestination_button.IsEnabled = false;
+            ViewDestination_button.Opacity = 0.5;
+            Display_Backups();
         }
 
         public void Update_Backupmenu()
@@ -1001,7 +1007,7 @@ namespace File_Master_project
             if(Backuptask_listbox.SelectedIndex!=-1)
             {
                 Backupitem Item = GetSelectedBackupitem();
-                Display_Backupitems();
+                Display_Backups();
                 for (int i = 0; i < Backuptask_listbox.Items.Count; i++)
                 {
                     ListBoxItem temp = (ListBoxItem)Backuptask_listbox.Items[i];
@@ -1012,14 +1018,15 @@ namespace File_Master_project
             }
             else
             {
-                Display_Backupitems();
+                Display_Backups();
             }
         }
 
         #region Backup Data-Display
-        private void Display_Backupitems()
+        private void Display_Backups()
         {
             Backuptask_listbox.Items.Clear();
+            Backuptask_listbox.IsHitTestVisible = true;
             Warning2_label.Visibility = Visibility.Hidden;
             Warning3_label.Visibility = Visibility.Hidden;
             Warning4_label.Visibility = Visibility.Hidden;
@@ -1061,23 +1068,41 @@ namespace File_Master_project
                 #region Add backupitems of backupdrive
                 foreach (var Backupitem in Drive.Backups)
                 {
-                    ListItem = new ListBoxItem();
-                    ListItem.Opacity = 0.8;
-                    ListItem.Content = $"-> {BackupProcess.GetBackupType(Backupitem)}: {Backupitem.Source.FullName} - ({Backupitem.GetBackupSize().Humanize()})";
-                    ListItem.Tag = Backupitem;
-                    CheckBackupitemStatus(Backupitem, ref ListItem);
+                    ListItem = Backupitem.GetListBoxItem();
                     Backuptask_listbox.Items.Add(ListItem);
+                    Backupitem.UpdateWarnings(ref Warning2_label, ref Warning3_label, ref Warning4_label);
                 }
                 #endregion
             }
             #region Add 'Add new task' button
-            ListItem = new ListBoxItem();
-            ListItem.Content = "➕ Add new task";
-            ListItem.FontWeight = FontWeights.Normal;
-            ListItem.HorizontalAlignment = HorizontalAlignment.Left;
-            ListItem.Tag = "add";
-            ListItem.MouseLeftButtonUp += new MouseButtonEventHandler(Additem_button_Click);
-            Backuptask_listbox.Items.Add(ListItem);
+            if(BackupProcess.Backupdrives.Count()>0)
+            {
+                ListItem = new ListBoxItem();
+                ListItem.Content = "➕ Add new task";
+                ListItem.FontWeight = FontWeights.Normal;
+                ListItem.HorizontalAlignment = HorizontalAlignment.Left;
+                ListItem.Tag = "add";
+                ListItem.MouseLeftButtonUp += new MouseButtonEventHandler(Additem_button_Click);
+                Backuptask_listbox.Items.Add(ListItem);
+            }
+            else
+            {
+                ListItem = new ListBoxItem();
+                DockPanel container = new DockPanel();
+                container.Height = 270;
+                container.Width = 475;
+                container.IsEnabled = false;
+                ListItem.Content = "Go to 'Manage backup drives' to allow\n    backup operations on local drives";
+                ListItem.FontWeight = FontWeights.Normal;
+                ListItem.FontSize = 15;
+                ListItem.Opacity = 0.5;
+                ListItem.VerticalAlignment = VerticalAlignment.Center;
+                ListItem.HorizontalAlignment = HorizontalAlignment.Center;
+                ListItem.VerticalContentAlignment = VerticalAlignment.Center;
+                container.Children.Add(ListItem);
+                Backuptask_listbox.Items.Add(container);
+                Backuptask_listbox.IsHitTestVisible = false;
+            }
             #endregion
         }
 
@@ -1089,7 +1114,7 @@ namespace File_Master_project
             #endregion
 
             #region Loads destination
-            Destination_textbox.Text = Item.Destination.FullName;
+            Item.SetDestinationTBox(ref Destination_textbox);
             #endregion
 
             #region Loads Smart save
@@ -1103,157 +1128,16 @@ namespace File_Master_project
             #endregion
 
             #region Get status
-            bool CanRunBackupProcess;
-            bool MissingSource;
-            LoadBackupitemStatus(Item, out CanRunBackupProcess, out MissingSource);
+            Item.SetStatusInfo(ref Status_label);
             #endregion
 
             #region Loads backup file size
             Backupfilesize_label.Content = $"Backup file size: {Item.GetBackupSize().Humanize()}";
             #endregion
 
-            EnableActionButtons(Item, CanRunBackupProcess, MissingSource);
-        }
-
-        private void EnableActionButtons(Backupitem Item, bool CanRunBackupProcess, bool MissingSource)
-        {
-            #region Remove item
-            Removeitem_button.IsEnabled = true;
-            Removeitem_button.Opacity = 1;
+            #region Buttons
+            Item.EnableActionButtons(ref Removeitem_button, ref Enablebackup_button, ref Disablebackup_button, ref Modification_button, ref Repair_button, ref Restorefiles_button, ref Manualsave_button, ref ViewDestination_button);
             #endregion
-            #region Enable/Disable backup
-            if (Item.IsEnabled)
-            {
-                Enablebackup_button.Visibility = Visibility.Hidden;
-                Disablebackup_button.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                Disablebackup_button.Visibility = Visibility.Hidden;
-                if (CanRunBackupProcess)
-                {
-                    Enablebackup_button.IsEnabled = true;
-                    Enablebackup_button.Visibility = Visibility.Visible;
-                    Enablebackup_button.Opacity = 1;
-                }
-                else
-                {
-                    Enablebackup_button.IsEnabled = false;
-                    Enablebackup_button.Visibility = Visibility.Visible;
-                    Enablebackup_button.Opacity = 0.5;
-                }
-            }
-            #endregion
-            #region Configuration/Repair/Restore
-            if (MissingSource)
-            {
-                Repair_button.Visibility = Visibility.Visible;
-                Modification_button.Visibility = Visibility.Hidden;
-                Restorefiles_button.Opacity = 1;
-                Restorefiles_button.IsEnabled = true;
-            }
-            else
-            {
-                Modification_button.Opacity = 1;
-                Modification_button.Visibility = Visibility.Visible;
-                Modification_button.IsEnabled = true;
-                Repair_button.Visibility = Visibility.Hidden;
-                Restorefiles_button.Opacity = 0.5;
-                Restorefiles_button.IsEnabled = false;
-            }
-            #endregion
-            #region Manual save
-            if (CanRunBackupProcess)
-            {
-                Manualsave_button.IsEnabled = true;
-                Manualsave_button.Opacity = 1;
-            }
-            else
-            {
-                Manualsave_button.IsEnabled = false;
-                Manualsave_button.Opacity = 0.5;
-            }
-            #endregion
-        }
-
-        private void CheckBackupitemStatus(Backupitem Item, ref ListBoxItem ListItem)//Sets warning labels, and item color
-        {
-            #region Default
-            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            #endregion
-            if (!Item.IsEnabled)
-            {
-                Warning2_label.Visibility = Visibility.Visible;
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-            }
-            if (BackupProcess.GetBackupType(Item) == "Unknown")
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-                Warning3_label.Visibility = Visibility.Visible;
-            }
-            if (false)//unknown issue
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                Warning4_label.Visibility = Visibility.Visible;
-            }
-            if (!Item.CanBeEnabled)
-            {
-                if (false)//Can save to temp-drive temp
-                {
-                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                }
-                else
-                {
-                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Warning4_label.Visibility = Visibility.Visible;
-                }
-            }
-        }
-
-        private void LoadBackupitemStatus(Backupitem Item, out bool CanRunBackupProcess, out bool MissingSource)//Sets Status label, and returns if it can be enabled
-        {
-            #region Default status
-            CanRunBackupProcess = true;
-            MissingSource = false;
-            Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            Status_label.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            Status_label.Content = "Status: OK!";
-            #endregion
-            if (!Item.IsEnabled)
-            {
-                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-                Status_label.Content = "Status: The backup item is disabled!";
-            }
-            if (BackupProcess.GetBackupType(Item) == "Unknown")
-            {
-                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-                Status_label.Content = "Status: The source is missing, cannot continue the backup process!";
-                CanRunBackupProcess = false;
-                MissingSource = true;
-            }
-            if (!Item.CanBeEnabled)
-            {
-                if (false)//Can save to temp-drive temp
-                {
-                    Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                    Status_label.Content = "Status: OK (alternative destination)!";
-                    CanRunBackupProcess = false;
-                }
-                else
-                {
-                    Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status_label.Content = "Status: The destination is unreachable, cannot continue the backup process!";
-                    CanRunBackupProcess = false;
-                }
-            }
-            else if (false)//unknown issue
-            {
-                Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                Status_label.Content = "Status: Cannot continue the backup process due to unknown circumstances!";
-                CanRunBackupProcess = false;
-            }
         }
         #endregion
 
