@@ -508,7 +508,7 @@ namespace File_Master_project
             bool SmartSave = Smartsave_checkbox.IsChecked.Value;
             bool UseMaxStorageData = false;
             int MaxStorageData = 0; //no value if 'UseMaxStorageData' is false
-            Interval RetryWaitTime = new Interval("5 min");
+            Interval RetryWaitTime = new Interval("5 minute");
             int MaxNumberOfRetries = 3;
             bool PopupOnFail = false;
             bool FileCompression = Compress_checkbox.IsChecked.Value;
@@ -1124,7 +1124,18 @@ namespace File_Master_project
 
             #region Loads Last saved
             if (Item.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
-            else Lastsaved_label.Content = $"Last saved: {Item.LastSaved}";
+            else
+            {
+                Interval lastsaved = new Interval(DateTime.Now - Item.LastSaved);
+                if (lastsaved.IsPlural())
+                {
+                    Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()}s ago";
+                }
+                else
+                {
+                    Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()} ago";
+                }
+            }
             #endregion
 
             #region Get status

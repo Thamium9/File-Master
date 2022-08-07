@@ -29,9 +29,16 @@ namespace File_Master_project
             Unit = temp[1];
         }
 
-        public double Convert_to_min()
+        public Interval(TimeSpan time)
         {
-            if (Unit == "min")
+            Time = Math.Max((double)time.TotalMinutes, 1);
+            Unit = "minute";
+            Humanize();
+        }
+
+        private double Convert_to_min()
+        {
+            if (Unit == "minute")
             {
                 return Time;
             }
@@ -45,9 +52,9 @@ namespace File_Master_project
             }
         }
 
-        public double Convert_to_hour()
+        private double Convert_to_hour()
         {
-            if (Unit == "min")
+            if (Unit == "minute")
             {
                 return (Time / 60);
             }
@@ -61,9 +68,9 @@ namespace File_Master_project
             }
         }
 
-        public double Convert_to_day()
+        private double Convert_to_day()
         {
-            if (Unit == "min")
+            if (Unit == "minute")
             {
                 return (Time / 60 / 24);
             }
@@ -86,17 +93,17 @@ namespace File_Master_project
         {
             if (Convert_to_min() < 60)
             {
-                Time = Convert_to_min();
-                Unit = "min";
+                Time = Math.Floor(Convert_to_min());
+                Unit = "minute";
             }
             else if (Convert_to_hour() < 24)
             {
-                Time = Convert_to_hour();
+                Time = Math.Floor(Convert_to_hour());
                 Unit = "hour";
             }
             else
             {
-                Time = Convert_to_day();
+                Time = Math.Floor(Convert_to_day());
                 Unit = "day";
             }
         }
@@ -104,6 +111,12 @@ namespace File_Master_project
         public string GetTime()
         {
             return $"{Time} {Unit}";
+        }
+
+        public bool IsPlural()
+        {
+            if (Time == 1) return false;
+            else return true;
         }
     }
 }

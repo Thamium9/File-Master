@@ -398,7 +398,7 @@ namespace File_Master_project
             }
             #endregion
             #region ViewDestination
-            if (IsAvailable)
+            if (IsAvailable && Destination.Exists)
             {
                 ViewDestination.IsEnabled = true;
                 ViewDestination.Opacity = 1;
@@ -432,8 +432,14 @@ namespace File_Master_project
             Backups = backups;
             SizeLimit = sizeLimit;
             ValidityCheck();
-            LimitCheck();
-            SizeLimitCheck();
+            if (IsAvailable)
+            {
+                if(SizeLimitCheck(out double limit))
+                {
+                    SizeLimit.Gigabytes = limit;
+                }               
+                LimitCheck();
+            }           
         }
 
         public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
@@ -442,7 +448,7 @@ namespace File_Master_project
             DefaultVolumeLabel = defaultVolumeLabel;
             SizeLimit = sizeLimit;
             ValidityCheck();
-            LimitCheck();
+            if(IsAvailable) LimitCheck();
             BackupProcess.Upload_Backupinfo();
         }
 
@@ -463,32 +469,19 @@ namespace File_Master_project
 
         public void LimitCheck()
         {
-            if (SizeLimit.Bytes > 0 && GetBackupSize().Bytes > SizeLimit.Bytes) IsOutOfSpace = true;
+            if ((SizeLimit.Bytes > 0 && GetBackupSize().Bytes > SizeLimit.Bytes) || ((double)DriveInformation.AvailableFreeSpace < (double)DriveInformation.TotalSize * 0.1)) IsOutOfSpace = true;
             else IsOutOfSpace = false;
         }
 
         public bool SizeLimitCheck(out double result)
         {
             result = 0;
-            if (((double)DriveInformation.TotalSize * 0.1) > ((double)DriveInformation.AvailableFreeSpace - SizeLimit.Bytes))
+            long SizeLimitReamining = SizeLimit.Bytes - GetBackupSize().Bytes;
+            if (((double)DriveInformation.TotalSize * 0.1) > (DriveInformation.AvailableFreeSpace - SizeLimitReamining))
             {
                 SizeLimit.Bytes = (long)Math.Max((DriveInformation.AvailableFreeSpace - ((double)DriveInformation.TotalSize * 0.1)), 0);
                 SizeLimit.Gigabytes = Math.Floor(SizeLimit.Gigabytes);
                 result = SizeLimit.Gigabytes;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public bool SizeLimitCheck()
-        {
-            if (((double)DriveInformation.TotalSize * 0.1) > ((double)DriveInformation.AvailableFreeSpace - SizeLimit.Bytes))
-            {
-                SizeLimit.Bytes = (long)Math.Max((DriveInformation.AvailableFreeSpace - ((double)DriveInformation.TotalSize * 0.1)), 0);
-                SizeLimit.Gigabytes = Math.Floor(SizeLimit.Gigabytes);
                 return true;
             }
             else

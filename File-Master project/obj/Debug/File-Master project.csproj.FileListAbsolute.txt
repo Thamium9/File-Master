@@ -1,4 +1,3 @@
-D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csprojAssemblyReference.cache
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\MainWindow.g.cs
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\App.g.cs
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\MainWindow.baml
@@ -18,3 +17,5 @@ D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Hardcodet.Notif
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.CopyComplete
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json.dll
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json.xml
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.AssemblyReference.cache
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.SuggestedBindingRedirects.cache

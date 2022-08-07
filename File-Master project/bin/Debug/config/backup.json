@@ -1,20 +1,20 @@
 [
   {
-    "DriveID": "3A380DA4",
-    "DefaultVolumeLabel": "HDD-K02",
+    "DriveID": "4CCE358A",
+    "DefaultVolumeLabel": "HDD",
     "SizeLimit": {
-      "Bytes": 300647710720
+      "Bytes": 53687091200
     },
     "Backups": [
       {
-        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
-        "DestinationPath": "C:\\Users\\Dani PC\\Desktop\\Destination",
+        "SourcePath": "H:\\Filmek",
+        "DestinationPath": "D:\\Biztonsági mentések",
         "LastSaved": "0001-01-01T00:00:00",
         "Configuration": {
           "IsSingleCopy": true,
           "NumberOfCopies": 1,
           "Save_interval": {
-            "Time": 10.0,
+            "Time": 5.0,
             "Unit": "day"
           },
           "AbsoluteCopy": true,
@@ -26,7 +26,7 @@
           "MaxStorageData": 0,
           "RetryWaitTime": {
             "Time": 5.0,
-            "Unit": "min"
+            "Unit": "minute"
           },
           "MaxNumberOfRetries": 3,
           "PopupOnFail": false,
@@ -36,134 +36,9 @@
         "IsEnabled": true
       },
       {
-        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
-        "DestinationPath": "E:\\Telepítők",
-        "LastSaved": "0001-01-01T00:00:00",
-        "Configuration": {
-          "IsSingleCopy": true,
-          "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 5.0,
-            "Unit": "hour"
-          },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "min"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        },
-        "ID": 1,
-        "IsEnabled": false
-      },
-      {
-        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source\\Torrentek",
-        "DestinationPath": "E:\\Telepítők",
-        "LastSaved": "0001-01-01T00:00:00",
-        "Configuration": {
-          "IsSingleCopy": true,
-          "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 10.0,
-            "Unit": "hour"
-          },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "min"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        },
-        "ID": 2,
-        "IsEnabled": false
-      },
-      {
-        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
-        "DestinationPath": "C:\\Users\\Dani PC\\Desktop\\Destination\\Source",
-        "LastSaved": "2022-04-13T01:24:01.4987672+02:00",
-        "Configuration": {
-          "IsSingleCopy": true,
-          "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 10.0,
-            "Unit": "hour"
-          },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "min"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        },
-        "ID": 3,
-        "IsEnabled": true
-      },
-      {
-        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
-        "DestinationPath": "J:\\Destination",
-        "LastSaved": "2022-04-13T23:02:24.1385787+02:00",
-        "Configuration": {
-          "IsSingleCopy": true,
-          "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 5.0,
-            "Unit": "hour"
-          },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "min"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        },
-        "ID": 4,
-        "IsEnabled": true
-      }
-    ]
-  },
-  {
-    "DriveID": "02466E75",
-    "DefaultVolumeLabel": "HDD-K01",
-    "SizeLimit": {
-      "Bytes": 0
-    },
-    "Backups": [
-      {
-        "SourcePath": "C:\\Users\\Dani PC\\Desktop\\Source",
-        "DestinationPath": "H:\\Biztonsági mentések\\Destination",
-        "LastSaved": "2022-04-14T20:27:43.344393+02:00",
+        "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
+        "DestinationPath": "D:\\TEMP",
+        "LastSaved": "2022-08-07T17:30:06.9115363+02:00",
         "Configuration": {
           "IsSingleCopy": true,
           "NumberOfCopies": 1,
@@ -180,14 +55,14 @@
           "MaxStorageData": 0,
           "RetryWaitTime": {
             "Time": 5.0,
-            "Unit": "min"
+            "Unit": "minute"
           },
           "MaxNumberOfRetries": 3,
           "PopupOnFail": false,
           "FileCompression": false
         },
-        "ID": 6,
-        "IsEnabled": false
+        "ID": 1,
+        "IsEnabled": true
       }
     ]
   }
