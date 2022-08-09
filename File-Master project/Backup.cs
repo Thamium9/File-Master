@@ -76,12 +76,12 @@ namespace File_Master_project
         [JsonProperty] public int ID { get; set; }
         [JsonIgnore] public FileSystemInfo Source { get; set; }
         [JsonProperty] private string SourcePath;
-        [JsonIgnore] public FileSystemInfo Destination;
+        [JsonIgnore] public DirectoryInfo Destination;
         [JsonProperty] private string DestinationPath;
         [JsonProperty] public DateTime LastSaved;
         [JsonProperty] public bool IsEnabled { get; set; }
-        [JsonIgnore] public bool IsAvailable { get; set; } = true;
-        [JsonIgnore] public bool IsOutOfSpace { get; set; } = false;
+        [JsonIgnore] public bool IsAvailable { get {return GetBackupdrive().IsAvailable;} }
+        [JsonIgnore] public bool IsOutOfSpace { get { return GetBackupdrive().IsOutOfSpace; } }
         [JsonProperty] public Backupsettings_Local Configuration;
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
 
@@ -93,7 +93,7 @@ namespace File_Master_project
             LastSaved = lastSaved;
             IsEnabled = isEnabled;
             Configuration = configuration;
-            Destination = GetPathInfo(DestinationPath);
+            Destination = new DirectoryInfo(DestinationPath);
             Source = GetPathInfo(SourcePath);
             // start timer
         }
@@ -140,6 +140,12 @@ namespace File_Master_project
             if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
             else if (Source.GetType() == typeof(FileInfo)) return "File";
             else return "Unknown";
+        }
+
+        public Backupdrive GetBackupdrive()
+        {
+            DriveInfo temp = new DriveInfo(Destination.Root.FullName);
+            return BackupProcess.GetBackupdriveFromDriveInfo(temp);
         }
         #endregion
 
@@ -240,7 +246,7 @@ namespace File_Master_project
         {
             ListBoxItem ListItem = new ListBoxItem();
             ListItem.Opacity = 0.8;
-            ListItem.Content = $"-> {GetBackupType()}: {Source.FullName} - ({GetBackupSize().Humanize()})";
+            ListItem.Content = $"◍ {GetBackupType()}: {Source.FullName} - ({GetBackupSize().Humanize()})";
             ListItem.Tag = this;
             #region Item color
             ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
@@ -418,10 +424,8 @@ namespace File_Master_project
         [JsonProperty] public string DriveID;
         [JsonProperty] private string DefaultVolumeLabel;
         [JsonIgnore] public DriveInfo DriveInformation;
-        [JsonIgnore] public bool IsAvailable { get { return _IsAvailable; } private set { _IsAvailable = value; SetBackupsAvailability(); } }
-        [JsonIgnore] private bool _IsAvailable;
-        [JsonIgnore] public bool IsOutOfSpace { get { return _IsOutOfSpace; } private set { _IsOutOfSpace = value; SetBackupsAvailableSpaceState(); } }
-        [JsonIgnore] private bool _IsOutOfSpace;
+        [JsonIgnore] public bool IsAvailable { get; private set; }
+        [JsonIgnore] public bool IsOutOfSpace { get; private set; }
         [JsonProperty] public DiskSpace SizeLimit { get; set; }
         [JsonProperty] public List<Backupitem> Backups { get; private set; } = new List<Backupitem>();
 
@@ -437,9 +441,9 @@ namespace File_Master_project
                 if(SizeLimitCheck(out double limit))
                 {
                     SizeLimit.Gigabytes = limit;
-                }               
+                }
                 LimitCheck();
-            }           
+            }
         }
 
         public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
@@ -447,13 +451,13 @@ namespace File_Master_project
             DriveID = driveID;
             DefaultVolumeLabel = defaultVolumeLabel;
             SizeLimit = sizeLimit;
-            ValidityCheck();
+            ValidityCheck();           
             if(IsAvailable) LimitCheck();
             BackupProcess.Upload_Backupinfo();
         }
 
         #region Checks
-        public void ValidityCheck()
+        public void ValidityCheck() // sets the IsAvailable value
         {
             IsAvailable = true;
             foreach (var thisDriveInfo in BackupProcess.AllDriveInfo)
@@ -462,18 +466,19 @@ namespace File_Master_project
                 {
                     DriveInformation = thisDriveInfo.Value.DriveInformation;
                     DefaultVolumeLabel = DriveInformation.VolumeLabel;
+                    UpdateBackupitemDestination();
                 }
             }
             if (DriveInformation == null) IsAvailable = false;
         }
 
-        public void LimitCheck()
+        public void LimitCheck()// sets the isOutOfSpace value
         {
             if ((SizeLimit.Bytes > 0 && GetBackupSize().Bytes > SizeLimit.Bytes) || ((double)DriveInformation.AvailableFreeSpace < (double)DriveInformation.TotalSize * 0.1)) IsOutOfSpace = true;
             else IsOutOfSpace = false;
         }
 
-        public bool SizeLimitCheck(out double result)
+        public bool SizeLimitCheck(out double result) //returns true if the result is a new limit, and false if no adjustment is needed
         {
             result = 0;
             long SizeLimitReamining = SizeLimit.Bytes - GetBackupSize().Bytes;
@@ -488,7 +493,7 @@ namespace File_Master_project
             {
                 return false;
             }
-        }
+        }        
         #endregion
 
         #region Modify backupitems
@@ -507,19 +512,13 @@ namespace File_Master_project
             Item.IsEnabled = State;
         }
 
-        public void SetBackupsAvailableSpaceState()
+        private void UpdateBackupitemDestination()
         {
             foreach (var item in Backups)
             {
-                item.IsOutOfSpace = IsOutOfSpace;
-            }
-        }
-
-        private void SetBackupsAvailability()
-        {
-            foreach (var item in Backups)
-            {
-                item.IsAvailable = IsAvailable;
+                StringBuilder value = new StringBuilder(item.Destination.FullName);
+                value[0] = DriveInformation.Name[0];
+                item.Destination = new DirectoryInfo(value.ToString());
             }
         }
         #endregion
@@ -668,6 +667,19 @@ namespace File_Master_project
             foreach (var Drive in Backupdrives)
             {
                 if (Drive.DriveID == Serial) result = Drive;
+            }
+            return result;
+        }
+
+        static public Backupdrive GetBackupdriveFromDriveInfo(DriveInfo DriveInformation)
+        {
+            Backupdrive result = null;
+            foreach (var Drive in Backupdrives)
+            {
+                if(DriveInformation.Name == Drive.DriveInformation.Name)
+                {
+                    result = Drive;
+                }
             }
             return result;
         }

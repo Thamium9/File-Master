@@ -358,14 +358,19 @@ namespace File_Master_project
             HideAllMenu();
             Backupsubmenu1_grid.Visibility = Visibility.Visible;
             Menu = "Backup.sub1";
-            Destinationinput_textbox.IsEnabled = false;
-            Sourceinput_textbox.IsEnabled = false;
-            Intervalselection_combobox.Visibility = Visibility.Hidden;
-            Interval2_label.Visibility = Visibility.Visible;
-            Newitemapply_button.Visibility = Visibility.Hidden;
+            Modifyitemapply_button.Visibility = Visibility.Visible;
 
             #region Data load
-
+            Backupitem temp = GetSelectedBackupitem();
+            Destinationinput_textbox.Text = temp.Destination.ToString();
+            Sourceinput_textbox.Text = temp.Source.ToString();
+            foreach (ComboBoxItem item in Intervalselection_combobox.Items)
+            {
+                if(item.Tag.ToString() == temp.Configuration.Save_interval.GetTime())
+                {
+                    Intervalselection_combobox.SelectedItem = item;
+                }
+            }
             #endregion
         }
 
@@ -453,6 +458,28 @@ namespace File_Master_project
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     Backupdrive Target = (Backupdrive)CI.Tag;
                     Target.AddBackupitem(CreateBackupitem(Settings));
+                    BackupProcess.Upload_Backupinfo();
+                    Reset_Backupmenu();
+                    Reset_BackupSubmenu1();
+                }
+            }
+        }
+
+        private void Updateitemapply_button_Click(object sender, RoutedEventArgs e)
+        {
+            if(CheckInfo())
+            {
+                if (MessageBox.Show("Are you sure you want to modify this item?", "Modify", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
+                {
+                    HideAllMenu();
+                    Backup_grid.Visibility = Visibility.Visible;
+                    Menu = "Backup";
+                    Backupitem temp = GetSelectedBackupitem();
+                    Backupsettings_Local Settings = CreateBackupsettings_Local();
+                    /*ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
+                    Backupdrive Target = (Backupdrive)CI.Tag;
+                    Target.AddBackupitem(CreateBackupitem(Settings));*/
+                    temp = CreateBackupitem(Settings);
                     BackupProcess.Upload_Backupinfo();
                     Reset_Backupmenu();
                     Reset_BackupSubmenu1();
@@ -565,10 +592,8 @@ namespace File_Master_project
             Destinationinput_textbox.IsEnabled = true;
             Sourceinput_textbox.IsEnabled = true;
             Intervalselection_combobox.Visibility = Visibility.Visible;
-            Interval2_label.Visibility = Visibility.Hidden;
-            Interval2_label.Content = "";
             Newitemapply_button.Visibility = Visibility.Hidden;
-            Replaceitemapply_button.Visibility = Visibility.Hidden;
+            Modifyitemapply_button.Visibility = Visibility.Hidden;
             Reset_BackupSubmenu1Settings();
         }
         #endregion
