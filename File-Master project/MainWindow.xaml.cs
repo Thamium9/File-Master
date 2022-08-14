@@ -371,6 +371,12 @@ namespace File_Master_project
                     Intervalselection_combobox.SelectedItem = item;
                 }
             }
+            Backupdrive Drive = temp.GetBackupdrive();
+            ComboBoxItem CI = new ComboBoxItem();
+            CI = new ComboBoxItem();
+            CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+            CI.Tag = Drive;
+            Backupdriveselect_combobox_Refresh(CI);
             #endregion
         }
 
@@ -412,7 +418,7 @@ namespace File_Master_project
             HideAllMenu();
             Backupsubmenu2_grid.Visibility = Visibility.Visible;
             Menu = "Backup.sub2";
-            UpdateSubmenu2();
+            UpdateSubmenu2_Async();
         }
 
         private void ViewDestination_button_Click(object sender, RoutedEventArgs e)
@@ -426,19 +432,42 @@ namespace File_Master_project
         #region Backupdrivelist combobox
         private void Backupdriveselect_combobox_DropDownOpened(object sender, EventArgs e)
         {
+            Backupdriveselect_combobox_Refresh((ComboBoxItem)Backupdriveselect_combobox.SelectedItem);
+        }
+
+        private void Backupdriveselect_combobox_Refresh(ComboBoxItem selected = null)
+        {
+            ComboBoxItem CI = new ComboBoxItem();
+            Backupdriveselect_combobox.Items.Clear();
+            if (selected != null)
+            {
+                Backupdriveselect_combobox.Items.Add(selected);
+                Backupdriveselect_combobox.SelectedItem = selected;
+            }
+            else
+            {
+                Backupdriveselect_combobox_Reset();
+            }
+            foreach (var Drive in BackupProcess.Backupdrives)
+            {
+                if(Drive != selected.Tag)
+                {
+                    CI = new ComboBoxItem();
+                    CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+                    CI.Tag = Drive;
+                    Backupdriveselect_combobox.Items.Add(CI);
+                }
+            }
+        }
+
+        private void Backupdriveselect_combobox_Reset()
+        {
             Backupdriveselect_combobox.Items.Clear();
             ComboBoxItem CI = new ComboBoxItem();
             CI.Content = "Select a backup drive!";
-            CI.Tag = "none";
+            CI.Tag = null;
             Backupdriveselect_combobox.Items.Add(CI);
-            Backupdriveselect_combobox.SelectedIndex = 0;
-            foreach (var Drive in BackupProcess.Backupdrives)
-            {
-                CI = new ComboBoxItem();
-                CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
-                CI.Tag = Drive;
-                Backupdriveselect_combobox.Items.Add(CI);
-            }
+            Backupdriveselect_combobox.SelectedItem = CI;
         }
         #endregion
 
@@ -471,18 +500,15 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to modify this item?", "Modify", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
-                    HideAllMenu();
-                    Backup_grid.Visibility = Visibility.Visible;
-                    Menu = "Backup";
-                    Backupitem temp = GetSelectedBackupitem();
+                    /*Backupitem temp = GetSelectedBackupitem();
                     Backupsettings_Local Settings = CreateBackupsettings_Local();
-                    /*ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
-                    Backupdrive Target = (Backupdrive)CI.Tag;
-                    Target.AddBackupitem(CreateBackupitem(Settings));*/
                     temp = CreateBackupitem(Settings);
                     BackupProcess.Upload_Backupinfo();
                     Reset_Backupmenu();
                     Reset_BackupSubmenu1();
+                    HideAllMenu();
+                    Backup_grid.Visibility = Visibility.Visible;
+                    Menu = "Backup";*/
                 }
             }
         }
@@ -490,8 +516,12 @@ namespace File_Master_project
         private bool CheckInfo()
         {
             ComboBoxItem Selection = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
-            Backupdrive Target = (Backupdrive)Selection.Tag;
-            if (Sourceinput_textbox.Text == "" || Destinationinput_textbox.Text == "" || Intervalselection_combobox.SelectedIndex == -1 || Backupdriveselect_combobox.SelectedIndex == 0)
+            Backupdrive Target = null;
+            if (Selection.Tag.GetType() == typeof(Backupdrive))
+            {
+                Target = (Backupdrive)Selection.Tag;
+            }
+            if (Sourceinput_textbox.Text == "" || Destinationinput_textbox.Text == "" || Intervalselection_combobox.SelectedIndex == -1 || Backupdriveselect_combobox.SelectedIndex == 0 || Target == null)
             {
                 MessageBox.Show("You have to provide more information!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -587,7 +617,7 @@ namespace File_Master_project
             Destinationinput_textbox.Text = "";
             Intervalselection_combobox.SelectedIndex = -1;
             MSettings_radiobutton.IsChecked = true;
-            Backupdriveselect_combobox.SelectedIndex = 0;
+            Backupdriveselect_combobox_Reset();
 
             Destinationinput_textbox.IsEnabled = true;
             Sourceinput_textbox.IsEnabled = true;
@@ -605,7 +635,7 @@ namespace File_Master_project
         #region Actions
         private void Showunavailable_checkbox_click(object sender, RoutedEventArgs e)
         {
-            UpdateSubmenu2();
+            UpdateSubmenu2_Async();
         }
 
         private void SetLimitChange(object sender, RoutedEventArgs e)
@@ -640,7 +670,7 @@ namespace File_Master_project
                 MessageBox.Show("The set limit cannot be this big!\nIt will be set to the maximum allowed amount!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 Main.BackupDriveSizeLimits[serial].Text = result.ToString();
             }
-            UpdateSubmenu2();
+            UpdateSubmenu2_Async();
         }
 
         private void UpdateDrive_Click(object sender, RoutedEventArgs e)
@@ -663,13 +693,13 @@ namespace File_Master_project
                 Main.BackupDriveSizeLimits[serial].Text = "";
             }
             BackupProcess.Upload_Backupinfo();
-            UpdateSubmenu2();
+            UpdateSubmenu2_Async();
         }
 
         private void DeactivateDrive_Click(object sender, RoutedEventArgs e)
         {
             BackupProcess.DeactivateBackupdrive(((Image)sender).Tag.ToString());
-            UpdateSubmenu2();
+            UpdateSubmenu2_Async();
         }
 
         private void Delete_mouseenter(object sender, RoutedEventArgs e)
@@ -713,13 +743,14 @@ namespace File_Master_project
             #endregion
             foreach (var ThisDrive in BackupProcess.AllDriveInfo)
             {
-                //await Task.Run(() =>
-                {
-                var MediaType = ThisDrive.Value.MediaType;
+                #region Data gathering
+                Func<string> GetMediaType = () => ThisDrive.Value.MediaType;
+                string MediaType = await Task.Run(GetMediaType);
+
                 if (MediaType == "") break;
-                var ThisDriveSerial = ThisDrive.Key;
-                var ThisDriveInfo = ThisDrive.Value.DriveInformation;
-                
+                string ThisDriveSerial = ThisDrive.Key;
+                DriveInfo ThisDriveInfo = ThisDrive.Value.DriveInformation;
+
                 bool isBackupEnabled = BackupProcess.IsBackupdrive(ThisDriveSerial);
 
                 double AvailableSpaceRatio = (double)ThisDriveInfo.AvailableFreeSpace / (double)ThisDriveInfo.TotalSize;
@@ -731,6 +762,7 @@ namespace File_Master_project
                     BackupSpaceRatio += ((double)BackupProcess.GetBackupdriveFromSerial(ThisDriveSerial).SizeLimit.Bytes / (double)ThisDriveInfo.TotalSize) - BackupUsedSpaceRatio;
                     if (0 > BackupSpaceRatio) BackupSpaceRatio = 0;
                 }
+                #endregion
                 #region Stackpanel                  
                 StackPanel Drive = new StackPanel();
                 Drive.Orientation = Orientation.Horizontal;
@@ -911,8 +943,6 @@ namespace File_Master_project
                 }
                 #endregion
                 Drives.Children.Add(Drive);
-                }
-                //);
             }
 
             return Drives;
@@ -978,10 +1008,27 @@ namespace File_Master_project
         #endregion
 
         #region Menu actions
-        private void UpdateSubmenu2()// data is for transfering new drive size limit
+        private async Task UpdateSubmenu2_Async()// data is for transfering new drive size limit
         {
             StackPanel Drives = new StackPanel();
-            Drives.Children.Add(CreateAvailableDrivesSP_Async().Result);
+            #region Loading message
+            ListBoxItem Message = new ListBoxItem();
+            DockPanel Loading_message = new DockPanel();
+            Loading_message.Height = 270;
+            Loading_message.Width = 475;
+            Loading_message.IsEnabled = false;
+            Message.Content = "Loading drives...";
+            Message.FontWeight = FontWeights.Normal;
+            Message.FontSize = 20;
+            Message.Opacity = 0.5;
+            Message.VerticalAlignment = VerticalAlignment.Center;
+            Message.HorizontalAlignment = HorizontalAlignment.Center;
+            Message.VerticalContentAlignment = VerticalAlignment.Center;
+            Loading_message.Children.Add(Message);
+            Alldrives_scrollviewer.Content = Loading_message;
+            #endregion
+            StackPanel Available = await CreateAvailableDrivesSP_Async();
+            Drives.Children.Add(Available);
             if (Showunavailable_checkbox.IsChecked.Value) Drives.Children.Add(CreateUnavailableDrivesSP());
 
             Alldrives_scrollviewer.Content = Drives;

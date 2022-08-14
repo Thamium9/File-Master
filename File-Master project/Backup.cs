@@ -144,8 +144,7 @@ namespace File_Master_project
 
         public Backupdrive GetBackupdrive()
         {
-            DriveInfo temp = new DriveInfo(Destination.Root.FullName);
-            return BackupProcess.GetBackupdriveFromDriveInfo(temp);
+            return BackupProcess.GetBackupdriveFromDriveInfo(new DriveInfo(Destination.Root.FullName));
         }
         #endregion
 

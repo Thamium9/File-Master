@@ -38,7 +38,7 @@
       {
         "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
         "DestinationPath": "D:\\TEMP",
-        "LastSaved": "2022-08-07T17:30:06.9115363+02:00",
+        "LastSaved": "2022-08-10T01:30:54.706946+02:00",
         "Configuration": {
           "IsSingleCopy": true,
           "NumberOfCopies": 1,
@@ -65,5 +65,21 @@
         "IsEnabled": true
       }
     ]
+  },
+  {
+    "DriveID": "3C920CC7",
+    "DefaultVolumeLabel": "",
+    "SizeLimit": {
+      "Bytes": 10737418240
+    },
+    "Backups": []
+  },
+  {
+    "DriveID": "3A380DA4",
+    "DefaultVolumeLabel": "HDD-K02",
+    "SizeLimit": {
+      "Bytes": 536870912000
+    },
+    "Backups": []
   }
 ]
