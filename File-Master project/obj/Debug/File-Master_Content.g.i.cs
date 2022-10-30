@@ -8,6 +8,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("icons/pendrive4.png")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("notes/backup%20settings%20structure.txt")]
 
 

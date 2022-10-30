@@ -1,0 +1,57 @@
+﻿in 0.6:
++ new window design
++ new class structure
++ manage backup drives menu activate/ button
++ backup drive size limit
++ drive size limit visualization
++ backup file size lable implementation
++ backupdrive menu proper icons
++ should only be able to use the assigned drives
++ fix: activate button doesn't stay disabled when limit changes
++ fix: backup space slide ratio fix
++ fix: backup.json structure
++ fix: 'last saved' info update
+
+in 0.7:
++ should be able to perform manual save while the item is disabled
+- modification menu functions
+- restore files implementation
++ disable add backupitem when there is no available backupdrive
++ 'last saved' info : display how long ago
++ backupdrive menu async load
++ view destination button implementation
+- show both source and destination in the view task menu
++ backup item's destination path drive letter update
+- restructure backup settings + menu
++ integrity check of files after data load in
++ allow destination to be a non existing folder
+- delete backups when item is deleted or modified
++ fix: view destination button visibility when it does not exists yet
++ fix: size limit check always resets after restart
++ fix: upon first opening the add new task menu, the modify button is seen
++ fix: the add new task menu crashes if nothing is changed before applying
+- fix: the enable backup button is still visible when the source is missing
+- fix: trying to access DriveInformation when it is null
++ (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
+
+in 0.8:
+- available drives update in every 30 seconds
+- BackupProcess implementation (limited mode)
+- backup task label (task name)
+- ("total amount of backup space" label in backupdrives menu)
+- delete backups option when removing backup drives
+- compress backup files implementation
+- use backup size limit implementation
+- async load of backup item size for faster program startup
+- menu redesign
+
+in 0.9:
+- events / current operations menu (shows the tasks in order, the time they will deploy and other informations)
+- file manager menu implementation
+- run on windows startup
+- global settings menu implementation
+- application language settings
+
+in the future:
+- low performance demand mode (don't do backup when cpu is load is high)
+- sleep mode while minimized (stops processes temporarily)

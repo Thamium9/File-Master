@@ -1,0 +1,15 @@
+﻿Backup settings:
+
+-Global settings:
+	-Temporary backup folder on internal storage (default: off) //usage when one of the backup folders are missing
+	
+-Local settings:
+	-Method: {Full, Incremental, Differential}
+	-Number of copies //cycles between them, the oldest will be overwritten
+	-Cycle interval
+		-Only perform the next cycle when data has been modified (default: on)
+	-Max storage usage (default: off ; hard limit at 95% used space -> this can be disabled in the application settings)		
+	Action after failed attempt: // save it to log file!!!
+		-Try again (after: *minutes (1); number of tries(3)) 
+		-Popup message notification after last try (default)
+	-Compress backup files (default: off)

@@ -1,58 +1,26 @@
 [
   {
-    "DriveID": "4CCE358A",
     "DefaultVolumeLabel": "HDD",
+    "DriveID": "4CCE358A",
     "SizeLimit": {
       "Bytes": 53687091200
     },
     "Backups": [
       {
-        "SourcePath": "H:\\Filmek",
-        "DestinationPath": "D:\\Biztonsági mentések",
-        "LastSaved": "0001-01-01T00:00:00",
-        "Configuration": {
-          "IsSingleCopy": true,
-          "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 5.0,
-            "Unit": "day"
-          },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        },
-        "ID": 0,
-        "IsEnabled": false
-      },
-      {
         "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
         "DestinationPath": "D:\\TEMP",
+        "ID": 1,
         "LastSaved": "2022-08-10T01:30:54.706946+02:00",
+        "IsEnabled": true,
         "Configuration": {
-          "IsSingleCopy": true,
+          "Method": "F",
           "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 1.0,
+          "CycleInterval": {
+            "Time": 10.0,
             "Unit": "day"
           },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
+          "OnlySaveOnChange": true,
+          "MaxStorageSpace": 0,
           "RetryWaitTime": {
             "Time": 5.0,
             "Unit": "minute"
@@ -60,26 +28,32 @@
           "MaxNumberOfRetries": 3,
           "PopupOnFail": false,
           "FileCompression": false
-        },
-        "ID": 1,
-        "IsEnabled": true
+        }
+      },
+      {
+        "SourcePath": "H:\\Filmek\\Free Guy\\free.guy.1080p-no1.mkv",
+        "DestinationPath": "D:\\Backups",
+        "ID": 0,
+        "LastSaved": "2022-10-30T23:53:00.9012915+01:00",
+        "IsEnabled": true,
+        "Configuration": {
+          "Method": "F",
+          "NumberOfCopies": 1,
+          "CycleInterval": {
+            "Time": 10.0,
+            "Unit": "hour"
+          },
+          "OnlySaveOnChange": true,
+          "MaxStorageSpace": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        }
       }
     ]
-  },
-  {
-    "DriveID": "3C920CC7",
-    "DefaultVolumeLabel": "",
-    "SizeLimit": {
-      "Bytes": 10737418240
-    },
-    "Backups": []
-  },
-  {
-    "DriveID": "3A380DA4",
-    "DefaultVolumeLabel": "HDD-K02",
-    "SizeLimit": {
-      "Bytes": 536870912000
-    },
-    "Backups": []
   }
 ]

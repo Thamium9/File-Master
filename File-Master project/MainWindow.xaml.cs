@@ -366,12 +366,12 @@ namespace File_Master_project
             Sourceinput_textbox.Text = temp.Source.ToString();
             foreach (ComboBoxItem item in Intervalselection_combobox.Items)
             {
-                if(item.Tag.ToString() == temp.Configuration.Save_interval.GetTime())
+                if(item.Tag.ToString() == temp.Configuration.CycleInterval.GetTime())
                 {
                     Intervalselection_combobox.SelectedItem = item;
                 }
             }
-            Backupdrive Drive = temp.GetBackupdrive();
+            Backupdrive Drive = temp.BackupDriveOfItem;
             ComboBoxItem CI = new ComboBoxItem();
             CI = new ComboBoxItem();
             CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
@@ -480,16 +480,18 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
-                    HideAllMenu();
-                    Backup_grid.Visibility = Visibility.Visible;
-                    Menu = "Backup";
                     Backupsettings_Local Settings = CreateBackupsettings_Local();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     Backupdrive Target = (Backupdrive)CI.Tag;
                     Target.AddBackupitem(CreateBackupitem(Settings));
                     BackupProcess.Upload_Backupinfo();
+                    #region UI changes
                     Reset_Backupmenu();
                     Reset_BackupSubmenu1();
+                    HideAllMenu();
+                    Backup_grid.Visibility = Visibility.Visible;
+                    Menu = "Backup";
+                    #endregion
                 }
             }
         }
@@ -498,17 +500,23 @@ namespace File_Master_project
         {
             if(CheckInfo())
             {
-                if (MessageBox.Show("Are you sure you want to modify this item?", "Modify", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
+                if (MessageBox.Show("Are you sure you want to modify this item?\nThis action will delete all the backups associated with this item!", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
                 {
-                    /*Backupitem temp = GetSelectedBackupitem();
+                    Backupitem SelectedItem = GetSelectedBackupitem();
+                    SelectedItem.BackupDriveOfItem.RemoveBackupitem(SelectedItem); //deletes itself
+
                     Backupsettings_Local Settings = CreateBackupsettings_Local();
-                    temp = CreateBackupitem(Settings);
+                    ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
+                    Backupdrive Target = (Backupdrive)CI.Tag;
+                    Target.AddBackupitem(CreateBackupitem(Settings));
                     BackupProcess.Upload_Backupinfo();
+                    #region UI changes
+                    HideAllMenu();
                     Reset_Backupmenu();
                     Reset_BackupSubmenu1();
-                    HideAllMenu();
                     Backup_grid.Visibility = Visibility.Visible;
-                    Menu = "Backup";*/
+                    Menu = "Backup";
+                    #endregion
                 }
             }
         }
@@ -517,11 +525,11 @@ namespace File_Master_project
         {
             ComboBoxItem Selection = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
             Backupdrive Target = null;
-            if (Selection.Tag.GetType() == typeof(Backupdrive))
+            if (Selection.Tag != null && Selection.Tag.GetType() == typeof(Backupdrive))
             {
                 Target = (Backupdrive)Selection.Tag;
             }
-            if (Sourceinput_textbox.Text == "" || Destinationinput_textbox.Text == "" || Intervalselection_combobox.SelectedIndex == -1 || Backupdriveselect_combobox.SelectedIndex == 0 || Target == null)
+            if (Sourceinput_textbox.Text == "" || Destinationinput_textbox.Text == "" || Intervalselection_combobox.SelectedIndex == -1 || Target == null)
             {
                 MessageBox.Show("You have to provide more information!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -529,11 +537,7 @@ namespace File_Master_project
             {
                 MessageBox.Show("The source doesn't exists!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            else if (!Directory.Exists(Destinationinput_textbox.Text))
-            {
-                MessageBox.Show("The destination doesn't exists!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            else if (Destinationinput_textbox.Text.Split('\\')[0][0] != Target.GetDriveLetter())
+            else if (new DirectoryInfo(Destinationinput_textbox.Text).Root.FullName != $@"{Target.GetDriveLetter()}:\")
             {
                 MessageBox.Show("The destination is not located in the selected backup drive!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -554,22 +558,25 @@ namespace File_Master_project
 
         private Backupsettings_Local CreateBackupsettings_Local()
         {
-            bool IsSingleCopy = Singlecopy_radiobutton.IsChecked.Value;
+            char Method = 'F';
             int NumberOfCopies = 1;
             ComboBoxItem CI = (ComboBoxItem)Intervalselection_combobox.SelectedItem;
-            Interval Save_interval = new Interval(CI.Tag.ToString());
-            bool AbsoluteCopy = true;
-            bool ManualDetermination = false;
-            bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
-            bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
-            bool SmartSave = Smartsave_checkbox.IsChecked.Value;
-            bool UseMaxStorageData = false;
-            int MaxStorageData = 0; //no value if 'UseMaxStorageData' is false
+            Interval CycleInterval = new Interval(CI.Tag.ToString());
+            int MaxStorageData = 0;
             Interval RetryWaitTime = new Interval("5 minute");
             int MaxNumberOfRetries = 3;
             bool PopupOnFail = false;
-            bool FileCompression = Compress_checkbox.IsChecked.Value;
-            Backupsettings_Local Settings = new Backupsettings_Local(IsSingleCopy, NumberOfCopies, Save_interval, AbsoluteCopy, ManualDetermination, StoreDeletedInRBin, PopupWhenRBinIsFull, SmartSave, UseMaxStorageData, MaxStorageData, RetryWaitTime, MaxNumberOfRetries, PopupOnFail, FileCompression);
+            Backupsettings_Local Settings = new Backupsettings_Local(
+                Method,
+                NumberOfCopies,
+                CycleInterval,
+                OnlySaveOnChange_checkbox.IsChecked.Value,
+                MaxStorageData,
+                RetryWaitTime,
+                MaxNumberOfRetries,
+                PopupOnFail,
+                Compress_checkbox.IsChecked.Value
+            );
             return Settings;
         }
 
@@ -858,15 +865,17 @@ namespace File_Master_project
                 Size.VerticalAlignment = VerticalAlignment.Center;
                 Size.Width = 150;
                 Size.Orientation = Orientation.Horizontal;
-                TextBox DiskSpaceLimit = new TextBox();
-                DiskSpaceLimit.Width = 80;
-                DiskSpaceLimit.Height = 25;
-                DiskSpaceLimit.Background = new SolidColorBrush(Color.FromRgb(21,21,21));
-                DiskSpaceLimit.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                DiskSpaceLimit.VerticalContentAlignment = VerticalAlignment.Center;
-                DiskSpaceLimit.HorizontalContentAlignment = HorizontalAlignment.Right;
-                DiskSpaceLimit.Margin = new Thickness(40, 0, 0, 0);
-                DiskSpaceLimit.Tag = ThisDriveSerial;
+                TextBox DiskSpaceLimit = new TextBox
+                {
+                    Width = 80,
+                    Height = 25,
+                    Background = new SolidColorBrush(Color.FromRgb(21, 21, 21)),
+                    Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172)),
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                    HorizontalContentAlignment = HorizontalAlignment.Right,
+                    Margin = new Thickness(40, 0, 0, 0),
+                    Tag = ThisDriveSerial
+                };
                 if (isBackupEnabled)
                 {
                     if (Main.BackupDriveSizeLimits.ContainsKey(ThisDriveSerial))
@@ -1105,7 +1114,7 @@ namespace File_Master_project
             ListBoxItem ListItem;
             foreach (var Drive in BackupProcess.Backupdrives)
             {
-                Drive.LimitCheck();
+                Drive.Update();
                 #region Add backupdrive to list
                 ListItem = new ListBoxItem();
                 DockPanel Drive_dockpanel = new DockPanel();
@@ -1149,28 +1158,34 @@ namespace File_Master_project
             #region Add 'Add new task' button
             if(BackupProcess.Backupdrives.Count()>0)
             {
-                ListItem = new ListBoxItem();
-                ListItem.Content = "➕ Add new task";
-                ListItem.FontWeight = FontWeights.Normal;
-                ListItem.HorizontalAlignment = HorizontalAlignment.Left;
-                ListItem.Tag = "add";
+                ListItem = new ListBoxItem
+                {
+                    Content = "➕ Add new task",
+                    FontWeight = FontWeights.Normal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Tag = "add"
+                };
                 ListItem.MouseLeftButtonUp += new MouseButtonEventHandler(Additem_button_Click);
                 Backuptask_listbox.Items.Add(ListItem);
             }
             else
             {
-                ListItem = new ListBoxItem();
-                DockPanel container = new DockPanel();
-                container.Height = 270;
-                container.Width = 475;
-                container.IsEnabled = false;
-                ListItem.Content = "Go to 'Manage backup drives' to allow\n    backup operations on local drives";
-                ListItem.FontWeight = FontWeights.Normal;
-                ListItem.FontSize = 15;
-                ListItem.Opacity = 0.5;
-                ListItem.VerticalAlignment = VerticalAlignment.Center;
-                ListItem.HorizontalAlignment = HorizontalAlignment.Center;
-                ListItem.VerticalContentAlignment = VerticalAlignment.Center;
+                DockPanel container = new DockPanel
+                {
+                    Height = 270,
+                    Width = 475,
+                    IsEnabled = false
+                };
+                ListItem = new ListBoxItem
+                {
+                    Content = "Go to 'Manage backup drives' to allow\n    backup operations on local drives",
+                    FontWeight = FontWeights.Normal,
+                    FontSize = 15,
+                    Opacity = 0.5,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalContentAlignment = VerticalAlignment.Center
+                };
                 container.Children.Add(ListItem);
                 Backuptask_listbox.Items.Add(container);
                 Backuptask_listbox.IsHitTestVisible = false;
@@ -1181,8 +1196,8 @@ namespace File_Master_project
         private void Display_Backupitem(Backupitem Item)
         {
             #region Loads interval
-            Item.Configuration.Save_interval.Humanize();
-            Interval_label.Content = Item.Configuration.Save_interval.GetTime();
+            Item.Configuration.CycleInterval.Humanize();
+            Interval_label.Content = Item.Configuration.CycleInterval.GetTime();
             #endregion
 
             #region Loads destination
@@ -1190,7 +1205,7 @@ namespace File_Master_project
             #endregion
 
             #region Loads Smart save
-            if (Item.Configuration.SmartSave) Smartsave_label.Content = "Smart save: ON";
+            if (Item.Configuration.OnlySaveOnChange) Smartsave_label.Content = "Smart save: ON";
             else Smartsave_label.Content = "Smart save: OFF";
             #endregion
 

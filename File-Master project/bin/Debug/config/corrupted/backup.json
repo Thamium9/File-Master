@@ -1,0 +1,85 @@
+[
+  {
+    "DriveID": "4CCE358A",
+    "DefaultVolumeLabel": "HDD",
+    "SizeLimit": {
+      "Bytes": 53687091200
+    },
+    "Backups": [
+      {
+        "SourcePath": "H:\\Filmek",
+        "DestinationPath": "D:\\Biztonsági mentések",
+        "LastSaved": "0001-01-01T00:00:00",
+        "Configuration": {
+          "IsSingleCopy": true,
+          "NumberOfCopies": 1,
+          "Save_interval": {
+            "Time": 5.0,
+            "Unit": "day"
+          },
+          "AbsoluteCopy": true,
+          "ManualDetermination": false,
+          "StoreDeletedInRBin": false,
+          "PopupWhenRBinIsFull": false,
+          "SmartSave": true,
+          "UseMaxStorageData": false,
+          "MaxStorageData": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        },
+        "ID": 0,
+        "IsEnabled": false
+      },
+      {
+        "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
+        "DestinationPath": "D:\\TEMP",
+        "LastSaved": "2022-08-10T01:30:54.706946+02:00",
+        "Configuration": {
+          "IsSingleCopy": true,
+          "NumberOfCopies": 1,
+          "Save_interval": {
+            "Time": 1.0,
+            "Unit": "day"
+          },
+          "AbsoluteCopy": true,
+          "ManualDetermination": false,
+          "StoreDeletedInRBin": false,
+          "PopupWhenRBinIsFull": false,
+          "SmartSave": true,
+          "UseMaxStorageData": false,
+          "MaxStorageData": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        },
+        "ID": 1,
+        "IsEnabled": true
+      }
+    ]
+  },
+  {
+    "DriveID": "3C920CC7",
+    "DefaultVolumeLabel": "",
+    "SizeLimit": {
+      "Bytes": 10737418240
+    },
+    "Backups": []
+  },
+  {
+    "DriveID": "3A380DA4",
+    "DefaultVolumeLabel": "HDD-K02",
+    "SizeLimit": {
+      "Bytes": 536870912000
+    },
+    "Backups": []
+  }
+]

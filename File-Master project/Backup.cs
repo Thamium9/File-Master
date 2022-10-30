@@ -33,37 +33,23 @@ namespace File_Master_project
 
     public class Backupsettings_Local
     {
-        [JsonProperty] public bool IsSingleCopy;
-        [JsonProperty] public int NumberOfCopies; //automatically 1 if 'IsSingleCopy' is true
-        [JsonProperty] public Interval Save_interval;
-        [JsonProperty] public bool AbsoluteCopy;
-        [JsonProperty] public bool ManualDetermination = false; //automatically false when 'AbsoluteCopy' is true or 'IsSingleCopy' is false
-        [JsonProperty] public bool StoreDeletedInRBin = false; //automatically false when 'AbsoluteCopy' is true
-        [JsonProperty] public bool PopupWhenRBinIsFull = false; //automatically false when 'StoreDeletedInRBin' is false
-        [JsonProperty] public bool SmartSave;
-        [JsonProperty] public bool UseMaxStorageData;
-        [JsonProperty] public int MaxStorageData; //no value if 'UseMaxStorageData' is false
-        [JsonProperty] public Interval RetryWaitTime;
-        [JsonProperty] public int MaxNumberOfRetries;
-        [JsonProperty] public bool PopupOnFail;
-        [JsonProperty] public bool FileCompression;
+        [JsonProperty] public char Method { get; } // F -> Full , I -> Incremental, D -> Differential
+        [JsonProperty] public int NumberOfCopies { get; }
+        [JsonProperty] public Interval CycleInterval  { get; }
+        [JsonProperty] public bool OnlySaveOnChange  { get; }
+        [JsonProperty] public int MaxStorageSpace { get; }
+        [JsonProperty] public Interval RetryWaitTime  { get; }
+        [JsonProperty] public int MaxNumberOfRetries  { get; }
+        [JsonProperty] public bool PopupOnFail  { get; }
+        [JsonProperty] public bool FileCompression  { get; }
 
-        public Backupsettings_Local(bool isSingleCopy, int numberOfCopies, Interval save_interval, bool absoluteCopy, bool manualDetermination, bool storeDeletedInRBin, bool popupWhenRBinIsFull, bool smartSave, bool useMaxStorageData, int maxStorageData, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+        public Backupsettings_Local(char method, int numberOfCopies, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
-            IsSingleCopy = isSingleCopy;
-            if (IsSingleCopy) NumberOfCopies = 1;
-            else NumberOfCopies = numberOfCopies;
-            Save_interval = save_interval;
-            AbsoluteCopy = absoluteCopy;
-            if (!AbsoluteCopy)
-            {
-                if (IsSingleCopy) ManualDetermination = manualDetermination;
-                StoreDeletedInRBin = storeDeletedInRBin;
-                if (StoreDeletedInRBin) PopupWhenRBinIsFull = popupWhenRBinIsFull;
-            }
-            SmartSave = smartSave;
-            UseMaxStorageData = useMaxStorageData;
-            if (UseMaxStorageData) MaxStorageData = maxStorageData;
+            Method = method;
+            NumberOfCopies = numberOfCopies;
+            CycleInterval = cycleInterval;
+            OnlySaveOnChange = onlySaveOnChange;
+            MaxStorageSpace = maxStorageSpace;
             RetryWaitTime = retryWaitTime;
             MaxNumberOfRetries = maxNumberOfRetries;
             PopupOnFail = popupOnFail;
@@ -76,13 +62,26 @@ namespace File_Master_project
         [JsonProperty] public int ID { get; set; }
         [JsonIgnore] public FileSystemInfo Source { get; set; }
         [JsonProperty] private string SourcePath;
-        [JsonIgnore] public DirectoryInfo Destination;
+        [JsonIgnore] public DirectoryInfo Destination { get; set; }
         [JsonProperty] private string DestinationPath;
-        [JsonProperty] public DateTime LastSaved;
+        [JsonProperty] public DateTime LastSaved { get; set; }
         [JsonProperty] public bool IsEnabled { get; set; }
-        [JsonIgnore] public bool IsAvailable { get {return GetBackupdrive().IsAvailable;} }
-        [JsonIgnore] public bool IsOutOfSpace { get { return GetBackupdrive().IsOutOfSpace; } }
-        [JsonProperty] public Backupsettings_Local Configuration;
+        [JsonIgnore] public bool IsAvailable { 
+            get 
+            {
+                if(BackupDriveOfItem == null) return false;
+                else return BackupDriveOfItem.IsAvailable;
+            }
+        }
+        [JsonIgnore] public bool IsOutOfSpace { 
+            get 
+            {
+                if (BackupDriveOfItem == null) return true;
+                return BackupDriveOfItem.IsOutOfSpace; 
+            } 
+        }
+        [JsonIgnore] public Backupdrive BackupDriveOfItem { get { return BackupProcess.GetBackupdriveFromBackupitem(this); } }
+        [JsonProperty] public Backupsettings_Local Configuration { get; set; }
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
 
         [JsonConstructor] public Backupitem(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, Backupsettings_Local configuration)
@@ -101,7 +100,7 @@ namespace File_Master_project
         #region Get data
         private DateTime GetNextCallTime()
         {
-            return LastSaved.AddTicks(Configuration.Save_interval.Convert_to_ticks());
+            return LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks());
         }
 
         public DiskSpace GetBackupSize()
@@ -140,11 +139,6 @@ namespace File_Master_project
             if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
             else if (Source.GetType() == typeof(FileInfo)) return "File";
             else return "Unknown";
-        }
-
-        public Backupdrive GetBackupdrive()
-        {
-            return BackupProcess.GetBackupdriveFromDriveInfo(new DriveInfo(Destination.Root.FullName));
         }
         #endregion
 
@@ -231,12 +225,17 @@ namespace File_Master_project
 
         private void StartTimer()
         {
-            DateTime NextCall = LastSaved.AddTicks(Configuration.Save_interval.Convert_to_ticks()); //this is the date when the next backup will happen
+            DateTime NextCall = LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks()); //this is the date when the next backup will happen
             TimeSpan diff = (NextCall - DateTime.Now);
             Backuptimer.Interval = Math.Min(Math.Max(60000, diff.Ticks / 10000), 2147483647); //the interval cannot be less than a second (or in this case 10000000 ticks or 1000 miliseconds)  AND  the interval cannot be more than 2147483647 miliseconds
             Backuptimer.Elapsed += Backuptimer_Elapsed;
             Backuptimer.AutoReset = false;
             Backuptimer.Start();
+        }
+
+        public void DeleteBackups()
+        {
+            //code
         }
         #endregion
 
@@ -420,9 +419,9 @@ namespace File_Master_project
 
     public class Backupdrive
     {
-        [JsonProperty] public string DriveID;
+        [JsonProperty] public string DriveID { get; private set; }
         [JsonProperty] private string DefaultVolumeLabel;
-        [JsonIgnore] public DriveInfo DriveInformation;
+        [JsonIgnore] public DriveInfo DriveInformation { get; private set; }
         [JsonIgnore] public bool IsAvailable { get; private set; }
         [JsonIgnore] public bool IsOutOfSpace { get; private set; }
         [JsonProperty] public DiskSpace SizeLimit { get; set; }
@@ -434,15 +433,7 @@ namespace File_Master_project
             DefaultVolumeLabel = defaultVolumeLabel;
             Backups = backups;
             SizeLimit = sizeLimit;
-            ValidityCheck();
-            if (IsAvailable)
-            {
-                if(SizeLimitCheck(out double limit))
-                {
-                    SizeLimit.Gigabytes = limit;
-                }
-                LimitCheck();
-            }
+            Update();
         }
 
         public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
@@ -455,8 +446,21 @@ namespace File_Master_project
             BackupProcess.Upload_Backupinfo();
         }
 
+        public void Update()
+        {
+            ValidityCheck();
+            if (IsAvailable)
+            {
+                if (SizeLimitCheck(out double limit))
+                {
+                    SizeLimit.Gigabytes = limit;
+                }
+                LimitCheck();
+            }
+        }
+
         #region Checks
-        public void ValidityCheck() // sets the IsAvailable value
+        private void ValidityCheck() // sets the IsAvailable value
         {
             IsAvailable = true;
             foreach (var thisDriveInfo in BackupProcess.AllDriveInfo)
@@ -471,7 +475,7 @@ namespace File_Master_project
             if (DriveInformation == null) IsAvailable = false;
         }
 
-        public void LimitCheck()// sets the isOutOfSpace value
+        private void LimitCheck()// sets the isOutOfSpace value
         {
             if ((SizeLimit.Bytes > 0 && GetBackupSize().Bytes > SizeLimit.Bytes) || ((double)DriveInformation.AvailableFreeSpace < (double)DriveInformation.TotalSize * 0.1)) IsOutOfSpace = true;
             else IsOutOfSpace = false;
@@ -503,6 +507,7 @@ namespace File_Master_project
 
         public void RemoveBackupitem(Backupitem Item)
         {
+            Item.DeleteBackups();
             Backups.Remove(Item);
         }
 
@@ -670,17 +675,19 @@ namespace File_Master_project
             return result;
         }
 
-        static public Backupdrive GetBackupdriveFromDriveInfo(DriveInfo DriveInformation)
+        static public Backupdrive GetBackupdriveFromBackupitem(Backupitem Target)
         {
-            Backupdrive result = null;
             foreach (var Drive in Backupdrives)
             {
-                if(DriveInformation.Name == Drive.DriveInformation.Name)
+                foreach (var Item in Drive.Backups)
                 {
-                    result = Drive;
+                    if (Item == Target)
+                    {
+                        return Drive;
+                    }
                 }
             }
-            return result;
+            return null;
         }
 
         static public bool IsBackupdrive(string serial)
@@ -726,15 +733,17 @@ namespace File_Master_project
             try
             {
                 Backupdrives = JsonConvert.DeserializeObject<List<Backupdrive>>(Backupinfo);
-                if (Backupdrives == null)
+                if (Backupdrives == null || !IntegrityCheck())
                 {
                     Backupdrives = new List<Backupdrive>();
                     throw null;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                MessageBox.Show("Unable to load in the user data due to data corruption!\nAll backup settings are deleted!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+                MessageBox.Show("Unable to load in the user data due to data corruption!\nAll backup configurations are cleared!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+                Directory.CreateDirectory(@".\config\corrupted");
+                File.Move(@".\config\backup.json", @".\config\corrupted\backup.json");
                 Upload_Backupinfo();
             }
             #endregion
@@ -747,7 +756,7 @@ namespace File_Master_project
         static private void Load_backupinfo(out string Backupinfo)
         {
             Backupinfo = "[]";
-            string filepath = $"{Directory.GetCurrentDirectory()}\\config\\backup.json";
+            string filepath = @".\config\backup.json";
             if (File.Exists(filepath))
             {
                 Backupinfo = File.ReadAllText(filepath);
@@ -773,14 +782,36 @@ namespace File_Master_project
                 }
             }
         }
+
+        static private bool IntegrityCheck()
+        {
+            bool Intact = true;
+            foreach (var Drive in Backupdrives)
+            {
+                if(Drive.DriveID == null) Intact = false;
+                else if(Drive.SizeLimit == null) Intact = false;
+                else
+                {
+                    foreach (var Item in Drive.Backups)
+                    {
+                        if (Item.Source == null) Intact = false;
+                        else if (Item.Destination == null) Intact = false;                  
+                        else if (Item.LastSaved == null) Intact = false;
+                        else if (Item.Configuration == null) Intact = false;
+                        else if (Item.Configuration.CycleInterval == null) Intact = false;
+                        else if (Item.Configuration.RetryWaitTime == null) Intact = false;
+                    }
+                }
+            }
+            return Intact;
+        }
         #endregion
 
         #region Upload Data
         static public void Upload_Backupinfo()
         {
             string Code = JsonConvert.SerializeObject(Backupdrives, Newtonsoft.Json.Formatting.Indented);
-            File.WriteAllText(CurrentDir + "\\config\\backup.json", Code);
-
+            File.WriteAllText( @".\config\backup.json", Code);
             #region UI-changes
             
             #endregion
@@ -801,8 +832,6 @@ namespace File_Master_project
             }
         }
         #endregion
-
-        static public string CurrentDir = Directory.GetCurrentDirectory();
     }
 
     public class AdvancedDriveInfo

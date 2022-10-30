@@ -169,5 +169,11 @@
   <ItemGroup>
     <Resource Include="Icons\pendrive.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Notes\changelog.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Notes\Backup settings structure.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
