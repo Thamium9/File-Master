@@ -91,6 +91,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ApplicationSettings.cs" />
     <Compile Include="Backup.cs" />
     <Compile Include="DiskSpace.cs" />
     <Compile Include="Interval.cs" />
@@ -174,6 +175,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Notes\Backup settings structure.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Help icon mini IV.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

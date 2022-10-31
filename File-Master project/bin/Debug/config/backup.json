@@ -53,7 +53,63 @@
           "PopupOnFail": false,
           "FileCompression": false
         }
+      },
+      {
+        "SourcePath": "D:\\Dokumentumok\\Blender\\Font styles",
+        "DestinationPath": "TEMP",
+        "ID": 0,
+        "LastSaved": "0001-01-01T00:00:00",
+        "IsEnabled": false,
+        "Configuration": {
+          "Method": "F",
+          "NumberOfCopies": 1,
+          "CycleInterval": {
+            "Time": 10.0,
+            "Unit": "day"
+          },
+          "OnlySaveOnChange": true,
+          "MaxStorageSpace": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        }
+      },
+      {
+        "SourcePath": "D:\\TEMP\\settings.txt",
+        "DestinationPath": ".",
+        "ID": 0,
+        "LastSaved": "0001-01-01T00:00:00",
+        "IsEnabled": false,
+        "Configuration": {
+          "Method": "F",
+          "NumberOfCopies": 1,
+          "CycleInterval": {
+            "Time": 1.0,
+            "Unit": "day"
+          },
+          "OnlySaveOnChange": true,
+          "MaxStorageSpace": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        }
       }
     ]
+  },
+  {
+    "DefaultVolumeLabel": "HDD-K01",
+    "DriveID": "02466E75",
+    "SizeLimit": {
+      "Bytes": 0
+    },
+    "Backups": []
   }
 ]

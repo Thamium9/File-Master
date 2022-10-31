@@ -8,6 +8,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("notes/backup%20settings%20structure.txt")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("icons/help%20icon%20mini%20iv.png")]
 
 

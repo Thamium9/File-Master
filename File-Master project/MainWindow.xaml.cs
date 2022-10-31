@@ -374,7 +374,7 @@ namespace File_Master_project
             Backupdrive Drive = temp.BackupDriveOfItem;
             ComboBoxItem CI = new ComboBoxItem();
             CI = new ComboBoxItem();
-            CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+            CI.Content = $"({Drive.GetDriveLetter()}:) {Drive.GetVolumeLabel()}";
             CI.Tag = Drive;
             Backupdriveselect_combobox_Refresh(CI);
             #endregion
@@ -423,7 +423,15 @@ namespace File_Master_project
 
         private void ViewDestination_button_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(GetSelectedBackupitem().Destination.FullName);
+            try
+            {
+                Process.Start(GetSelectedBackupitem().Destination.FullName);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("The folder cannot be opened!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            
         }
         #endregion
 
@@ -435,14 +443,13 @@ namespace File_Master_project
             Backupdriveselect_combobox_Refresh((ComboBoxItem)Backupdriveselect_combobox.SelectedItem);
         }
 
-        private void Backupdriveselect_combobox_Refresh(ComboBoxItem selected = null)
+        private void Backupdriveselect_combobox_Refresh(ComboBoxItem selected)
         {
-            ComboBoxItem CI = new ComboBoxItem();
             Backupdriveselect_combobox.Items.Clear();
             if (selected != null)
             {
                 Backupdriveselect_combobox.Items.Add(selected);
-                Backupdriveselect_combobox.SelectedItem = selected;
+                Backupdriveselect_combobox.SelectedItem = selected;               
             }
             else
             {
@@ -452,8 +459,8 @@ namespace File_Master_project
             {
                 if(Drive != selected.Tag)
                 {
-                    CI = new ComboBoxItem();
-                    CI.Content = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+                    ComboBoxItem CI = new ComboBoxItem();
+                    CI.Content = $"({Drive.GetDriveLetter()}:) {Drive.GetVolumeLabel()}";
                     CI.Tag = Drive;
                     Backupdriveselect_combobox.Items.Add(CI);
                 }
@@ -469,6 +476,26 @@ namespace File_Master_project
             Backupdriveselect_combobox.Items.Add(CI);
             Backupdriveselect_combobox.SelectedItem = CI;
         }
+
+        private void Backupdriveselect_combobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBoxItem selected = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
+            if(selected != null && selected.Tag != null)
+            {
+                Backupdrive SelectedDrive = (Backupdrive)selected.Tag;
+                AvailableFreeSpaceBD_label.Content = new DiskSpace(SelectedDrive.DriveInformation.AvailableFreeSpace).Humanize();
+                long AvailableAllocated = SelectedDrive.SizeLimit.Bytes - SelectedDrive.GetBackupSize().Bytes;
+                if(SelectedDrive.SizeLimit.Bytes > 0)
+                {
+                    if (AvailableAllocated <= 0) AvailableAllocatedSpace_label.Content = "Out of allocated space!";
+                    else AvailableAllocatedSpace_label.Content = new DiskSpace(AvailableAllocated).Humanize();
+                }
+                else
+                {
+                    AvailableAllocatedSpace_label.Content = "No limit is set!";
+                }
+            }
+        }
         #endregion
 
         #region Buttons
@@ -480,7 +507,7 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
-                    Backupsettings_Local Settings = CreateBackupsettings_Local();
+                    Backupitem_Settings Settings = CreateBackupsettings_Local();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     Backupdrive Target = (Backupdrive)CI.Tag;
                     Target.AddBackupitem(CreateBackupitem(Settings));
@@ -505,7 +532,7 @@ namespace File_Master_project
                     Backupitem SelectedItem = GetSelectedBackupitem();
                     SelectedItem.BackupDriveOfItem.RemoveBackupitem(SelectedItem); //deletes itself
 
-                    Backupsettings_Local Settings = CreateBackupsettings_Local();
+                    Backupitem_Settings Settings = CreateBackupsettings_Local();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     Backupdrive Target = (Backupdrive)CI.Tag;
                     Target.AddBackupitem(CreateBackupitem(Settings));
@@ -548,7 +575,7 @@ namespace File_Master_project
             return false;
         }
 
-        private Backupitem CreateBackupitem(Backupsettings_Local Settings)
+        private Backupitem CreateBackupitem(Backupitem_Settings Settings)
         {         
             string Source = Sourceinput_textbox.Text;
             string Destination = Destinationinput_textbox.Text;
@@ -556,7 +583,7 @@ namespace File_Master_project
             return Item;
         }
 
-        private Backupsettings_Local CreateBackupsettings_Local()
+        private Backupitem_Settings CreateBackupsettings_Local()
         {
             char Method = 'F';
             int NumberOfCopies = 1;
@@ -566,7 +593,7 @@ namespace File_Master_project
             Interval RetryWaitTime = new Interval("5 minute");
             int MaxNumberOfRetries = 3;
             bool PopupOnFail = false;
-            Backupsettings_Local Settings = new Backupsettings_Local(
+            Backupitem_Settings Settings = new Backupitem_Settings(
                 Method,
                 NumberOfCopies,
                 CycleInterval,
@@ -596,25 +623,14 @@ namespace File_Master_project
         #endregion
 
         #region Settings menu
-        #region Toggle menu
-        private void MSettings_radiobutton_Checked(object sender, RoutedEventArgs e)
-        {
-            Backupsubmenu1_settings2_grid.Visibility = Visibility.Hidden;
-            Backupsubmenu1_settings1_grid.Visibility = Visibility.Visible;
-        }
 
-        private void ASettings_radiobutton_Checked(object sender, RoutedEventArgs e)
-        {
-            Backupsubmenu1_settings2_grid.Visibility = Visibility.Visible;
-            Backupsubmenu1_settings1_grid.Visibility = Visibility.Hidden;
-        }
-        #endregion
         #region Reset menu
         private void Reset_BackupSubmenu1Settings()
         {
-            Singlecopy_radiobutton.IsChecked = true;
+            BackupMethodFull_radiobutton.IsChecked = true;
         }
         #endregion
+
         #endregion
 
         #region Menu actions
@@ -623,7 +639,8 @@ namespace File_Master_project
             Sourceinput_textbox.Text = "";
             Destinationinput_textbox.Text = "";
             Intervalselection_combobox.SelectedIndex = -1;
-            MSettings_radiobutton.IsChecked = true;
+            AvailableFreeSpaceBD_label.Content = "-";
+            AvailableAllocatedSpace_label.Content= "-";
             Backupdriveselect_combobox_Reset();
 
             Destinationinput_textbox.IsEnabled = true;

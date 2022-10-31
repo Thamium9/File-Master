@@ -25,13 +25,13 @@ using WTimer = System.Threading.Timer;
 
 namespace File_Master_project
 {
-    public class Backupsettings_Global
+    public class Backup_Settings
     {
         public bool IsTempfolderEnabled = false;
         public DirectoryInfo TempFolder;
     }
 
-    public class Backupsettings_Local
+    public class Backupitem_Settings
     {
         [JsonProperty] public char Method { get; } // F -> Full , I -> Incremental, D -> Differential
         [JsonProperty] public int NumberOfCopies { get; }
@@ -43,7 +43,7 @@ namespace File_Master_project
         [JsonProperty] public bool PopupOnFail  { get; }
         [JsonProperty] public bool FileCompression  { get; }
 
-        public Backupsettings_Local(char method, int numberOfCopies, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+        public Backupitem_Settings(char method, int numberOfCopies, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
             Method = method;
             NumberOfCopies = numberOfCopies;
@@ -81,10 +81,10 @@ namespace File_Master_project
             } 
         }
         [JsonIgnore] public Backupdrive BackupDriveOfItem { get { return BackupProcess.GetBackupdriveFromBackupitem(this); } }
-        [JsonProperty] public Backupsettings_Local Configuration { get; set; }
+        [JsonProperty] public Backupitem_Settings Configuration { get; set; }
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
 
-        [JsonConstructor] public Backupitem(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, Backupsettings_Local configuration)
+        [JsonConstructor] public Backupitem(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, Backupitem_Settings configuration)
         {
             ID = iD;
             SourcePath = sourcePath;
@@ -617,7 +617,7 @@ namespace File_Master_project
     static public class BackupProcess 
     {
         static public List<Backupdrive> Backupdrives { get; private set; }
-        static public Backupsettings_Global Settings { get; set; }
+        static public Backup_Settings Settings { get; set; }
         static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } = new Dictionary<string, AdvancedDriveInfo>(); //key: serial number , value: DriveInfo
         public delegate void UIChanges();
 
@@ -749,7 +749,7 @@ namespace File_Master_project
             #endregion
 
             #region BackupSettings_Global
-            Settings = new Backupsettings_Global();
+            Settings = new Backup_Settings();
             #endregion
         }
 
