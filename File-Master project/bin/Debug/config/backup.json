@@ -34,7 +34,7 @@
         "SourcePath": "H:\\Filmek\\Free Guy\\free.guy.1080p-no1.mkv",
         "DestinationPath": "D:\\Backups",
         "ID": 0,
-        "LastSaved": "2022-10-30T23:53:00.9012915+01:00",
+        "LastSaved": "2022-11-02T21:07:20.5323562+01:00",
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
@@ -79,11 +79,11 @@
         }
       },
       {
-        "SourcePath": "D:\\TEMP\\settings.txt",
-        "DestinationPath": ".",
+        "SourcePath": "D:\\TEMP\\Music\\Sub\\Westworld I",
+        "DestinationPath": "D:\\Backups",
         "ID": 0,
-        "LastSaved": "0001-01-01T00:00:00",
-        "IsEnabled": false,
+        "LastSaved": "2022-11-02T22:04:33.0004548+01:00",
+        "IsEnabled": true,
         "Configuration": {
           "Method": "F",
           "NumberOfCopies": 1,

@@ -26,10 +26,10 @@ in 0.7:
 + integrity check of files after data load in
 + allow destination to be a non existing folder
 - delete backups when item is deleted or modified
-- make the 'settings' class static, and put it in a separate file
-- create a static UserInterface class
 - help tooltips
-- make path textboxes responsive by shortening path if necessary
++ async backuping process
+- indication for ongoing backup process (show progress in 'manage selected item menu', color backupitem blue, display notification)
+- cancel operation button for ongoing backup process
 + fix: view destination button visibility when it does not exists yet
 + fix: size limit check always resets after restart
 + fix: upon first opening the add new task menu, the modify button is seen
@@ -42,6 +42,8 @@ in 0.7:
 
 in 0.8:
 - available drives update in every 30 seconds
+- make the 'settings' class static, and put it in a separate file
+- create a static UserInterface class
 - working automated backup process
 - display total amount of backup space on drive in backupdrives menu
 - delete backups option when removing backup drives
@@ -49,6 +51,7 @@ in 0.8:
 - async load of backup item size for faster program startup
 - application language settings
 - prevent opening application while it is already running
+- make path textboxes responsive by shortening path if necessary
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15
 

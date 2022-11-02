@@ -83,6 +83,7 @@ namespace File_Master_project
         [JsonIgnore] public Backupdrive BackupDriveOfItem { get { return BackupProcess.GetBackupdriveFromBackupitem(this); } }
         [JsonProperty] public Backupitem_Settings Configuration { get; set; }
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
+        [JsonIgnore] private Task<bool> BackupTask;
 
         [JsonConstructor] public Backupitem(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, Backupitem_Settings configuration)
         {
@@ -143,35 +144,19 @@ namespace File_Master_project
         #endregion
 
         #region Backup process (SAVEING)
-        public void Backup(bool isManual)
+        public async Task Backup_Async(bool isManual)
         {
             bool success = false;
             if (CheckPermission(isManual))
             {
                 try
                 {
-                    if(((Source.Attributes & FileAttributes.System) != FileAttributes.System))
-                    {
-                        if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
-                        {
-                            SaveDirectory(Source);
-                            foreach (var ThisDirectory in Directory.GetDirectories(Source.FullName, "*", SearchOption.AllDirectories))
-                            {
-                                SaveDirectory(Main.GetPathInfo(ThisDirectory));
-                            }         
-                        }
-                        else
-                        {
-                            SaveFile(Source);
-                        }
-                        LastSaved = DateTime.Now;
-                        success = true;
-                        BackupProcess.Upload_Backupinfo();
-                    }
-                    else
-                    {
-                        MessageBox.Show("System files are not allowed to be accessed!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    BackupTask = new Task<bool>(CreateBackup);
+                    BackupProcess.BackupTasks.Add(this, BackupTask);
+                    BackupTask.Start();
+                    success = await BackupTask;
+                    BackupProcess.BackupTasks.Remove(this);
+                    BackupTask = null;
                 }
                 catch (Exception ex)
                 {
@@ -186,17 +171,44 @@ namespace File_Master_project
             StartTimer();
         }
 
-        private void SaveFile(FileSystemInfo ThisSource, string AdditionalPath = "")
+        private bool CreateBackup()
+        {
+            if (((Source.Attributes & FileAttributes.System) != FileAttributes.System))
+            {
+                if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+                {
+                    CopyDirectory(Source);
+                    foreach (var ThisDirectory in Directory.GetDirectories(Source.FullName, "*", SearchOption.AllDirectories))
+                    {
+                        CopyDirectory(Main.GetPathInfo(ThisDirectory));
+                    }
+                }
+                else
+                {
+                    CopyFile(Source);
+                }
+                LastSaved = DateTime.Now;
+                BackupProcess.Upload_Backupinfo();
+                return true;
+            }
+            else
+            {
+                MessageBox.Show("System files are not allowed to be accessed!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        private void CopyFile(FileSystemInfo ThisSource, string AdditionalPath = "")
         {
             Directory.CreateDirectory($"{Destination.FullName}{AdditionalPath}");
             File.Copy(ThisSource.FullName, $@"{Destination.FullName}{AdditionalPath}\{ThisSource.Name}", false);
         }
 
-        private void SaveDirectory(FileSystemInfo ThisSource)
+        private void CopyDirectory(FileSystemInfo ThisSource)
         {
             foreach (var item in Directory.GetFiles(ThisSource.FullName))
             {
-                SaveFile(Main.GetPathInfo(item), ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}"));
+                CopyFile(Main.GetPathInfo(item), ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}"));
             }
         }
 
@@ -215,7 +227,7 @@ namespace File_Master_project
         {
             if (DateTime.Now >= GetNextCallTime())
             {
-                //Backup(false);
+                //Backup_Async(false);
             }
             else
             {
@@ -343,6 +355,7 @@ namespace File_Master_project
 
         public void EnableActionButtons(ref Button Remove, ref Button Enable, ref Button Disable, ref Button Modify, ref Button Repair, ref Button Restore, ref Button ManualSave, ref Button ViewDestination)
         {
+            bool ActiveTask = (BackupTask != null && BackupTask.Status == TaskStatus.Running);
             #region Remove item
             Remove.IsEnabled = true;
             Remove.Opacity = 1;
@@ -353,8 +366,8 @@ namespace File_Master_project
                 if (!IsEnabled)
                 {
                     Disable.Visibility = Visibility.Hidden;
-                    Enable.IsEnabled = true;
                     Enable.Visibility = Visibility.Visible;
+                    Enable.IsEnabled = true;                  
                     Enable.Opacity = 1;
                 }
                 else
@@ -366,8 +379,8 @@ namespace File_Master_project
             else
             {
                 Disable.Visibility = Visibility.Hidden;
-                Enable.IsEnabled = false;
                 Enable.Visibility = Visibility.Visible;
+                Enable.IsEnabled = false;               
                 Enable.Opacity = 0.5;
             }
             #endregion
@@ -390,15 +403,26 @@ namespace File_Master_project
             }
             #endregion
             #region Manual save
-            if (IsAvailable && !IsOutOfSpace)
-            {
-                ManualSave.IsEnabled = true;
-                ManualSave.Opacity = 1;
-            }
-            else
+            if(ActiveTask)
             {
                 ManualSave.IsEnabled = false;
                 ManualSave.Opacity = 0.5;
+                ManualSave.Content = "Saving...";
+            }
+            else
+            {
+                if (IsAvailable && !IsOutOfSpace)
+                {
+                    ManualSave.IsEnabled = true;
+                    ManualSave.Opacity = 1;
+                    ManualSave.Content = "Manual save";
+                }
+                else
+                {
+                    ManualSave.IsEnabled = false;
+                    ManualSave.Opacity = 0.5;
+                    ManualSave.Content = "Manual save";
+                }
             }
             #endregion
             #region ViewDestination
@@ -570,11 +594,11 @@ namespace File_Master_project
         #endregion
 
         #region Backup
-        public void Backup()
+        public async void Backup_Async()
         {
             foreach (var item in Backups)
             {
-                item.Backup(true);
+                await item.Backup_Async(true);
             }
         }
         #endregion
@@ -619,6 +643,7 @@ namespace File_Master_project
         static public List<Backupdrive> Backupdrives { get; private set; }
         static public Backup_Settings Settings { get; set; }
         static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } = new Dictionary<string, AdvancedDriveInfo>(); //key: serial number , value: DriveInfo
+        static public Dictionary<Backupitem, Task<bool>> BackupTasks = new Dictionary<Backupitem, Task<bool>>();
         public delegate void UIChanges();
 
         static BackupProcess()
@@ -819,16 +844,16 @@ namespace File_Master_project
         #endregion
 
         #region Backup(Manualsave)
-        static public void Manualsave(Backupitem Item)
+        static public async Task Manualsave_Async(Backupitem Item)
         {
-            Item.Backup(true);
+            await Item.Backup_Async(true);
         }
 
         static private void ManualsaveALL()
         {
             foreach (var Drive in Backupdrives)
             {
-                Drive.Backup();
+                Drive.Backup_Async();
             }
         }
         #endregion

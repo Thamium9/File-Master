@@ -402,12 +402,15 @@ namespace File_Master_project
             BackupProcess.Upload_Backupinfo();
         }
 
-        private void Manualsave_button_Click(object sender, RoutedEventArgs e)
+        private async void Manualsave_button_Click(object sender, RoutedEventArgs e)
         {
             if (Warning_Save())
             {
                 Backupitem Item = GetSelectedBackupitem();
-                BackupProcess.Manualsave(Item);
+                Manualsave_button.IsEnabled = false;
+                Manualsave_button.Opacity = 0.5;
+                Manualsave_button.Content = "Saving...";
+                await BackupProcess.Manualsave_Async(Item);
                 Update_Backupmenu();
                 BackupProcess.Upload_Backupinfo();
             }
@@ -1090,6 +1093,7 @@ namespace File_Master_project
             Repair_button.Visibility = Visibility.Hidden;
             Manualsave_button.IsEnabled = false;
             Manualsave_button.Opacity = 0.5;
+            Manualsave_button.Content = "Manual save";
             Save_image.Opacity = 0.5;
             Disablebackup_button.Visibility = Visibility.Hidden;
             Enablebackup_button.IsEnabled = false;
