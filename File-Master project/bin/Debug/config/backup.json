@@ -31,30 +31,6 @@
         }
       },
       {
-        "SourcePath": "H:\\Filmek\\Free Guy\\free.guy.1080p-no1.mkv",
-        "DestinationPath": "D:\\Backups",
-        "ID": 0,
-        "LastSaved": "2022-11-02T21:07:20.5323562+01:00",
-        "IsEnabled": true,
-        "Configuration": {
-          "Method": "F",
-          "NumberOfCopies": 1,
-          "CycleInterval": {
-            "Time": 10.0,
-            "Unit": "hour"
-          },
-          "OnlySaveOnChange": true,
-          "MaxStorageSpace": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        }
-      },
-      {
         "SourcePath": "D:\\Dokumentumok\\Blender\\Font styles",
         "DestinationPath": "TEMP",
         "ID": 0,
@@ -79,16 +55,40 @@
         }
       },
       {
-        "SourcePath": "D:\\TEMP\\Music\\Sub\\Westworld I",
+        "SourcePath": "H:\\Filmek\\Free Guy\\free.guy.1080p-no1.mkv",
         "DestinationPath": "D:\\Backups",
         "ID": 0,
-        "LastSaved": "2022-11-02T22:04:33.0004548+01:00",
+        "LastSaved": "0001-01-01T00:00:00",
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
           "NumberOfCopies": 1,
           "CycleInterval": {
-            "Time": 1.0,
+            "Time": 10.0,
+            "Unit": "day"
+          },
+          "OnlySaveOnChange": true,
+          "MaxStorageSpace": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        }
+      },
+      {
+        "SourcePath": "D:\\TEMP\\Music\\Sub\\Westworld I",
+        "DestinationPath": "D:\\Backups",
+        "ID": 0,
+        "LastSaved": "0001-01-01T00:00:00",
+        "IsEnabled": true,
+        "Configuration": {
+          "Method": "F",
+          "NumberOfCopies": 1,
+          "CycleInterval": {
+            "Time": 10.0,
             "Unit": "day"
           },
           "OnlySaveOnChange": true,
@@ -111,5 +111,62 @@
       "Bytes": 0
     },
     "Backups": []
+  },
+  {
+    "DefaultVolumeLabel": "KINGSTON_C",
+    "DriveID": "E9EFF223",
+    "SizeLimit": {
+      "Bytes": 2147483648
+    },
+    "Backups": [
+      {
+        "SourcePath": "C:\\Program Files\\Notepad++",
+        "DestinationPath": "J:\\Backups",
+        "ID": 0,
+        "LastSaved": "2022-11-04T20:48:20.5656942+01:00",
+        "IsEnabled": true,
+        "Configuration": {
+          "Method": "F",
+          "NumberOfCopies": 1,
+          "CycleInterval": {
+            "Time": 10.0,
+            "Unit": "day"
+          },
+          "OnlySaveOnChange": true,
+          "MaxStorageSpace": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        }
+      },
+      {
+        "SourcePath": "D:\\TEMP\\Source",
+        "DestinationPath": "J:\\Backups",
+        "ID": 0,
+        "LastSaved": "2022-11-04T21:58:53.4238907+01:00",
+        "IsEnabled": true,
+        "Configuration": {
+          "Method": "F",
+          "NumberOfCopies": 1,
+          "CycleInterval": {
+            "Time": 10.0,
+            "Unit": "day"
+          },
+          "OnlySaveOnChange": true,
+          "MaxStorageSpace": 0,
+          "RetryWaitTime": {
+            "Time": 5.0,
+            "Unit": "minute"
+          },
+          "MaxNumberOfRetries": 3,
+          "PopupOnFail": false,
+          "FileCompression": false
+        }
+      }
+    ]
   }
 ]

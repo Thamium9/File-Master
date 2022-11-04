@@ -38,6 +38,9 @@ in 0.7:
 - fix: trying to access DriveInformation when it is null
 + fix: crash on pressing the view destination button while it doesn't exists
 + fix: applied margin on main window shifted the UI elements hitbox
++ fix: crash while trying to access driveinformation for unavailable drive (Backupdriveselect_combobox_SelectionChanged)
++ fix: backup not copying empty directories 
++ fix: Backup task is not removed on failed attempt, causing error in 'BackupTasks' dictionary
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
 
 in 0.8:
@@ -50,8 +53,9 @@ in 0.8:
 - use backup size limit implementation
 - async load of backup item size for faster program startup
 - application language settings
-- prevent opening application while it is already running
 - make path textboxes responsive by shortening path if necessary
+- create log file to store events
+- global settings menu implementation
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15
 
@@ -61,7 +65,7 @@ in 0.9:
 - events / current operations menu (shows the tasks in order, the time they will deploy and other informations)
 - file browser menu implementation
 - run on windows startup
-- global settings menu implementation
+- prevent opening application while it is already running
 - menu redesign
 
 in the future:

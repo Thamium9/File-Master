@@ -151,12 +151,9 @@ namespace File_Master_project
             {
                 try
                 {
-                    BackupTask = new Task<bool>(CreateBackup);
+                    BackupTask = Task.Run(() => CreateBackup());
                     BackupProcess.BackupTasks.Add(this, BackupTask);
-                    BackupTask.Start();
                     success = await BackupTask;
-                    BackupProcess.BackupTasks.Remove(this);
-                    BackupTask = null;
                 }
                 catch (Exception ex)
                 {
@@ -167,6 +164,8 @@ namespace File_Master_project
                     if (success) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
                     else MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                BackupProcess.BackupTasks.Remove(this);
+                BackupTask = null;
             }
             StartTimer();
         }
@@ -177,15 +176,15 @@ namespace File_Master_project
             {
                 if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    CopyDirectory(Source);
+                    CopyDirectory((DirectoryInfo)Source);
                     foreach (var ThisDirectory in Directory.GetDirectories(Source.FullName, "*", SearchOption.AllDirectories))
                     {
-                        CopyDirectory(Main.GetPathInfo(ThisDirectory));
+                        CopyDirectory((DirectoryInfo)Main.GetPathInfo(ThisDirectory));
                     }
                 }
                 else
                 {
-                    CopyFile(Source);
+                    CopyFile((FileInfo)Source);
                 }
                 LastSaved = DateTime.Now;
                 BackupProcess.Upload_Backupinfo();
@@ -198,17 +197,18 @@ namespace File_Master_project
             }
         }
 
-        private void CopyFile(FileSystemInfo ThisSource, string AdditionalPath = "")
+        private void CopyFile(FileInfo ThisSource, string AdditionalPath = "")
         {
             Directory.CreateDirectory($"{Destination.FullName}{AdditionalPath}");
             File.Copy(ThisSource.FullName, $@"{Destination.FullName}{AdditionalPath}\{ThisSource.Name}", false);
         }
 
-        private void CopyDirectory(FileSystemInfo ThisSource)
+        private void CopyDirectory(DirectoryInfo ThisSource)
         {
+            Directory.CreateDirectory($@"{Destination.FullName}{ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}")}");
             foreach (var item in Directory.GetFiles(ThisSource.FullName))
             {
-                CopyFile(Main.GetPathInfo(item), ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}"));
+                CopyFile(new FileInfo(item), ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}"));
             }
         }
 

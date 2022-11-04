@@ -407,10 +407,9 @@ namespace File_Master_project
             if (Warning_Save())
             {
                 Backupitem Item = GetSelectedBackupitem();
-                Manualsave_button.IsEnabled = false;
-                Manualsave_button.Opacity = 0.5;
-                Manualsave_button.Content = "Saving...";
-                await BackupProcess.Manualsave_Async(Item);
+                var Backup = Task.Run(() => BackupProcess.Manualsave_Async(Item));
+                Update_Backupmenu();
+                await Backup;
                 Update_Backupmenu();
                 BackupProcess.Upload_Backupinfo();
             }
@@ -486,16 +485,24 @@ namespace File_Master_project
             if(selected != null && selected.Tag != null)
             {
                 Backupdrive SelectedDrive = (Backupdrive)selected.Tag;
-                AvailableFreeSpaceBD_label.Content = new DiskSpace(SelectedDrive.DriveInformation.AvailableFreeSpace).Humanize();
-                long AvailableAllocated = SelectedDrive.SizeLimit.Bytes - SelectedDrive.GetBackupSize().Bytes;
-                if(SelectedDrive.SizeLimit.Bytes > 0)
+                if(SelectedDrive.DriveInformation != null)
                 {
-                    if (AvailableAllocated <= 0) AvailableAllocatedSpace_label.Content = "Out of allocated space!";
-                    else AvailableAllocatedSpace_label.Content = new DiskSpace(AvailableAllocated).Humanize();
+                    AvailableFreeSpaceBD_label.Content = new DiskSpace(SelectedDrive.DriveInformation.AvailableFreeSpace).Humanize();
+                    long AvailableAllocated = SelectedDrive.SizeLimit.Bytes - SelectedDrive.GetBackupSize().Bytes;
+                    if (SelectedDrive.SizeLimit.Bytes > 0)
+                    {
+                        if (AvailableAllocated <= 0) AvailableAllocatedSpace_label.Content = "Out of allocated space!";
+                        else AvailableAllocatedSpace_label.Content = new DiskSpace(AvailableAllocated).Humanize();
+                    }
+                    else
+                    {
+                        AvailableAllocatedSpace_label.Content = "No limit is set!";
+                    }
                 }
                 else
                 {
-                    AvailableAllocatedSpace_label.Content = "No limit is set!";
+                    AvailableFreeSpaceBD_label.Content = "Not available!";
+                    AvailableAllocatedSpace_label.Content = "Not available!";
                 }
             }
         }
