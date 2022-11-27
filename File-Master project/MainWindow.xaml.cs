@@ -115,11 +115,14 @@ namespace File_Master_project
 
         public MainWindow()
         {
-            bool debug = true;
-            if (debug)
-            {
-                InitializeComponent();
+            InitializeComponent();
+        }
 
+        private void Main_window_Loaded(object sender, RoutedEventArgs e)
+        {
+            bool debug = true;
+            try
+            {
                 #region Window visibility on startup
                 if (!Minimize_as_TaskbarIcon || !Start_with_minimized) NotifyIcon_Taskbar.Visibility = Visibility.Collapsed; //hide notifyicon when not needed
                 if (Start_with_minimized) Program_Minimize(Minimize_as_TaskbarIcon);
@@ -129,6 +132,10 @@ namespace File_Master_project
                 Settings Usersettings = new Settings();
                 Usersettings.Shortsource = false;
 
+                if (InDevelopment && !debug)
+                {
+                    Unstable_Warning();
+                }
                 HideAllMenu();
                 Backup_grid.Visibility = Visibility.Visible;
                 Main_window.Activate();
@@ -151,39 +158,10 @@ namespace File_Master_project
 
                 Display_Backups();
             }
-            else
+            catch (Exception ex)
             {
-                try
-                {
-                    InitializeComponent();
-
-                    #region Window visibility on startup
-                    if (!Minimize_as_TaskbarIcon || !Start_with_minimized) NotifyIcon_Taskbar.Visibility = Visibility.Collapsed; //hide notifyicon when not needed
-                    if (Start_with_minimized) Program_Minimize(Minimize_as_TaskbarIcon);
-                    else Main_window.WindowState = WindowState.Normal;
-                    #endregion
-
-                    Settings Usersettings = new Settings();
-                    Usersettings.Shortsource = false;
-
-                    if (InDevelopment)
-                    {
-                        Unstable_Warning();
-                    }
-                    HideAllMenu();
-                    Backup_grid.Visibility = Visibility.Visible;
-                    Main_window.Activate();
-                    Menu = "Backup";
-
-                    Display_Backups();
-                }
-                #region Runtime Error
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message, "Runtime error!", MessageBoxButton.OK, MessageBoxImage.Error);
-                    throw;
-                }
-                #endregion
+                MessageBox.Show(ex.Message, "Runtime error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw;
             }
         }
 
@@ -218,13 +196,13 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Select backuptask
+        #region User Actions
         private void Backuptask_listbox_SelectionChanged(object sender, SelectionChangedEventArgs e)//changes when you select an item from the source list
         {
             if (Backuptask_listbox.SelectedIndex != -1)//if the index is -1 there is no item selected
             {
                 Backupitem Item = GetSelectedBackupitem();
-                if(Item != null)
+                if (Item != null)
                 {
                     Display_Backupitem(Item);
                     #region UI-changes
@@ -236,14 +214,19 @@ namespace File_Master_project
                     Reset_Backupmenu();
                 }
             }
-            else if(Backuptask_listbox.Items.Count!=0)
+            else if (Backuptask_listbox.Items.Count != 0)
             {
                 Reset_Backupmenu();
             }
         }
-        #endregion
 
-        #region Buttons
+        private void ViewPathSelection_Combobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(Main_window.IsLoaded)
+            {
+                Update_Backupmenu();
+            }           
+        }
 
         private void Additem_button_Click(object sender, RoutedEventArgs e)
         {
@@ -415,19 +398,35 @@ namespace File_Master_project
             }
         }
 
-        private void ManageBackupDrives_button_Click(object sender, RoutedEventArgs e)
+        private async void ManageBackupDrives_button_Click(object sender, RoutedEventArgs e)
         {
             HideAllMenu();
             Backupsubmenu2_grid.Visibility = Visibility.Visible;
             Menu = "Backup.sub2";
-            UpdateSubmenu2_Async();
+            await UpdateSubmenu2_Async();
         }
 
-        private void ViewDestination_button_Click(object sender, RoutedEventArgs e)
+        private void ViewSelectedPath_button_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                Process.Start(GetSelectedBackupitem().Destination.FullName);
+                if (ViewPathSelection_Combobox.SelectedIndex == 0)
+                {
+                    Process.Start(GetSelectedBackupitem().Destination.FullName);
+                }
+                else
+                {
+                    FileSystemInfo Source = GetSelectedBackupitem().Source;
+                    if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+                    {
+                        Process.Start(Source.FullName);
+                    }
+                    else
+                    {
+                        FileInfo Target = (FileInfo)Source;
+                        Process.Start(Target.DirectoryName);
+                    }
+                }             
             }
             catch (Exception)
             {
@@ -438,6 +437,8 @@ namespace File_Master_project
         #endregion
 
         #region Submenu1
+
+        #region User Actions
 
         #region Backupdrivelist combobox
         private void Backupdriveselect_combobox_DropDownOpened(object sender, EventArgs e)
@@ -451,7 +452,7 @@ namespace File_Master_project
             if (selected != null)
             {
                 Backupdriveselect_combobox.Items.Add(selected);
-                Backupdriveselect_combobox.SelectedItem = selected;               
+                Backupdriveselect_combobox.SelectedItem = selected;
             }
             else
             {
@@ -459,7 +460,7 @@ namespace File_Master_project
             }
             foreach (var Drive in BackupProcess.Backupdrives)
             {
-                if(Drive != selected.Tag)
+                if (Drive != selected.Tag)
                 {
                     ComboBoxItem CI = new ComboBoxItem();
                     CI.Content = $"({Drive.GetDriveLetter()}:) {Drive.GetVolumeLabel()}";
@@ -482,10 +483,10 @@ namespace File_Master_project
         private void Backupdriveselect_combobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ComboBoxItem selected = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
-            if(selected != null && selected.Tag != null)
+            if (selected != null && selected.Tag != null)
             {
                 Backupdrive SelectedDrive = (Backupdrive)selected.Tag;
-                if(SelectedDrive.DriveInformation != null)
+                if (SelectedDrive.DriveInformation != null)
                 {
                     AvailableFreeSpaceBD_label.Content = new DiskSpace(SelectedDrive.DriveInformation.AvailableFreeSpace).Humanize();
                     long AvailableAllocated = SelectedDrive.SizeLimit.Bytes - SelectedDrive.GetBackupSize().Bytes;
@@ -535,7 +536,7 @@ namespace File_Master_project
 
         private void Updateitemapply_button_Click(object sender, RoutedEventArgs e)
         {
-            if(CheckInfo())
+            if (CheckInfo())
             {
                 if (MessageBox.Show("Are you sure you want to modify this item?\nThis action will delete all the backups associated with this item!", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
                 {
@@ -586,7 +587,7 @@ namespace File_Master_project
         }
 
         private Backupitem CreateBackupitem(Backupitem_Settings Settings)
-        {         
+        {
             string Source = Sourceinput_textbox.Text;
             string Destination = Destinationinput_textbox.Text;
             Backupitem Item = new Backupitem(BackupProcess.GetNewBackupID(), Source, Destination, DateTime.MinValue, false, Settings);
@@ -632,6 +633,8 @@ namespace File_Master_project
 
         #endregion
 
+        #endregion
+
         #region Settings menu
 
         #region Reset menu
@@ -666,7 +669,7 @@ namespace File_Master_project
 
         #region Submenu2
 
-        #region Actions
+        #region User Actions
         private void Showunavailable_checkbox_click(object sender, RoutedEventArgs e)
         {
             UpdateSubmenu2_Async();
@@ -759,7 +762,7 @@ namespace File_Master_project
 
         #endregion
 
-        #region Menu functions
+        #region Menu Functions
         private async Task<StackPanel> CreateAvailableDrivesSP_Async()
         {
             StackPanel Drives = new StackPanel();
@@ -1043,7 +1046,7 @@ namespace File_Master_project
 
         #endregion
 
-        #region Menu actions
+        #region Menu Actions
         private async Task UpdateSubmenu2_Async()// data is for transfering new drive size limit
         {
             StackPanel Drives = new StackPanel();
@@ -1077,17 +1080,17 @@ namespace File_Master_project
 
         #endregion
 
-        #region Menu actions
+        #region Menu Actions
         public void Reset_Backupmenu()
         {
             Backuptask_listbox.SelectedIndex = -1;
             Warning1_label.Visibility = Visibility.Visible;
-            Destination_textbox.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            Destination_textbox.Text = "Select a source folder!";
-            Interval_label.Content = "";
-            Status_label.Content = "Status: No items are selected!";
+            ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
+            ItemPath_textbox.Text = "Select a source folder!";
+            Interval_label.Content = "Save interval: ";
+            Status_label.Content = "Status info: No items are selected!";
             Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            Smartsave_label.Content = "Smart save:";
+            OnlySaveOnChange_label.Content = "Only save if data is modified: ";
             Lastsaved_label.Content = "Last saved:";
             Backupfilesize_label.Content = "Backup file size: ";
             Removeitem_button.IsEnabled = false;
@@ -1106,8 +1109,9 @@ namespace File_Master_project
             Enablebackup_button.IsEnabled = false;
             Enablebackup_button.Visibility = Visibility.Visible;
             Enablebackup_button.Opacity = 0.5;
-            ViewDestination_button.IsEnabled = false;
-            ViewDestination_button.Opacity = 0.5;
+            ViewSelectedPath_button.IsEnabled = false;
+            ViewSelectedPath_button.Opacity = 0.5;
+            ViewPathSelection_Combobox.SelectedIndex = 0;
             Display_Backups();
         }
 
@@ -1225,16 +1229,23 @@ namespace File_Master_project
         {
             #region Loads interval
             Item.Configuration.CycleInterval.Humanize();
-            Interval_label.Content = Item.Configuration.CycleInterval.GetTime();
+            Interval_label.Content = $"Save interval: {Item.Configuration.CycleInterval.GetTime()}";
             #endregion
 
-            #region Loads destination
-            Item.SetDestinationTBox(ref Destination_textbox);
+            #region Loads path
+            if(ViewPathSelection_Combobox.SelectedIndex == 0)
+            {
+                Item.SetDestinationTBox(ref ItemPath_textbox);
+            }
+            else
+            {
+                Item.SetSourceTBox(ref ItemPath_textbox);
+            }
             #endregion
 
             #region Loads Smart save
-            if (Item.Configuration.OnlySaveOnChange) Smartsave_label.Content = "Smart save: ON";
-            else Smartsave_label.Content = "Smart save: OFF";
+            if (Item.Configuration.OnlySaveOnChange) OnlySaveOnChange_label.Content = "Only save if data is modified: ON";
+            else OnlySaveOnChange_label.Content = "Only save if data is modified: OFF";
             #endregion
 
             #region Loads Last saved
@@ -1262,7 +1273,39 @@ namespace File_Master_project
             #endregion
 
             #region Buttons
-            Item.EnableActionButtons(ref Removeitem_button, ref Enablebackup_button, ref Disablebackup_button, ref Modification_button, ref Repair_button, ref Restorefiles_button, ref Manualsave_button, ref ViewDestination_button);
+
+            Item.EnableActionButtons(ref Removeitem_button, ref Enablebackup_button, ref Disablebackup_button, ref Modification_button, ref Repair_button, ref Restorefiles_button, ref Manualsave_button);
+
+            #region View Selected Path
+            if (ViewPathSelection_Combobox.SelectedIndex == 0)
+            {
+                if (Item.IsAvailable && Item.Destination.Exists)
+                {
+                    ViewSelectedPath_button.IsEnabled = true;
+                    ViewSelectedPath_button.Opacity = 1;
+                }
+                else
+                {
+                    ViewSelectedPath_button.IsEnabled = false;
+                    ViewSelectedPath_button.Opacity = 0.5;
+                }
+            }
+            else
+            {
+                if (Item.IsAvailable && Item.Source.Exists)
+                {
+                    ViewSelectedPath_button.IsEnabled = true;
+                    ViewSelectedPath_button.Opacity = 1;
+                }
+                else
+                {
+                    ViewSelectedPath_button.IsEnabled = false;
+                    ViewSelectedPath_button.Opacity = 0.5;
+                }
+            }
+
+            #endregion
+
             #endregion
         }
         #endregion

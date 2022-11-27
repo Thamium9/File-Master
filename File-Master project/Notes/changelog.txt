@@ -20,7 +20,7 @@ in 0.7:
 + 'last saved' info : display how long ago
 + backupdrive menu async load
 + view destination button implementation
-- show both source and destination in the view task menu
++ show both source and destination in the view task menu
 + backup item's destination path drive letter update
 + restructure backup settings + menu
 + integrity check of files after data load in
@@ -40,11 +40,14 @@ in 0.7:
 + fix: applied margin on main window shifted the UI elements hitbox
 + fix: crash while trying to access driveinformation for unavailable drive (Backupdriveselect_combobox_SelectionChanged)
 + fix: backup not copying empty directories 
-+ fix: Backup task is not removed on failed attempt, causing error in 'BackupTasks' dictionary
++ fix: backup task is not removed on failed attempt, causing error in 'BackupTasks' dictionary
++ fix: crash when a drive serial numbers occurs more than once (for example multiple google drive accounts or partitioned drives)
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
 
 in 0.8:
 - available drives update in every 30 seconds
+- support for partitioned drives (drive id)
+- only store supported drive types in "AllDriveInfo" list ()
 - make the 'settings' class static, and put it in a separate file
 - create a static UserInterface class
 - working automated backup process
@@ -54,7 +57,7 @@ in 0.8:
 - async load of backup item size for faster program startup
 - application language settings
 - make path textboxes responsive by shortening path if necessary
-- create log file to store events
+- create log file to store events ('//LOG' indicates undefined log in code)
 - global settings menu implementation
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15

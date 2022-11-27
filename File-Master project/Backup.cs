@@ -296,52 +296,69 @@ namespace File_Master_project
             if (!IsEnabled)
             {
                 Status.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-                Status.Content = "Status: The backup item is disabled!";
+                Status.Content = "Status info: The backup item is disabled!";
             }
             if (!Source.Exists)
             {
                 Status.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-                Status.Content = "Status: The source is missing!";
+                Status.Content = "Status info: The source is missing!";
             }
             else if(IsOutOfSpace || !IsAvailable) //destination is unusable
             {
                 if (BackupProcess.Settings.IsTempfolderEnabled)//Can save to temp-drive temp
                 {
                     Status.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                    Status.Content = "Status: OK (alternative destination)!";
+                    Status.Content = "Status info: OK (alternative destination)!";
                 }
                 else if (!IsAvailable)
                 {
                     Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status.Content = "Status: The destination is unreachable!";
+                    Status.Content = "Status info: The destination is unreachable!";
                 }
                 else
                 {
                     Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status.Content = "Status: The backup drive has reached its space limit!";
+                    Status.Content = "Status info: The backup drive has reached its space limit!";
                 }
             }
             else if (false)//unknown issue
             {
                 Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                Status.Content = "Status: Unknown issue has occurred!";
+                Status.Content = "Status info: Unknown issue has occurred!";
             }
         }
 
-        public void SetDestinationTBox(ref TextBox Dest)
+        public void SetDestinationTBox(ref TextBox DestinationTB)
         {
-            Dest.Text = Destination.FullName;
-            Dest.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            DestinationTB.Text = Destination.FullName;
+            DestinationTB.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
             if (!IsAvailable || IsOutOfSpace)
             {
                 if (BackupProcess.Settings.IsTempfolderEnabled)
                 {
-                    Dest.Text = BackupProcess.Settings.TempFolder.FullName;
-                    Dest.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                    DestinationTB.Text = BackupProcess.Settings.TempFolder.FullName;
+                    DestinationTB.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
                 }
                 else
                 {
-                    Dest.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                    DestinationTB.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                }
+            }
+        }
+
+        public void SetSourceTBox(ref TextBox SourceTB)
+        {
+            SourceTB.Text = Source.FullName;
+            SourceTB.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            if (!IsAvailable || IsOutOfSpace)
+            {
+                if (BackupProcess.Settings.IsTempfolderEnabled)
+                {
+                    SourceTB.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
+                }
+                else
+                {
+                    SourceTB.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
                 }
             }
         }
@@ -353,7 +370,7 @@ namespace File_Master_project
             if (!IsAvailable || IsOutOfSpace) Warning4.Visibility = Visibility.Visible;
         }
 
-        public void EnableActionButtons(ref Button Remove, ref Button Enable, ref Button Disable, ref Button Modify, ref Button Repair, ref Button Restore, ref Button ManualSave, ref Button ViewDestination)
+        public void EnableActionButtons(ref Button Remove, ref Button Enable, ref Button Disable, ref Button Modify, ref Button Repair, ref Button Restore, ref Button ManualSave)
         {
             bool ActiveTask = (BackupTask != null && BackupTask.Status == TaskStatus.Running);
             #region Remove item
@@ -423,18 +440,6 @@ namespace File_Master_project
                     ManualSave.Opacity = 0.5;
                     ManualSave.Content = "Manual save";
                 }
-            }
-            #endregion
-            #region ViewDestination
-            if (IsAvailable && Destination.Exists)
-            {
-                ViewDestination.IsEnabled = true;
-                ViewDestination.Opacity = 1;
-            }
-            else
-            {
-                ViewDestination.IsEnabled = false;
-                ViewDestination.Opacity = 0.5;
             }
             #endregion
         }
@@ -803,6 +808,11 @@ namespace File_Master_project
                 if (Drive.IsReady)
                 {
                     string Serial = GetHardDiskDSerialNumber($"{Drive.Name[0]}");
+                    if (AllDriveInfo.ContainsKey(Serial))
+                    {
+                        AllDriveInfo.Remove(Serial);
+                        //LOG
+                    }
                     AllDriveInfo.Add(Serial, new AdvancedDriveInfo(Drive, Serial));
                 }
             }
@@ -883,7 +893,7 @@ namespace File_Master_project
             Serial = serial;
         }
 
-        public string GetMediaType() //code from: https://gist.github.com/MiloszKrajewski/352dc8b8eb132d3a2bc7
+        private string GetMediaType() //code from: https://gist.github.com/MiloszKrajewski/352dc8b8eb132d3a2bc7
         {
             try
             {
