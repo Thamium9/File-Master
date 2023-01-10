@@ -84,6 +84,7 @@ namespace File_Master_project
         [JsonProperty] public Backupitem_Settings Configuration { get; set; }
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
         [JsonIgnore] private Task<bool> BackupTask;
+        [JsonIgnore] public bool ActiveTask { get { return BackupTask != null && BackupTask.Status == TaskStatus.Running; } }
 
         [JsonConstructor] public Backupitem(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, Backupitem_Settings configuration)
         {
@@ -259,7 +260,18 @@ namespace File_Master_project
             ListItem.Content = $"◍ {GetBackupType()}: {Source.FullName} - ({GetBackupSize().Humanize()})";
             ListItem.Tag = this;
             #region Item color
-            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            
+            //Defaults
+            if(ActiveTask)
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 145, 250));
+            }
+            else
+            {
+                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+            }
+
+            //Issues
             if (!IsEnabled)
             {
                 ListItem.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));

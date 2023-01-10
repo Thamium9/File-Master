@@ -19,3 +19,24 @@ D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json.xml
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.AssemblyReference.cache
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.SuggestedBindingRedirects.cache
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\bin\Debug\File-Master.exe.config
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\bin\Debug\File-Master.exe
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\bin\Debug\File-Master.pdb
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\bin\Debug\Hardcodet.NotifyIcon.Wpf.dll
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\bin\Debug\Hardcodet.NotifyIcon.Wpf.xml
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.AssemblyReference.cache
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.SuggestedBindingRedirects.cache
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\MainWindow.g.cs
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\App.g.cs
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master_MarkupCompile.cache
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master_MarkupCompile.lref
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\MainWindow.baml
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master.g.resources
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File_Master_project.Properties.Resources.resources
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.GenerateResource.cache
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.CoreCompileInputs.cache
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.CopyComplete
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master.exe
+C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master.pdb

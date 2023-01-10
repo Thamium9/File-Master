@@ -1112,6 +1112,8 @@ namespace File_Master_project
             ViewSelectedPath_button.IsEnabled = false;
             ViewSelectedPath_button.Opacity = 0.5;
             ViewPathSelection_Combobox.SelectedIndex = 0;
+            BackupProgress_grid.Visibility = Visibility.Hidden;
+            BackupManaging_grid.Visibility = Visibility.Visible;
             Display_Backups();
         }
 
@@ -1227,86 +1229,97 @@ namespace File_Master_project
 
         private void Display_Backupitem(Backupitem Item)
         {
-            #region Loads interval
-            Item.Configuration.CycleInterval.Humanize();
-            Interval_label.Content = $"Save interval: {Item.Configuration.CycleInterval.GetTime()}";
-            #endregion
-
-            #region Loads path
-            if(ViewPathSelection_Combobox.SelectedIndex == 0)
+            if(Item.ActiveTask)
             {
-                Item.SetDestinationTBox(ref ItemPath_textbox);
+                BackupProgress_grid.Visibility = Visibility.Visible;
+                BackupManaging_grid.Visibility = Visibility.Hidden;
             }
             else
             {
-                Item.SetSourceTBox(ref ItemPath_textbox);
-            }
-            #endregion
+                BackupProgress_grid.Visibility = Visibility.Hidden;
+                BackupManaging_grid.Visibility = Visibility.Visible;
+                #region Loads interval
+                Item.Configuration.CycleInterval.Humanize();
+                Interval_label.Content = $"Save interval: {Item.Configuration.CycleInterval.GetTime()}";
+                #endregion
 
-            #region Loads Smart save
-            if (Item.Configuration.OnlySaveOnChange) OnlySaveOnChange_label.Content = "Only save if data is modified: ON";
-            else OnlySaveOnChange_label.Content = "Only save if data is modified: OFF";
-            #endregion
-
-            #region Loads Last saved
-            if (Item.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
-            else
-            {
-                Interval lastsaved = new Interval(DateTime.Now - Item.LastSaved);
-                if (lastsaved.IsPlural())
+                #region Loads path
+                if (ViewPathSelection_Combobox.SelectedIndex == 0)
                 {
-                    Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()}s ago";
+                    Item.SetDestinationTBox(ref ItemPath_textbox);
                 }
                 else
                 {
-                    Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()} ago";
+                    Item.SetSourceTBox(ref ItemPath_textbox);
                 }
-            }
-            #endregion
+                #endregion
 
-            #region Get status
-            Item.SetStatusInfo(ref Status_label);
-            #endregion
+                #region Loads Smart save
+                if (Item.Configuration.OnlySaveOnChange) OnlySaveOnChange_label.Content = "Only save if data is modified: ON";
+                else OnlySaveOnChange_label.Content = "Only save if data is modified: OFF";
+                #endregion
 
-            #region Loads backup file size
-            Backupfilesize_label.Content = $"Backup file size: {Item.GetBackupSize().Humanize()}";
-            #endregion
-
-            #region Buttons
-
-            Item.EnableActionButtons(ref Removeitem_button, ref Enablebackup_button, ref Disablebackup_button, ref Modification_button, ref Repair_button, ref Restorefiles_button, ref Manualsave_button);
-
-            #region View Selected Path
-            if (ViewPathSelection_Combobox.SelectedIndex == 0)
-            {
-                if (Item.IsAvailable && Item.Destination.Exists)
+                #region Loads Last saved
+                if (Item.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
+                else
                 {
-                    ViewSelectedPath_button.IsEnabled = true;
-                    ViewSelectedPath_button.Opacity = 1;
+                    Interval lastsaved = new Interval(DateTime.Now - Item.LastSaved);
+                    if (lastsaved.IsPlural())
+                    {
+                        Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()}s ago";
+                    }
+                    else
+                    {
+                        Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()} ago";
+                    }
+                }
+                #endregion
+
+                #region Get status
+                Item.SetStatusInfo(ref Status_label);
+                #endregion
+
+                #region Loads backup file size
+                Backupfilesize_label.Content = $"Backup file size: {Item.GetBackupSize().Humanize()}";
+                #endregion
+
+                #region Buttons
+
+                Item.EnableActionButtons(ref Removeitem_button, ref Enablebackup_button, ref Disablebackup_button, ref Modification_button, ref Repair_button, ref Restorefiles_button, ref Manualsave_button);
+
+                #region View Selected Path
+                if (ViewPathSelection_Combobox.SelectedIndex == 0)
+                {
+                    if (Item.IsAvailable && Item.Destination.Exists)
+                    {
+                        ViewSelectedPath_button.IsEnabled = true;
+                        ViewSelectedPath_button.Opacity = 1;
+                    }
+                    else
+                    {
+                        ViewSelectedPath_button.IsEnabled = false;
+                        ViewSelectedPath_button.Opacity = 0.5;
+                    }
                 }
                 else
                 {
-                    ViewSelectedPath_button.IsEnabled = false;
-                    ViewSelectedPath_button.Opacity = 0.5;
+                    if (Item.IsAvailable && Item.Source.Exists)
+                    {
+                        ViewSelectedPath_button.IsEnabled = true;
+                        ViewSelectedPath_button.Opacity = 1;
+                    }
+                    else
+                    {
+                        ViewSelectedPath_button.IsEnabled = false;
+                        ViewSelectedPath_button.Opacity = 0.5;
+                    }
                 }
-            }
-            else
-            {
-                if (Item.IsAvailable && Item.Source.Exists)
-                {
-                    ViewSelectedPath_button.IsEnabled = true;
-                    ViewSelectedPath_button.Opacity = 1;
-                }
-                else
-                {
-                    ViewSelectedPath_button.IsEnabled = false;
-                    ViewSelectedPath_button.Opacity = 0.5;
-                }
+
+                #endregion
+
+                #endregion
             }
 
-            #endregion
-
-            #endregion
         }
         #endregion
 
