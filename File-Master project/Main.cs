@@ -31,7 +31,7 @@ namespace File_Master_project
         static public Dictionary<string, Button> BackupDriveUpdateButtons { get; set; } = new Dictionary<string, Button>();
         #endregion
 
-        static public string GetBackupType(Backupitem Item)
+        static public string GetBackupType(BackupTask Item)
         {
             if (Directory.Exists(Item.Source.FullName)) return "Folder";
             else if (File.Exists(Item.Source.FullName)) return "File";

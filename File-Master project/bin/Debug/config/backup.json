@@ -10,11 +10,13 @@
         "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
         "DestinationPath": "D:\\TEMP",
         "ID": 1,
+        "Label": null,
         "LastSaved": "2022-08-10T01:30:54.706946+02:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
-          "NumberOfCopies": 1,
+          "NumberOfCycles": 0,
           "CycleInterval": {
             "Time": 10.0,
             "Unit": "day"
@@ -34,11 +36,13 @@
         "SourcePath": "H:\\Filmek\\Free Guy\\free.guy.1080p-no1.mkv",
         "DestinationPath": "D:\\Backups",
         "ID": 0,
+        "Label": null,
         "LastSaved": "0001-01-01T00:00:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
-          "NumberOfCopies": 1,
+          "NumberOfCycles": 0,
           "CycleInterval": {
             "Time": 10.0,
             "Unit": "day"
@@ -58,11 +62,13 @@
         "SourcePath": "D:\\TEMP\\Music\\Sub\\Westworld I",
         "DestinationPath": "D:\\Backups",
         "ID": 0,
+        "Label": null,
         "LastSaved": "0001-01-01T00:00:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
-          "NumberOfCopies": 1,
+          "NumberOfCycles": 0,
           "CycleInterval": {
             "Time": 10.0,
             "Unit": "day"
@@ -82,11 +88,13 @@
         "SourcePath": "D:\\Dokumentumok\\Blender\\Font styles",
         "DestinationPath": "D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\bin\\Debug\\TEMP",
         "ID": 0,
+        "Label": null,
         "LastSaved": "0001-01-01T00:00:00",
+        "Backups": null,
         "IsEnabled": false,
         "Configuration": {
           "Method": "F",
-          "NumberOfCopies": 1,
+          "NumberOfCycles": 0,
           "CycleInterval": {
             "Time": 10.0,
             "Unit": "hour"
@@ -123,11 +131,13 @@
         "SourcePath": "C:\\Program Files\\Notepad++",
         "DestinationPath": "J:\\Backups",
         "ID": 0,
-        "LastSaved": "2022-11-04T20:48:20.5656942+01:00",
+        "Label": null,
+        "LastSaved": "2023-01-15T01:57:04.9341234+01:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
-          "NumberOfCopies": 1,
+          "NumberOfCycles": 0,
           "CycleInterval": {
             "Time": 10.0,
             "Unit": "day"
@@ -147,11 +157,13 @@
         "SourcePath": "D:\\TEMP\\Source",
         "DestinationPath": "J:\\Backups",
         "ID": 0,
+        "Label": null,
         "LastSaved": "2022-11-04T21:58:53.4238907+01:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
-          "NumberOfCopies": 1,
+          "NumberOfCycles": 0,
           "CycleInterval": {
             "Time": 10.0,
             "Unit": "day"

@@ -22,6 +22,7 @@ using System.Xml.Serialization;
 using System.Management;
 using System.Timers;
 using WTimer = System.Threading.Timer;
+using System.ComponentModel;
 
 namespace File_Master_project
 {
@@ -31,10 +32,10 @@ namespace File_Master_project
         public DirectoryInfo TempFolder;
     }
 
-    public class Backupitem_Settings
+    public class BackupTask_Settings
     {
         [JsonProperty] public char Method { get; } // F -> Full , I -> Incremental, D -> Differential
-        [JsonProperty] public int NumberOfCopies { get; }
+        [JsonProperty] public int NumberOfCycles { get; }
         [JsonProperty] public Interval CycleInterval  { get; }
         [JsonProperty] public bool OnlySaveOnChange  { get; }
         [JsonProperty] public int MaxStorageSpace { get; }
@@ -43,10 +44,10 @@ namespace File_Master_project
         [JsonProperty] public bool PopupOnFail  { get; }
         [JsonProperty] public bool FileCompression  { get; }
 
-        public Backupitem_Settings(char method, int numberOfCopies, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+        public BackupTask_Settings(char method, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
             Method = method;
-            NumberOfCopies = numberOfCopies;
+            NumberOfCycles = numberOfCycles;
             CycleInterval = cycleInterval;
             OnlySaveOnChange = onlySaveOnChange;
             MaxStorageSpace = maxStorageSpace;
@@ -57,14 +58,97 @@ namespace File_Master_project
         }
     }
 
-    public class Backupitem
+    public class Backup
     {
-        [JsonProperty] public int ID { get; set; }
-        [JsonIgnore] public FileSystemInfo Source { get; set; }
+        //public int ID { get; }
+        //public bool Partial { get; } //partial if it is not a full backup (differential / incremental)
+        //public DiskSpace Size { get; }
+        //public DateTime Creation { get; }
+        public BackupProgressReportModel Progress { get; set; }
+        public string Root { get; }
+        public List<string> Files { get; }
+        public List<string> Folders { get; }
+        /*public bool IsEmpty { 
+            get { 
+                if (Files.Count == 0) return true; 
+                else return false;
+            } 
+        }*/
+
+        public Backup(List<string> files, List<string> folders)
+        {
+            Files = files;
+            Folders = folders;
+        }
+
+        public Backup()
+        {
+
+        }
+
+        public bool CheckIntegrity()
+        {
+            bool result = true;
+            foreach (var file in Files)
+            {
+                if(!File.Exists(file)) result = false;
+            }
+            foreach (var folder in Folders)
+            {
+                if (!Directory.Exists(folder)) result = false;
+            }
+            return result;
+        }
+
+        public void DeleteBackup()
+        {
+            Directory.Delete(Root, true);
+        }
+    }
+
+    public struct BackupProgressReportModel
+    {
+        public double Percentage { get { return Math.Round((double)((FinishedData.Bytes * 100) / AllData.Bytes), 1); } }
+        public BackupTask Item;
+        public int AllFiles;
+        public int FinisedFiles;
+        public DiskSpace AllData;
+        public DiskSpace FinishedData;
+        public string NextItem;
+
+        public BackupProgressReportModel(BackupTask item, int allFiles, int finisedFiles, DiskSpace allData, DiskSpace finishedData, string nextItem)
+        {
+            Item = item;
+            AllFiles = allFiles;
+            FinisedFiles = finisedFiles;
+            AllData = allData;
+            FinishedData = finishedData;
+            NextItem = nextItem;
+        }
+    }
+
+    public class BackupTask
+    {
+        [JsonProperty] public int ID { get; private set; }
+        [JsonProperty] public string Label { get; set; }
+        [JsonIgnore] public FileSystemInfo Source { get; private set; }
         [JsonProperty] private string SourcePath;
         [JsonIgnore] public DirectoryInfo Destination { get; set; }
         [JsonProperty] private string DestinationPath;
-        [JsonProperty] public DateTime LastSaved { get; set; }
+        [JsonIgnore] public string RootDirectoty {
+            get { 
+                if(Label != null && Label != "")
+                {
+                    return $@"{Destination.FullName}\{Label}";
+                }
+                else
+                {
+                    return $@"{Destination.FullName}\{Source.Name}";
+                }
+            } 
+        }
+        [JsonProperty] public DateTime LastSaved { get; private set; }
+        [JsonProperty] public Backup Backups { get; private set; }
         [JsonProperty] public bool IsEnabled { get; set; }
         [JsonIgnore] public bool IsAvailable { 
             get 
@@ -80,12 +164,13 @@ namespace File_Master_project
                 return BackupDriveOfItem.IsOutOfSpace; 
             } 
         }
-        [JsonIgnore] public Backupdrive BackupDriveOfItem { get { return BackupProcess.GetBackupdriveFromBackupitem(this); } }
-        [JsonProperty] public Backupitem_Settings Configuration { get; set; }
+        [JsonIgnore] public BackupDrive BackupDriveOfItem { get { return BackupProcess.GetBackupdriveFromBackupitem(this); } }
+        [JsonProperty] public BackupTask_Settings Configuration { get; set; }
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
-        [JsonIgnore] private Task<bool> BackupTask;
+        [JsonIgnore] private Task<Backup> CurrentTask;
+        [JsonIgnore] public bool ActiveTask { get { return CurrentTask != null && CurrentTask.Status == TaskStatus.Running; } }
 
-        [JsonConstructor] public Backupitem(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, Backupitem_Settings configuration)
+        [JsonConstructor] public BackupTask(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, BackupTask_Settings configuration)
         {
             ID = iD;
             SourcePath = sourcePath;
@@ -104,7 +189,7 @@ namespace File_Master_project
             return LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks());
         }
 
-        public DiskSpace GetBackupSize()
+        public DiskSpace GetBackupsSize()
         {
             DiskSpace space = new DiskSpace(0);
             if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
@@ -135,81 +220,157 @@ namespace File_Master_project
             else return new FileInfo(Path);
         }
 
-        private string GetBackupType()
+        public string GetBackupType()
         {
             if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
             else if (Source.GetType() == typeof(FileInfo)) return "File";
             else return "Unknown";
         }
+
+        public Backup SelectNextBackup()
+        {
+            return null;
+        }
+
         #endregion
 
         #region Backup process (SAVEING)
-        public async Task Backup_Async(bool isManual)
+        public async Task Backup_Async(bool isManual, Backup Target)
         {
-            bool success = false;
             if (CheckPermission(isManual))
             {
                 try
                 {
-                    BackupTask = Task.Run(() => CreateBackup());
-                    BackupProcess.BackupTasks.Add(this, BackupTask);
-                    success = await BackupTask;
+                    BackgroundWorker bg = new BackgroundWorker();
+                    bg.WorkerReportsProgress = true;
+                    Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
+                    progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
+
+                    CurrentTask = Task.Run(() => CreateBackup(progress, Source));
+                    BackupProcess.BackupTasks.Add(this, CurrentTask);
+                    Target = await CurrentTask;
                 }
-                catch (Exception ex)
+                catch (Exception error)
                 {
-                    if (isManual) MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (isManual) MessageBox.Show(error.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    //else
+                    //LOG
                 }
+
                 if (isManual)
                 {
-                    if (success) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
-                    else MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (Target != null) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else if(isManual) MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
+                    //else
+                    //LOG
                 }
                 BackupProcess.BackupTasks.Remove(this);
-                BackupTask = null;
+                CurrentTask = null;
             }
             StartTimer();
         }
 
-        private bool CreateBackup()
+        private Backup CreateBackup(IProgress<BackupProgressReportModel> ProgressReport, FileSystemInfo Source, List<Backup> Previous = null)
         {
-            if (((Source.Attributes & FileAttributes.System) != FileAttributes.System))
+            Backup Result;
+            if (((Source.Attributes & FileAttributes.System) == FileAttributes.System))
+            {
+                throw new Exception("System files are not allowed to be accessed!");
+            }
+            try
             {
                 if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    CopyDirectory((DirectoryInfo)Source);
-                    foreach (var ThisDirectory in Directory.GetDirectories(Source.FullName, "*", SearchOption.AllDirectories))
+                    Result = new Backup();
+                    List<string> SourceFiles, BackupFiles = new List<string>();
+                    List<string> SourceFolders, BackupFolders = new List<string>();
+                    GetDirectoryContent((DirectoryInfo)Source, out SourceFiles, out SourceFolders);
+                    foreach (var SourceItem in SourceFolders)
                     {
-                        CopyDirectory((DirectoryInfo)Main.GetPathInfo(ThisDirectory));
+                        string Target = ConvertPath_Destination(SourceItem);
+                        BackupFolders.Add(Directory.CreateDirectory(Target).FullName);
                     }
+                    #region DiskSpaces
+                    DiskSpace All = new DiskSpace(0);
+                    foreach (var item in SourceFiles)
+                    {
+                        FileInfo file = new FileInfo(item);
+                        All.Bytes += file.Length;
+                    }
+                    DiskSpace Finished = new DiskSpace(0);
+                    #endregion
+                    foreach (var SourceItem in SourceFiles)
+                    {
+                        Result.Progress = new BackupProgressReportModel(this, SourceFiles.Count, BackupFiles.Count, All, Finished, SourceItem);
+                        ProgressReport.Report(Result.Progress);
+
+                        string Target = ConvertPath_Destination(SourceItem);
+                        var Error = CopyFile(SourceItem, Target, ProgressReport, Result.Progress).Exception;
+                        if(Error != null) throw new Exception($"Error during the file operaiton: {Error}");
+                        BackupFiles.Add(Target);
+                    }
+                    Result = new Backup(BackupFiles, BackupFolders);
                 }
                 else
                 {
-                    CopyFile((FileInfo)Source);
+                    Result = new Backup();
+                    string SourceFile = Source.FullName;
+                    string BackupFile = ConvertPath_Destination(SourceFile);
+                    List<string> BackupFiles = new List<string>();                          
+                    var Error = CopyFile(SourceFile, BackupFile, ProgressReport, Result.Progress).Exception;
+                    if (Error != null) throw new Exception($"Error during the file operaiton: {Error}");
+                    BackupFiles.Add(BackupFile);
+                    Result = new Backup(BackupFiles, null);
                 }
+
                 LastSaved = DateTime.Now;
                 BackupProcess.Upload_Backupinfo();
-                return true;
+                return Result;
             }
-            else
+            catch (Exception error)
             {
-                MessageBox.Show("System files are not allowed to be accessed!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
+                throw error;
             }
         }
 
-        private void CopyFile(FileInfo ThisSource, string AdditionalPath = "")
+        private async Task CopyFile(string source, string destination, IProgress<BackupProgressReportModel> progressreport, BackupProgressReportModel progress)
         {
-            Directory.CreateDirectory($"{Destination.FullName}{AdditionalPath}");
-            File.Copy(ThisSource.FullName, $@"{Destination.FullName}{AdditionalPath}\{ThisSource.Name}", false);
+            //Directory.CreateDirectory(destination.Directory.FullName);
+            FileStream Input = new FileStream(source, FileMode.Open, FileAccess.Read);
+            FileStream Output = new FileStream(destination, FileMode.CreateNew, FileAccess.Write);
+
+            while (Input.Position != Input.Length)
+            {
+                byte[] Buffer = new byte[1024];
+                int count = Input.Read(Buffer, 0, Buffer.Length);
+                Output.Write(Buffer, 0, count);
+                progress.FinishedData.Bytes += count;
+                progressreport.Report(progress);
+            }
+            Input.Close();
+            Output.Close();
         }
 
-        private void CopyDirectory(DirectoryInfo ThisSource)
+        private void GetDirectoryContent(DirectoryInfo MainDir, out List<string> Files, out List<string> Folders)
         {
-            Directory.CreateDirectory($@"{Destination.FullName}{ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}")}");
-            foreach (var item in Directory.GetFiles(ThisSource.FullName))
+            Files = new List<string>();
+            Folders = new List<string>();
+            foreach (var directory in MainDir.GetDirectories("*", SearchOption.AllDirectories))
             {
-                CopyFile(new FileInfo(item), ThisSource.FullName.Replace(Source.FullName, $@"\{Source.Name}"));
+                Folders.Add(directory.FullName);
             }
+            foreach (var file in MainDir.GetFiles("*", SearchOption.AllDirectories))
+            {
+                Files.Add(file.FullName);
+            }
+        }
+
+        private string ConvertPath_Destination(string Item)
+        {
+            string Result = Item;
+            string Parent = Directory.GetParent(Source.FullName).FullName;
+            Result = Result.Replace(Parent, $@"{RootDirectoty}");
+            return Result;
         }
 
         private bool CheckPermission(bool isManual)
@@ -249,204 +410,15 @@ namespace File_Master_project
         {
             //code
         }
-        #endregion
 
-        #region UI
-        public ListBoxItem GetListBoxItem()
+        public void RecoverBackups()
         {
-            ListBoxItem ListItem = new ListBoxItem();
-            ListItem.Opacity = 0.8;
-            ListItem.Content = $"◍ {GetBackupType()}: {Source.FullName} - ({GetBackupSize().Humanize()})";
-            ListItem.Tag = this;
-            #region Item color
-            ListItem.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            if (!IsEnabled)
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-            }
-            if (!Source.Exists)
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-            }
-            else if (IsOutOfSpace || !IsAvailable) //destination is unusable
-            {
-                if (BackupProcess.Settings.IsTempfolderEnabled)//Can save to temp-drive temp
-                {
-                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                }
-                else
-                {
-                    ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                }
-            }
-            if (false)//unknown issue
-            {
-                ListItem.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-            }
-            #endregion
-            return ListItem;
-        }
 
-        public void SetStatusInfo(ref Label Status)
-        {
-            #region Default status
-            Status.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            Status.Content = "Status: OK!";
-            #endregion
-            if (!IsEnabled)
-            {
-                Status.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-                Status.Content = "Status info: The backup item is disabled!";
-            }
-            if (!Source.Exists)
-            {
-                Status.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-                Status.Content = "Status info: The source is missing!";
-            }
-            else if(IsOutOfSpace || !IsAvailable) //destination is unusable
-            {
-                if (BackupProcess.Settings.IsTempfolderEnabled)//Can save to temp-drive temp
-                {
-                    Status.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                    Status.Content = "Status info: OK (alternative destination)!";
-                }
-                else if (!IsAvailable)
-                {
-                    Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status.Content = "Status info: The destination is unreachable!";
-                }
-                else
-                {
-                    Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status.Content = "Status info: The backup drive has reached its space limit!";
-                }
-            }
-            else if (false)//unknown issue
-            {
-                Status.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                Status.Content = "Status info: Unknown issue has occurred!";
-            }
-        }
-
-        public void SetDestinationTBox(ref TextBox DestinationTB)
-        {
-            DestinationTB.Text = Destination.FullName;
-            DestinationTB.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            if (!IsAvailable || IsOutOfSpace)
-            {
-                if (BackupProcess.Settings.IsTempfolderEnabled)
-                {
-                    DestinationTB.Text = BackupProcess.Settings.TempFolder.FullName;
-                    DestinationTB.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                }
-                else
-                {
-                    DestinationTB.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                }
-            }
-        }
-
-        public void SetSourceTBox(ref TextBox SourceTB)
-        {
-            SourceTB.Text = Source.FullName;
-            SourceTB.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            if (!IsAvailable || IsOutOfSpace)
-            {
-                if (BackupProcess.Settings.IsTempfolderEnabled)
-                {
-                    SourceTB.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
-                }
-                else
-                {
-                    SourceTB.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                }
-            }
-        }
-
-        public void UpdateWarnings(ref Label Warning2, ref Label Warning3, ref Label Warning4)
-        {
-            if (!IsEnabled) Warning2.Visibility = Visibility.Visible;
-            if (!Source.Exists) Warning3.Visibility = Visibility.Visible;
-            if (!IsAvailable || IsOutOfSpace) Warning4.Visibility = Visibility.Visible;
-        }
-
-        public void EnableActionButtons(ref Button Remove, ref Button Enable, ref Button Disable, ref Button Modify, ref Button Repair, ref Button Restore, ref Button ManualSave)
-        {
-            bool ActiveTask = (BackupTask != null && BackupTask.Status == TaskStatus.Running);
-            #region Remove item
-            Remove.IsEnabled = true;
-            Remove.Opacity = 1;
-            #endregion
-            #region Enable/Disable backup
-            if (IsAvailable && !IsOutOfSpace)
-            {
-                if (!IsEnabled)
-                {
-                    Disable.Visibility = Visibility.Hidden;
-                    Enable.Visibility = Visibility.Visible;
-                    Enable.IsEnabled = true;                  
-                    Enable.Opacity = 1;
-                }
-                else
-                {
-                    Disable.Visibility = Visibility.Visible;
-                    Enable.Visibility = Visibility.Hidden;
-                }              
-            }
-            else
-            {
-                Disable.Visibility = Visibility.Hidden;
-                Enable.Visibility = Visibility.Visible;
-                Enable.IsEnabled = false;               
-                Enable.Opacity = 0.5;
-            }
-            #endregion
-            #region Configuration/Repair/Restore
-            if (!Source.Exists)
-            {
-                Repair.Visibility = Visibility.Visible;
-                Modify.Visibility = Visibility.Hidden;
-                Restore.Opacity = 1;
-                Restore.IsEnabled = true;
-            }
-            else
-            {
-                Modify.Opacity = 1;
-                Modify.Visibility = Visibility.Visible;
-                Modify.IsEnabled = true;
-                Repair.Visibility = Visibility.Hidden;
-                Restore.Opacity = 0.5;
-                Restore.IsEnabled = false;
-            }
-            #endregion
-            #region Manual save
-            if(ActiveTask)
-            {
-                ManualSave.IsEnabled = false;
-                ManualSave.Opacity = 0.5;
-                ManualSave.Content = "Saving...";
-            }
-            else
-            {
-                if (IsAvailable && !IsOutOfSpace)
-                {
-                    ManualSave.IsEnabled = true;
-                    ManualSave.Opacity = 1;
-                    ManualSave.Content = "Manual save";
-                }
-                else
-                {
-                    ManualSave.IsEnabled = false;
-                    ManualSave.Opacity = 0.5;
-                    ManualSave.Content = "Manual save";
-                }
-            }
-            #endregion
         }
         #endregion
     }
 
-    public class Backupdrive
+    public class BackupDrive
     {
         [JsonProperty] public string DriveID { get; private set; }
         [JsonProperty] private string DefaultVolumeLabel;
@@ -454,9 +426,9 @@ namespace File_Master_project
         [JsonIgnore] public bool IsAvailable { get; private set; }
         [JsonIgnore] public bool IsOutOfSpace { get; private set; }
         [JsonProperty] public DiskSpace SizeLimit { get; set; }
-        [JsonProperty] public List<Backupitem> Backups { get; private set; } = new List<Backupitem>();
+        [JsonProperty] public List<BackupTask> Backups { get; private set; } = new List<BackupTask>();
 
-        [JsonConstructor] public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit, List<Backupitem> backups)
+        [JsonConstructor] public BackupDrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit, List<BackupTask> backups)
         {
             DriveID = driveID;
             DefaultVolumeLabel = defaultVolumeLabel;
@@ -465,7 +437,7 @@ namespace File_Master_project
             Update();
         }
 
-        public Backupdrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
+        public BackupDrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit)
         {
             DriveID = driveID;
             DefaultVolumeLabel = defaultVolumeLabel;
@@ -529,18 +501,18 @@ namespace File_Master_project
         #endregion
 
         #region Modify backupitems
-        public void AddBackupitem(Backupitem Item)
+        public void AddBackupitem(BackupTask Item)
         {
             Backups.Add(Item);
         }
 
-        public void RemoveBackupitem(Backupitem Item)
+        public void RemoveBackupitem(BackupTask Item)
         {
             Item.DeleteBackups();
             Backups.Remove(Item);
         }
 
-        public void SetBackupitemState(bool State, Backupitem Item)
+        public void SetBackupitemState(bool State, BackupTask Item)
         {
             Item.IsEnabled = State;
         }
@@ -592,7 +564,7 @@ namespace File_Master_project
             DiskSpace space = new DiskSpace(0);
             foreach (var item in Backups)
             {
-                space.Bytes += item.GetBackupSize().Bytes;
+                space.Bytes += item.GetBackupsSize().Bytes;
             }
             return space;
         }
@@ -603,41 +575,7 @@ namespace File_Master_project
         {
             foreach (var item in Backups)
             {
-                await item.Backup_Async(true);
-            }
-        }
-        #endregion
-
-        #region UI
-        public void SetDriveNameTextbox(ref TextBox Item, ref ListBoxItem ListItem)
-        {
-            if (IsAvailable == false)
-            {
-                Item.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                ListItem.BorderBrush = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-            }
-            else
-            {
-                Item.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-                ListItem.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            }
-        }
-
-        public void SetDriveSpaceTextbox(ref TextBox Item)
-        {
-            if (IsOutOfSpace == true)
-            {
-                Item.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-            }
-
-            else if (IsAvailable == false)
-            {
-                Item.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-            }
-
-            else
-            {
-                Item.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+                await item.Backup_Async(true, item.Backups);
             }
         }
         #endregion
@@ -645,15 +583,15 @@ namespace File_Master_project
 
     static public class BackupProcess 
     {
-        static public List<Backupdrive> Backupdrives { get; private set; }
+        static public List<BackupDrive> Backupdrives { get; private set; }
         static public Backup_Settings Settings { get; set; }
         static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } = new Dictionary<string, AdvancedDriveInfo>(); //key: serial number , value: DriveInfo
-        static public Dictionary<Backupitem, Task<bool>> BackupTasks = new Dictionary<Backupitem, Task<bool>>();
+        static public Dictionary<BackupTask, Task<Backup>> BackupTasks = new Dictionary<BackupTask, Task<Backup>>();
         public delegate void UIChanges();
 
         static BackupProcess()
         {
-            Backupdrives = new List<Backupdrive>();
+            Backupdrives = new List<BackupDrive>();
             LoadAllDriveInfo();
             LoadBackupProcess();
             Upload_Backupinfo();
@@ -663,7 +601,7 @@ namespace File_Master_project
         static public void ActivateBackupdrive(string Serial, DiskSpace SizeLimit)
         {
             AllDriveInfo.TryGetValue(Serial, out AdvancedDriveInfo Value);
-            Backupdrives.Add(new Backupdrive(Serial, Value.DriveInformation.VolumeLabel, SizeLimit));
+            Backupdrives.Add(new BackupDrive(Serial, Value.DriveInformation.VolumeLabel, SizeLimit));
             Upload_Backupinfo();
         }
 
@@ -695,9 +633,9 @@ namespace File_Master_project
             return disk["VolumeSerialNumber"].ToString();
         }
 
-        static public Backupdrive GetBackupdriveFromSerial(string Serial)
+        static public BackupDrive GetBackupdriveFromSerial(string Serial)
         {
-            Backupdrive result = null;
+            BackupDrive result = null;
             foreach (var Drive in Backupdrives)
             {
                 if (Drive.DriveID == Serial) result = Drive;
@@ -705,7 +643,7 @@ namespace File_Master_project
             return result;
         }
 
-        static public Backupdrive GetBackupdriveFromBackupitem(Backupitem Target)
+        static public BackupDrive GetBackupdriveFromBackupitem(BackupTask Target)
         {
             foreach (var Drive in Backupdrives)
             {
@@ -762,10 +700,10 @@ namespace File_Master_project
             Load_backupinfo(out string Backupinfo);
             try
             {
-                Backupdrives = JsonConvert.DeserializeObject<List<Backupdrive>>(Backupinfo);
+                Backupdrives = JsonConvert.DeserializeObject<List<BackupDrive>>(Backupinfo);
                 if (Backupdrives == null || !IntegrityCheck())
                 {
-                    Backupdrives = new List<Backupdrive>();
+                    Backupdrives = new List<BackupDrive>();
                     throw null;
                 }
             }
@@ -853,10 +791,10 @@ namespace File_Master_project
         }
         #endregion
 
-        #region Backup(Manualsave)
-        static public async Task Manualsave_Async(Backupitem Item)
+        #region Backup
+        static public async Task Manualsave_Async(BackupTask Item)
         {
-            await Item.Backup_Async(true);
+            await Item.Backup_Async(true, Item.Backups);
         }
 
         static private void ManualsaveALL()
@@ -865,6 +803,19 @@ namespace File_Master_project
             {
                 Drive.Backup_Async();
             }
+        }
+
+        static public void DisplayBackupProgress(object sender, BackupProgressReportModel report)
+        {
+            /*BackupProcess.Dispatcher.Invoke(() =>
+            {
+                MainWindow mainWindow = Application.Current.Windows[0] as MainWindow;
+                if (mainWindow.GetSelectedBackupTask() == report.Item)
+                {
+                    mainWindow.BackupProgress_progressbar.Value = report.Percentage;
+                }
+            });
+            */
         }
         #endregion
     }
