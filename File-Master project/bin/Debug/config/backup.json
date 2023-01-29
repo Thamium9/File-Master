@@ -37,7 +37,7 @@
         "DestinationPath": "D:\\Backups",
         "ID": 0,
         "Label": null,
-        "LastSaved": "0001-01-01T00:00:00",
+        "LastSaved": "2023-01-29T19:48:04.6254596+01:00",
         "Backups": null,
         "IsEnabled": true,
         "Configuration": {
@@ -63,7 +63,7 @@
         "DestinationPath": "D:\\Backups",
         "ID": 0,
         "Label": null,
-        "LastSaved": "0001-01-01T00:00:00",
+        "LastSaved": "2023-01-16T23:28:25.8389507+01:00",
         "Backups": null,
         "IsEnabled": true,
         "Configuration": {
@@ -86,15 +86,15 @@
       },
       {
         "SourcePath": "D:\\Dokumentumok\\Blender\\Font styles",
-        "DestinationPath": "D:\\Dokumentumok\\GitHub\\File-Master\\File-Master project\\bin\\Debug\\TEMP",
+        "DestinationPath": "D:\\Backups\\Blender",
         "ID": 0,
         "Label": null,
-        "LastSaved": "0001-01-01T00:00:00",
+        "LastSaved": "2023-01-17T21:05:06.8722318+01:00",
         "Backups": null,
         "IsEnabled": false,
         "Configuration": {
           "Method": "F",
-          "NumberOfCycles": 0,
+          "NumberOfCycles": 1,
           "CycleInterval": {
             "Time": 10.0,
             "Unit": "hour"
@@ -116,7 +116,7 @@
     "DefaultVolumeLabel": "HDD-K01",
     "DriveID": "02466E75",
     "SizeLimit": {
-      "Bytes": 1073741824
+      "Bytes": 107374182400
     },
     "Backups": []
   },
@@ -132,7 +132,7 @@
         "DestinationPath": "J:\\Backups",
         "ID": 0,
         "Label": null,
-        "LastSaved": "2023-01-15T01:57:04.9341234+01:00",
+        "LastSaved": "2023-01-16T22:02:03.1316018+01:00",
         "Backups": null,
         "IsEnabled": true,
         "Configuration": {
@@ -158,7 +158,7 @@
         "DestinationPath": "J:\\Backups",
         "ID": 0,
         "Label": null,
-        "LastSaved": "2022-11-04T21:58:53.4238907+01:00",
+        "LastSaved": "2023-01-23T14:34:00.9749199+01:00",
         "Backups": null,
         "IsEnabled": true,
         "Configuration": {

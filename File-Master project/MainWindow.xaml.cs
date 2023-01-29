@@ -435,6 +435,11 @@ namespace File_Master_project
             }
             
         }
+
+        private void CancelBackupOperation_button_Click(object sender, RoutedEventArgs e)
+        {
+            GetSelectedBackupTask().CancelBackup.Cancel();
+        }
         #endregion
 
         #region Submenu1
@@ -788,7 +793,7 @@ namespace File_Master_project
                 Func<string> GetMediaType = () => ThisDrive.Value.MediaType;
                 string MediaType = await Task.Run(GetMediaType);
 
-                if (MediaType == "") break;
+                if (MediaType == "") continue; // skips unsupported drive type from the list
                 string ThisDriveSerial = ThisDrive.Key;
                 DriveInfo ThisDriveInfo = ThisDrive.Value.DriveInformation;
 
@@ -1436,6 +1441,7 @@ namespace File_Master_project
             if (Item.ActiveTask)
             {
                 LBI.Foreground = new SolidColorBrush(Color.FromRgb(0, 145, 250));
+                LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Source.FullName} - (saving...)";
             }
             else
             {
