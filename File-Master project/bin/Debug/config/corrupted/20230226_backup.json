@@ -5,13 +5,14 @@
     "SizeLimit": {
       "Bytes": 53687091200
     },
-    "BackupTasks": [
+    "Backups": [
       {
         "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
         "DestinationPath": "D:\\TEMP",
         "ID": 1,
         "Label": null,
         "LastSaved": "2022-08-10T01:30:54.706946+02:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
@@ -37,6 +38,7 @@
         "ID": 0,
         "Label": null,
         "LastSaved": "2023-02-04T16:59:00.0037414+01:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
@@ -62,6 +64,7 @@
         "ID": 0,
         "Label": null,
         "LastSaved": "2023-02-05T14:53:00.2566994+01:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
@@ -87,6 +90,7 @@
         "ID": 0,
         "Label": null,
         "LastSaved": "2023-01-17T21:05:06.8722318+01:00",
+        "Backups": null,
         "IsEnabled": false,
         "Configuration": {
           "Method": "F",
@@ -114,7 +118,7 @@
     "SizeLimit": {
       "Bytes": 107374182400
     },
-    "BackupTasks": []
+    "Backups": []
   },
   {
     "DefaultVolumeLabel": "KINGSTON_C",
@@ -122,13 +126,14 @@
     "SizeLimit": {
       "Bytes": 2147483648
     },
-    "BackupTasks": [
+    "Backups": [
       {
         "SourcePath": "C:\\Program Files\\Notepad++",
         "DestinationPath": "J:\\Backups",
         "ID": 0,
         "Label": null,
-        "LastSaved": "2023-02-27T20:47:25.7934657+01:00",
+        "LastSaved": "2023-01-16T22:02:03.1316018+01:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",
@@ -154,6 +159,7 @@
         "ID": 0,
         "Label": null,
         "LastSaved": "2023-01-23T14:34:00.9749199+01:00",
+        "Backups": null,
         "IsEnabled": true,
         "Configuration": {
           "Method": "F",

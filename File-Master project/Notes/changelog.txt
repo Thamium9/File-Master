@@ -34,8 +34,6 @@ in 0.7:
 + fix: size limit check always resets after restart
 + fix: upon first opening the add new task menu, the modify button is seen
 + fix: the add new task menu crashes if nothing is changed before applying
-- fix: the enable backup button is still visible when the source is missing
-- fix: trying to access DriveInformation when it is null
 + fix: crash on pressing the view destination button while it doesn't exists
 + fix: applied margin on main window shifted the UI elements hitbox
 + fix: crash while trying to access driveinformation for unavailable drive (Backupdriveselect_combobox_SelectionChanged)
@@ -43,6 +41,8 @@ in 0.7:
 + fix: backup task is not removed on failed attempt, causing error in 'BackupTasks' dictionary
 + fix: crash when a drive serial numbers occurs more than once (for example multiple google drive accounts or partitioned drives)
 + fix: pendrive not showing up in the 'manage backup drives' menu
++ fix: crash when during backup a backupdrive is selected
++ fix: crash when backup configuration failes to load, and there is already a stored config file in the 'corrupted' folder
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
 
 in 0.8:
@@ -50,28 +50,28 @@ in 0.8:
 - available drives update in every 30 seconds
 - support for partitioned drives (drive id)
 - only store supported drive types in "AllDriveInfo" list ()
-- make the 'settings' class static, and put it in a separate file
-- create a static UserInterface class
 - working automated backup process
 - delete backups option when removing backup drives
-- async load of backup item size for faster program startup
 - application language settings
 - create log file to store events ('//LOG' indicates undefined log in code)
 - global settings menu implementation
+- file browser menu implementation
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15
 
 in 0.9:
+- make the 'settings' class static, and put it in a separate file
+- create a static UserInterface class
 - make path textboxes responsive by shortening path if necessary
 - use backup size limit implementation
 - display total amount of backup space on drive in backupdrives menu
 - backup task label (task name)
 - compress backup files implementation
 - events / current operations menu (shows the tasks in order, the time they will deploy and other informations)
-- file browser menu implementation
 - run on windows startup
 - prevent opening application while it is already running
 - menu redesign
+- import stored backups into the program (search for backups in folder)
 
 in the future:
 - low performance demand mode (don't do backup when cpu is load is high)

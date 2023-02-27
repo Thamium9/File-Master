@@ -1,30 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.IO;
-using System.Media;
-using System.Diagnostics;
-using Winform = System.Windows.Forms;
-using Newtonsoft.Json;
-using System.Xml;
-using System.Xml.Serialization;
 using System.Management;
-using System.Timers;
-using WTimer = System.Threading.Timer;
-using Timer = System.Timers.Timer;
-using System.ComponentModel;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Windows;
+using Timer = System.Timers.Timer;
 
 namespace File_Master_project
 {
@@ -63,13 +47,13 @@ namespace File_Master_project
     public class Backup
     {
         //public int ID { get; }
-        public bool Partial { get { if (Reference != null) return true; else return false; } } //partial if it is not a full backup (differential / incremental)
-        public Backup Reference { get; }
-        public DiskSpace Size { get; }
-        public DateTime Creation { get; }
-        public string Root { get; }
-        public List<string> Files { get; }
-        public List<string> Folders { get; }
+        [JsonIgnore] public bool Partial { get { if (Reference != null) return true; else return false; } } //partial if it is not a full backup (differential / incremental)
+        [JsonProperty] public Backup Reference { get; }
+        [JsonProperty] public DiskSpace Size { get; }
+        [JsonProperty] public DateTime Creation { get; }
+        [JsonProperty] public string Root { get; }
+        [JsonProperty] public List<string> Files { get; }
+        [JsonProperty] public List<string> Folders { get; }
 
         public Backup(List<string> files, List<string> folders, Backup reference = null)
         {
@@ -177,7 +161,7 @@ namespace File_Master_project
             } 
         }
         [JsonProperty] public DateTime LastSaved { get; private set; }
-        [JsonProperty] public List<Backup> Backups { get; private set; }
+        [JsonIgnore] public List<Backup> Backups { get; private set; }
         [JsonProperty] public bool IsEnabled { get; set; }
         [JsonIgnore] public bool IsAvailable { 
             get 
@@ -193,7 +177,7 @@ namespace File_Master_project
                 return BackupDriveOfItem.IsOutOfSpace; 
             } 
         }
-        [JsonIgnore] public BackupDrive BackupDriveOfItem { get { return BackupProcess.GetBackupdriveFromBackupitem(this); } }
+        [JsonIgnore] public BackupDrive BackupDriveOfItem { get { return BackupProcess.GetBackupDriveFromBackupTask(this); } }
         [JsonProperty] public BackupTask_Settings Configuration { get; set; }
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
         [JsonIgnore] private Task<Backup> CurrentTask;
@@ -211,6 +195,7 @@ namespace File_Master_project
             CancelBackup = new CancellationTokenSource();
             Destination = new DirectoryInfo(DestinationPath);
             Source = GetPathInfo(SourcePath);
+            Backups = new List<Backup>();
             // start timer
         }
 
@@ -261,7 +246,8 @@ namespace File_Master_project
         public Backup SelectNextBackup()
         {
             Backup Target = null;
-            /*
+
+            if (Backups.Count < Configuration.NumberOfCycles) return Target;
             foreach (var item in Backups)
             {
                 if (Target == null || item.Creation.Ticks < Target.Creation.Ticks)
@@ -269,7 +255,7 @@ namespace File_Master_project
                     Target = item;
                 }
             }
-            if (Target == null || Backups.Count < this.Configuration.NumberOfCycles)
+            /*if (Target == null || Backups.Count < this.Configuration.NumberOfCycles)
             {
                 Backups.Add(Target);
             }*/
@@ -279,10 +265,11 @@ namespace File_Master_project
         #endregion
 
         #region Backup process (SAVEING)
-        public async Task BackupRequest_Async(bool isManual, Backup Target)
+        public async Task BackupRequest_Async(bool isManual, Backup OutdatedBackup)
         {
             if (CheckPermission(isManual))
             {
+                bool done = false;
                 try
                 {
                     Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
@@ -290,7 +277,10 @@ namespace File_Master_project
 
                     CurrentTask = Task.Run(() => CreateBackup(progress, Source));
                     BackupProcess.BackupTasks.Add(this, CurrentTask);
-                    Target = await CurrentTask;
+                    Backup NewBackup = await CurrentTask;
+                    if(OutdatedBackup != null) Backups.Remove(OutdatedBackup);
+                    Backups.Add(NewBackup);
+                    done = true;
                 }
                 catch (Exception error)
                 {
@@ -301,7 +291,7 @@ namespace File_Master_project
 
                 if (isManual)
                 {
-                    if (Target != null) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (done) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
                     else if(isManual) MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
                     //else
                     //LOG
@@ -360,17 +350,17 @@ namespace File_Master_project
                 }
                 else
                 {
-                    string SourceFile = Source.FullName;
-                    string BackupFile = ConvertPath_Destination(SourceFile);
+                    FileInfo SourceFile = new FileInfo(Source.FullName);
+                    string BackupFile = ConvertPath_Destination(SourceFile.FullName);
                     #region DiskSpaces
-                    DiskSpace All = new DiskSpace(new FileInfo(SourceFile).Length);
+                    DiskSpace All = new DiskSpace(SourceFile.Length);
                     DiskSpace Finished = new DiskSpace(0);
                     #endregion
-                    Progress = new BackupProgressReportModel(this, 1, 0, All, Finished, SourceFile);
+                    Progress = new BackupProgressReportModel(this, 1, 0, All, Finished, SourceFile.Name);
                     ProgressReport.Report(Progress);
 
                     Directory.CreateDirectory(new FileInfo(BackupFile).Directory.FullName);
-                    CopyFile(SourceFile, BackupFile, ProgressReport, Progress, CancelBackup.Token);
+                    CopyFile(SourceFile.FullName, BackupFile, ProgressReport, Progress, CancelBackup.Token);
 
                     Progress = new BackupProgressReportModel(this, 1, 1, All, Finished, "none");
                     ProgressReport.Report(Progress);
@@ -378,7 +368,7 @@ namespace File_Master_project
                 }
 
                 LastSaved = DateTime.Now;
-                BackupProcess.Upload_Backupinfo();
+                BackupProcess.Upload_BackupInfo();
                 return Result;
             }
             catch (Exception error)
@@ -472,12 +462,12 @@ namespace File_Master_project
             //code
         }
 
-        public void DeleteBackup(Backup Target)
+        public void DeleteBackup(Backup Item)
         {
 
         }
 
-        public void RecoverBackup()
+        public void RecoverBackup(Backup Item)
         {
 
         }
@@ -492,13 +482,13 @@ namespace File_Master_project
         [JsonIgnore] public bool IsAvailable { get; private set; }
         [JsonIgnore] public bool IsOutOfSpace { get; private set; }
         [JsonProperty] public DiskSpace SizeLimit { get; set; }
-        [JsonProperty] public List<BackupTask> Backups { get; private set; } = new List<BackupTask>();
+        [JsonProperty] public List<BackupTask> BackupTasks { get; private set; } = new List<BackupTask>();
 
-        [JsonConstructor] public BackupDrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit, List<BackupTask> backups)
+        [JsonConstructor] public BackupDrive(string driveID, string defaultVolumeLabel, DiskSpace sizeLimit, List<BackupTask> backupTasks)
         {
             DriveID = driveID;
             DefaultVolumeLabel = defaultVolumeLabel;
-            Backups = backups;
+            BackupTasks = backupTasks;
             SizeLimit = sizeLimit;
             Update();
         }
@@ -510,7 +500,7 @@ namespace File_Master_project
             SizeLimit = sizeLimit;
             ValidityCheck();           
             if(IsAvailable) LimitCheck();
-            BackupProcess.Upload_Backupinfo();
+            BackupProcess.Upload_BackupInfo();
         }
 
         public void Update()
@@ -536,7 +526,7 @@ namespace File_Master_project
                 {
                     DriveInformation = thisDriveInfo.Value.DriveInformation;
                     DefaultVolumeLabel = DriveInformation.VolumeLabel;
-                    UpdateBackupitemDestination();
+                    UpdateBackupTaskDestination();
                 }
             }
             if (DriveInformation == null) IsAvailable = false;
@@ -567,25 +557,25 @@ namespace File_Master_project
         #endregion
 
         #region Modify backupitems
-        public void AddBackupitem(BackupTask Item)
+        public void AddBackupTask(BackupTask Item)
         {
-            Backups.Add(Item);
+            BackupTasks.Add(Item);
         }
 
-        public void RemoveBackupitem(BackupTask Item)
+        public void RemoveBackupTask(BackupTask Item)
         {
             Item.DeleteBackups();
-            Backups.Remove(Item);
+            BackupTasks.Remove(Item);
         }
 
-        public void SetBackupitemState(bool State, BackupTask Item)
+        public void SetBackupTaskState(bool State, BackupTask Item)
         {
             Item.IsEnabled = State;
         }
 
-        private void UpdateBackupitemDestination()
+        private void UpdateBackupTaskDestination()
         {
-            foreach (var item in Backups)
+            foreach (var item in BackupTasks)
             {
                 StringBuilder value = new StringBuilder(item.Destination.FullName);
                 value[0] = DriveInformation.Name[0];
@@ -598,7 +588,7 @@ namespace File_Master_project
         public List<int> GetIDs()
         {
             List<int> temp = new List<int>();
-            foreach (var BackupItem in Backups)
+            foreach (var BackupItem in BackupTasks)
             {
                 temp.Add(BackupItem.ID);
             }
@@ -628,7 +618,7 @@ namespace File_Master_project
         public DiskSpace GetBackupSize()
         {
             DiskSpace space = new DiskSpace(0);
-            foreach (var item in Backups)
+            foreach (var item in BackupTasks)
             {
                 space.Bytes += item.GetBackupsSize().Bytes;
             }
@@ -639,7 +629,7 @@ namespace File_Master_project
         #region Backup
         public async void Backup_Async()
         {
-            foreach (var item in Backups)
+            foreach (var item in BackupTasks)
             {
                 await item.BackupRequest_Async(true, item.SelectNextBackup());
             }
@@ -649,7 +639,7 @@ namespace File_Master_project
 
     static public class BackupProcess 
     {
-        static public List<BackupDrive> Backupdrives { get; private set; }
+        static public List<BackupDrive> BackupDrives { get; private set; }
         static public Backup_Settings Settings { get; set; }
         static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } //key: serial number , value: DriveInfo
         static public Dictionary<BackupTask, Task<Backup>> BackupTasks;
@@ -657,34 +647,34 @@ namespace File_Master_project
 
         static BackupProcess()
         {
-            Backupdrives = new List<BackupDrive>();
+            BackupDrives = new List<BackupDrive>();
             AllDriveInfo = new Dictionary<string, AdvancedDriveInfo>();
             BackupTasks = new Dictionary<BackupTask, Task<Backup>>();
             LoadAllDriveInfo();
             LoadBackupProcess();
-            Upload_Backupinfo();
+            Upload_BackupInfo();
         }
 
         #region Actions
-        static public void ActivateBackupdrive(string Serial, DiskSpace SizeLimit)
+        static public void ActivateBackupDrive(string Serial, DiskSpace SizeLimit)
         {
             AllDriveInfo.TryGetValue(Serial, out AdvancedDriveInfo Value);
-            Backupdrives.Add(new BackupDrive(Serial, Value.DriveInformation.VolumeLabel, SizeLimit));
-            Upload_Backupinfo();
+            BackupDrives.Add(new BackupDrive(Serial, Value.DriveInformation.VolumeLabel, SizeLimit));
+            Upload_BackupInfo();
         }
 
-        static public void DeactivateBackupdrive(string Serial)
+        static public void DeactivateBackupDrive(string Serial)
         {
             if (MessageBox.Show("Are you sure you want to remove this Backupdrive?\nAll of its backup tasks will be deleted, but not the bakcup files!", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
             {
-                Backupdrives.Remove(GetBackupdriveFromSerial(Serial));
-                Upload_Backupinfo();
+                BackupDrives.Remove(GetBackupDriveFromSerial(Serial));
+                Upload_BackupInfo();
             }
         }
         #endregion
 
         #region Get Data
-        static public string GetHardDiskDSerialNumber(string drive)//not my code : https://ukacademe.com/TutorialExamples/CSharp/Get_Serial_Number_of_Hard_Drive
+        static public string GetHardDiskSerialNumber(string drive)//not my code : https://ukacademe.com/TutorialExamples/CSharp/Get_Serial_Number_of_Hard_Drive
         {
             //Check to see if the user provided a drive letter
             //If not default it to "C"
@@ -701,23 +691,23 @@ namespace File_Master_project
             return disk["VolumeSerialNumber"].ToString();
         }
 
-        static public BackupDrive GetBackupdriveFromSerial(string Serial)
+        static public BackupDrive GetBackupDriveFromSerial(string Serial)
         {
             BackupDrive result = null;
-            foreach (var Drive in Backupdrives)
+            foreach (var Drive in BackupDrives)
             {
                 if (Drive.DriveID == Serial) result = Drive;
             }
             return result;
         }
 
-        static public BackupDrive GetBackupdriveFromBackupitem(BackupTask Target)
+        static public BackupDrive GetBackupDriveFromBackupTask(BackupTask Task)
         {
-            foreach (var Drive in Backupdrives)
+            foreach (var Drive in BackupDrives)
             {
-                foreach (var Item in Drive.Backups)
+                foreach (var Item in Drive.BackupTasks)
                 {
-                    if (Item == Target)
+                    if (Item == Task)
                     {
                         return Drive;
                     }
@@ -728,7 +718,7 @@ namespace File_Master_project
 
         static public bool IsBackupdrive(string serial)
         {
-            foreach (var Drive in Backupdrives)
+            foreach (var Drive in BackupDrives)
             {
                 if (Drive.DriveID == serial) return true;
             }
@@ -738,7 +728,7 @@ namespace File_Master_project
         static public int GetNewBackupID()
         {
             List<int> IDs = new List<int>();
-            foreach (var Drive in Backupdrives)
+            foreach (var Drive in BackupDrives)
             {
                 foreach (var ID in Drive.GetIDs())
                 {
@@ -765,13 +755,13 @@ namespace File_Master_project
         static private void LoadBackupProcess()
         {
             #region Backupdrives           
-            Load_backupinfo(out string Backupinfo);
+            Load_BackupInfo(out string Backupinfo);
             try
             {
-                Backupdrives = JsonConvert.DeserializeObject<List<BackupDrive>>(Backupinfo);
-                if (Backupdrives == null || !IntegrityCheck())
+                BackupDrives = JsonConvert.DeserializeObject<List<BackupDrive>>(Backupinfo);
+                if (BackupDrives == null || !IntegrityCheck())
                 {
-                    Backupdrives = new List<BackupDrive>();
+                    BackupDrives = new List<BackupDrive>();
                     throw null;
                 }
             }
@@ -779,8 +769,10 @@ namespace File_Master_project
             {
                 MessageBox.Show("Unable to load in the user data due to data corruption!\nAll backup configurations are cleared!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
                 Directory.CreateDirectory(@".\config\corrupted");
-                File.Move(@".\config\backup.json", @".\config\corrupted\backup.json");
-                Upload_Backupinfo();
+                string dest = $@".\config\corrupted\{DateTime.Now.ToString("yyyyMMddHHmm")}_backup.json";
+                if (File.Exists(dest)) File.Delete(dest);
+                File.Move(@".\config\backup.json", dest);
+                Upload_BackupInfo();
             }
             #endregion
 
@@ -789,21 +781,18 @@ namespace File_Master_project
             #endregion
         }
 
-        static private void Load_backupinfo(out string Backupinfo)
+        static private void Load_BackupInfo(out string BackupInfo)
         {
-            Backupinfo = "[]";
+            BackupInfo = "[]";
             string filepath = @".\config\backup.json";
             if (File.Exists(filepath))
             {
-                Backupinfo = File.ReadAllText(filepath);
+                BackupInfo = File.ReadAllText(filepath);
             }
             else
             {
-                File.WriteAllText(filepath, Backupinfo);
+                File.WriteAllText(filepath, BackupInfo);
             }
-            #region UI-changes
-            //((MainWindow)Application.Current.MainWindow).Warning2_label.Visibility = Visibility.Hidden;
-            #endregion
         }
 
         static private void LoadAllDriveInfo()
@@ -813,7 +802,7 @@ namespace File_Master_project
             {
                 if (Drive.IsReady)
                 {
-                    string Serial = GetHardDiskDSerialNumber($"{Drive.Name[0]}");
+                    string Serial = GetHardDiskSerialNumber($"{Drive.Name[0]}");
                     if (AllDriveInfo.ContainsKey(Serial)) // delete drives with conflicting serials
                     {
                         AllDriveInfo.Remove(Serial);
@@ -830,13 +819,13 @@ namespace File_Master_project
         static private bool IntegrityCheck()
         {
             bool Intact = true;
-            foreach (var Drive in Backupdrives)
+            foreach (var Drive in BackupDrives)
             {
                 if(Drive.DriveID == null) Intact = false;
                 else if(Drive.SizeLimit == null) Intact = false;
                 else
                 {
-                    foreach (var Item in Drive.Backups)
+                    foreach (var Item in Drive.BackupTasks)
                     {
                         if (Item.Source == null) Intact = false;
                         else if (Item.Destination == null) Intact = false;                  
@@ -852,9 +841,9 @@ namespace File_Master_project
         #endregion
 
         #region Upload Data
-        static public void Upload_Backupinfo()
+        static public void Upload_BackupInfo()
         {
-            string Code = JsonConvert.SerializeObject(Backupdrives, Newtonsoft.Json.Formatting.Indented);
+            string Code = JsonConvert.SerializeObject(BackupDrives, Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText( @".\config\backup.json", Code);
             #region UI-changes
             
@@ -870,7 +859,7 @@ namespace File_Master_project
 
         static private void ManualsaveALL()
         {
-            foreach (var Drive in Backupdrives)
+            foreach (var Drive in BackupDrives)
             {
                 Drive.Backup_Async();
             }
