@@ -454,7 +454,7 @@ namespace File_Master_project
             {
                 if (ViewPathSelection_Combobox.SelectedIndex == 0)
                 {
-                    Process.Start(GetSelectedBackupTask().Destination.FullName);
+                    Process.Start(GetSelectedBackupTask().RootDirectoty);
                 }
                 else
                 {
@@ -577,7 +577,7 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
-                    BackupTask_Settings Settings = CreateBackupsettings_Local();
+                    BackupTaskConfiguration Settings = CreateBackupsettings_Local();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     BackupDrive Target = (BackupDrive)CI.Tag;
                     Target.AddBackupTask(CreateBackupitem(Settings));
@@ -602,7 +602,7 @@ namespace File_Master_project
                     BackupTask SelectedItem = GetSelectedBackupTask();
                     SelectedItem.BackupDriveOfItem.RemoveBackupTask(SelectedItem); //deletes itself
 
-                    BackupTask_Settings Settings = CreateBackupsettings_Local();
+                    BackupTaskConfiguration Settings = CreateBackupsettings_Local();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     BackupDrive Target = (BackupDrive)CI.Tag;
                     Target.AddBackupTask(CreateBackupitem(Settings));
@@ -645,15 +645,15 @@ namespace File_Master_project
             return false;
         }
 
-        private BackupTask CreateBackupitem(BackupTask_Settings Settings)
+        private BackupTask CreateBackupitem(BackupTaskConfiguration Settings)
         {
             string Source = Sourceinput_textbox.Text;
             string Destination = Destinationinput_textbox.Text;
-            BackupTask Item = new BackupTask(BackupProcess.GetNewBackupID(), Source, Destination, DateTime.MinValue, false, Settings);
+            BackupTask Item = new BackupTask(BackupProcess.GetNewBackupID(), Source, Destination, Settings);
             return Item;
         }
 
-        private BackupTask_Settings CreateBackupsettings_Local()
+        private BackupTaskConfiguration CreateBackupsettings_Local()
         {
             char Method = 'F';
             int NumberOfCopies = 1;
@@ -663,7 +663,7 @@ namespace File_Master_project
             Interval RetryWaitTime = new Interval("5 minute");
             int MaxNumberOfRetries = 3;
             bool PopupOnFail = false;
-            BackupTask_Settings Settings = new BackupTask_Settings(
+            BackupTaskConfiguration Settings = new BackupTaskConfiguration(
                 Method,
                 NumberOfCopies,
                 CycleInterval,
@@ -1287,7 +1287,7 @@ namespace File_Master_project
 
                 if (!Item.IsAvailable || Item.IsOutOfSpace)
                 {
-                    if (BackupProcess.Settings.IsTempfolderEnabled)
+                    if (BackupProcess.Settings.IsTempFolderEnabled)
                     {
                         if(dest) ItemPath_textbox.Text = BackupProcess.Settings.TempFolder.FullName;
                         ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
@@ -1340,7 +1340,7 @@ namespace File_Master_project
 
                 else if (Item.IsOutOfSpace || !Item.IsAvailable) //destination is unusable
                 {
-                    if (BackupProcess.Settings.IsTempfolderEnabled)//Can save to temp-drive temp
+                    if (BackupProcess.Settings.IsTempFolderEnabled)//Can save to temp-drive temp
                     {
                         Status_label.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
                         Status_label.Content = "Status info: An alternative destination is used!";
@@ -1505,7 +1505,7 @@ namespace File_Master_project
             }
             else if (Item.IsOutOfSpace || !Item.IsAvailable) //destination is unusable
             {
-                if (BackupProcess.Settings.IsTempfolderEnabled)//Can save to temp-drive temp
+                if (BackupProcess.Settings.IsTempFolderEnabled)//Can save to temp-drive temp
                 {
                     LBI.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
                 }

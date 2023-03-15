@@ -12,13 +12,19 @@ using Timer = System.Timers.Timer;
 
 namespace File_Master_project
 {
-    public class Backup_Settings
+    public struct BackupSettings
     {
-        public bool IsTempfolderEnabled = false;
-        public DirectoryInfo TempFolder;
+        public bool IsTempFolderEnabled {get;set;}
+        public DirectoryInfo TempFolder { get;set;} 
+
+        public BackupSettings(bool isTempFolterEnabled)
+        {
+            IsTempFolderEnabled = isTempFolterEnabled;
+            TempFolder = null;
+        }
     }
 
-    public class BackupTask_Settings
+    public struct BackupTaskConfiguration
     {
         [JsonProperty] public char Method { get; } // F -> Full , I -> Incremental, D -> Differential
         [JsonProperty] public int NumberOfCycles { get; }
@@ -30,7 +36,7 @@ namespace File_Master_project
         [JsonProperty] public bool PopupOnFail  { get; }
         [JsonProperty] public bool FileCompression  { get; }
 
-        public BackupTask_Settings(char method, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+        [JsonConstructor] public BackupTaskConfiguration(char method, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
             Method = method;
             NumberOfCycles = numberOfCycles;
@@ -46,33 +52,34 @@ namespace File_Master_project
 
     public class Backup
     {
-        //public int ID { get; }
-        [JsonIgnore] public bool Partial { get { if (Reference != null) return true; else return false; } } //partial if it is not a full backup (differential / incremental)
-        [JsonProperty] public Backup Reference { get; }
-        [JsonProperty] public DiskSpace Size { get; }
-        [JsonProperty] public DateTime Creation { get; }
         [JsonProperty] public string Root { get; }
         [JsonProperty] public List<string> Files { get; }
         [JsonProperty] public List<string> Folders { get; }
+        [JsonProperty] public DiskSpace Size { get; }
+        [JsonProperty] public DateTime Creation { get; }
+        [JsonProperty] public Backup Reference { get; }
+        [JsonIgnore] public bool Partial { get { if (Reference != null) return true; else return false; } } //partial if it is not a full backup (differential / incremental)
 
-        public Backup(List<string> files, List<string> folders, Backup reference = null)
+        // constructor for storing a folder
+        public Backup(string root, List<string> files, List<string> folders, Backup reference = null)
         {
             Files = files;
             Folders = folders;
             Creation = DateTime.Now;
             Size = GetSize();
             Reference = reference;
-            Root = $"";
+            Root = root;
         }
 
-        public Backup(string file, Backup reference = null)
+        // constructor for storing one file
+        public Backup(string root, string file, Backup reference = null)
         {
             Files = new List<string> { file };
             Folders = new List<string>();
             Creation = DateTime.Now;
             Size = GetSize();
             Reference = reference;
-            Root = $"";
+            Root = root;
         }
 
         private DiskSpace GetSize()
@@ -143,14 +150,16 @@ namespace File_Master_project
     public class BackupTask
     {
         [JsonProperty] public int ID { get; private set; }
-        [JsonProperty] public string Label { get; set; }
+        [JsonProperty] public string Label { get; private set; }
         [JsonIgnore] public FileSystemInfo Source { get; private set; }
         [JsonProperty] private string SourcePath;
         [JsonIgnore] public DirectoryInfo Destination { get; set; }
         [JsonProperty] private string DestinationPath;
-        [JsonIgnore] public string RootDirectoty {
-            get { 
-                if(Label != null && Label != "")
+        [JsonIgnore] public string RootDirectoty
+        {
+            get
+            {
+                if (Label != null && Label != "")
                 {
                     return $@"{Destination.FullName}\{Label}";
                 }
@@ -158,10 +167,11 @@ namespace File_Master_project
                 {
                     return $@"{Destination.FullName}\{Source.Name}";
                 }
-            } 
+            }
         }
-        [JsonProperty] public DateTime LastSaved { get; private set; }
+        [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }
         [JsonIgnore] public List<Backup> Backups { get; private set; }
+        [JsonIgnore] public DateTime LastSaved { get; private set; }
         [JsonProperty] public bool IsEnabled { get; set; }
         [JsonIgnore] public bool IsAvailable { 
             get 
@@ -178,24 +188,38 @@ namespace File_Master_project
             } 
         }
         [JsonIgnore] public BackupDrive BackupDriveOfItem { get { return BackupProcess.GetBackupDriveFromBackupTask(this); } }
-        [JsonProperty] public BackupTask_Settings Configuration { get; set; }
+
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
         [JsonIgnore] private Task<Backup> CurrentTask;
         [JsonIgnore] public bool ActiveTask { get { return CurrentTask != null && CurrentTask.Status == TaskStatus.Running; } }
         [JsonIgnore] public CancellationTokenSource CancelBackup { get; private set; }
 
-        [JsonConstructor] public BackupTask(int iD, string sourcePath, string destinationPath, DateTime lastSaved, bool isEnabled, BackupTask_Settings configuration)
+        [JsonConstructor] private BackupTask(int iD, string sourcePath, string destinationPath, bool isEnabled)
         {
             ID = iD;
             SourcePath = sourcePath;
             DestinationPath = destinationPath;
-            LastSaved = lastSaved;
+            CancelBackup = new CancellationTokenSource();
+            Destination = new DirectoryInfo(DestinationPath);
+            Source = GetPathInfo(SourcePath);
             IsEnabled = isEnabled;
+            LoadBackupConfig();
+            LoadBackupInfo();
+            // start timer
+        }
+
+        public BackupTask(int iD, string sourcePath, string destinationPath, BackupTaskConfiguration configuration)
+        {
+            ID = iD;
+            SourcePath = sourcePath;
+            DestinationPath = destinationPath;
             Configuration = configuration;
             CancelBackup = new CancellationTokenSource();
             Destination = new DirectoryInfo(DestinationPath);
             Source = GetPathInfo(SourcePath);
             Backups = new List<Backup>();
+            IsEnabled = false;
+            StoreBackupConfig();
             // start timer
         }
 
@@ -264,7 +288,7 @@ namespace File_Master_project
 
         #endregion
 
-        #region Backup process (SAVEING)
+        #region Backup management
         public async Task BackupRequest_Async(bool isManual, Backup OutdatedBackup)
         {
             if (CheckPermission(isManual))
@@ -346,7 +370,7 @@ namespace File_Master_project
                     }
                     Progress = new BackupProgressReportModel(this, SourceFiles.Count, BackupFiles.Count, All, Finished, "none");
                     ProgressReport.Report(Progress);
-                    Result = new Backup(BackupFiles, BackupFolders);
+                    Result = new Backup("", BackupFiles, BackupFolders);
                 }
                 else
                 {
@@ -364,7 +388,7 @@ namespace File_Master_project
 
                     Progress = new BackupProgressReportModel(this, 1, 1, All, Finished, "none");
                     ProgressReport.Report(Progress);
-                    Result = new Backup(BackupFile);
+                    Result = new Backup("", BackupFile);
                 }
 
                 LastSaved = DateTime.Now;
@@ -470,6 +494,51 @@ namespace File_Master_project
         public void RecoverBackup(Backup Item)
         {
 
+        }
+
+        private void StoreBackupConfig()
+        {
+            string data = JsonConvert.SerializeObject(Configuration, Newtonsoft.Json.Formatting.Indented);
+            File.WriteAllText($@"{RootDirectoty}\configuration.json", data);
+        }
+
+        private void LoadBackupConfig()
+        {
+            string path = $@"{RootDirectoty}\configuration.json";
+            try
+            {
+                string data = File.ReadAllText(path);
+                Configuration = JsonConvert.DeserializeObject<BackupTaskConfiguration>(data);
+            }
+            catch (Exception)
+            {
+                //LOG
+                throw;
+            }
+        }
+
+        private void StoreBackupInfo()
+        {
+            string data = JsonConvert.SerializeObject(Backups, Newtonsoft.Json.Formatting.Indented);
+            File.WriteAllText($@"{RootDirectoty}\backups.json", data);
+        }
+
+        private void LoadBackupInfo()
+        {
+            string path = $@"{RootDirectoty}\backups.json";
+            if (File.Exists(path))
+            {
+                try
+                {
+                    string data = File.ReadAllText(path);
+                    Backups = JsonConvert.DeserializeObject<List<Backup>>(data);
+                }
+                catch (Exception)
+                {
+                    //LOG
+                    throw;
+                }
+            }
         }
         #endregion
     }
@@ -640,7 +709,7 @@ namespace File_Master_project
     static public class BackupProcess 
     {
         static public List<BackupDrive> BackupDrives { get; private set; }
-        static public Backup_Settings Settings { get; set; }
+        static public BackupSettings Settings { get; private set; }
         static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } //key: serial number , value: DriveInfo
         static public Dictionary<BackupTask, Task<Backup>> BackupTasks;
         public delegate void UIChanges();
@@ -777,7 +846,7 @@ namespace File_Master_project
             #endregion
 
             #region BackupSettings_Global
-            Settings = new Backup_Settings();
+            Settings = new BackupSettings(false);
             #endregion
         }
 
@@ -830,7 +899,7 @@ namespace File_Master_project
                         if (Item.Source == null) Intact = false;
                         else if (Item.Destination == null) Intact = false;                  
                         else if (Item.LastSaved == null) Intact = false;
-                        else if (Item.Configuration == null) Intact = false;
+                        //else if (Item.Configuration == null) Intact = false;
                         else if (Item.Configuration.CycleInterval == null) Intact = false;
                         else if (Item.Configuration.RetryWaitTime == null) Intact = false;
                     }

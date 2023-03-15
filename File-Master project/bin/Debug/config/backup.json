@@ -3,108 +3,15 @@
     "DefaultVolumeLabel": "HDD",
     "DriveID": "4CCE358A",
     "SizeLimit": {
-      "Bytes": 53687091200
+      "Bytes": 0
     },
     "BackupTasks": [
       {
         "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
         "DestinationPath": "D:\\TEMP",
-        "ID": 1,
-        "Label": null,
-        "LastSaved": "2022-08-10T01:30:54.706946+02:00",
-        "IsEnabled": true,
-        "Configuration": {
-          "Method": "F",
-          "NumberOfCycles": 0,
-          "CycleInterval": {
-            "Time": 10.0,
-            "Unit": "day"
-          },
-          "OnlySaveOnChange": true,
-          "MaxStorageSpace": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        }
-      },
-      {
-        "SourcePath": "H:\\Filmek\\Free Guy\\free.guy.1080p-no1.mkv",
-        "DestinationPath": "D:\\Backups",
         "ID": 0,
         "Label": null,
-        "LastSaved": "2023-02-04T16:59:00.0037414+01:00",
-        "IsEnabled": true,
-        "Configuration": {
-          "Method": "F",
-          "NumberOfCycles": 0,
-          "CycleInterval": {
-            "Time": 10.0,
-            "Unit": "day"
-          },
-          "OnlySaveOnChange": true,
-          "MaxStorageSpace": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        }
-      },
-      {
-        "SourcePath": "D:\\TEMP\\Music\\Sub\\Westworld I",
-        "DestinationPath": "D:\\Backups",
-        "ID": 0,
-        "Label": null,
-        "LastSaved": "2023-02-05T14:53:00.2566994+01:00",
-        "IsEnabled": true,
-        "Configuration": {
-          "Method": "F",
-          "NumberOfCycles": 0,
-          "CycleInterval": {
-            "Time": 10.0,
-            "Unit": "day"
-          },
-          "OnlySaveOnChange": true,
-          "MaxStorageSpace": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        }
-      },
-      {
-        "SourcePath": "D:\\Dokumentumok\\Blender\\Font styles",
-        "DestinationPath": "D:\\Backups\\Blender",
-        "ID": 0,
-        "Label": null,
-        "LastSaved": "2023-01-17T21:05:06.8722318+01:00",
-        "IsEnabled": false,
-        "Configuration": {
-          "Method": "F",
-          "NumberOfCycles": 1,
-          "CycleInterval": {
-            "Time": 10.0,
-            "Unit": "hour"
-          },
-          "OnlySaveOnChange": true,
-          "MaxStorageSpace": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        }
+        "IsEnabled": true
       }
     ]
   },
@@ -122,57 +29,6 @@
     "SizeLimit": {
       "Bytes": 2147483648
     },
-    "BackupTasks": [
-      {
-        "SourcePath": "C:\\Program Files\\Notepad++",
-        "DestinationPath": "J:\\Backups",
-        "ID": 0,
-        "Label": null,
-        "LastSaved": "2023-02-27T20:47:25.7934657+01:00",
-        "IsEnabled": true,
-        "Configuration": {
-          "Method": "F",
-          "NumberOfCycles": 0,
-          "CycleInterval": {
-            "Time": 10.0,
-            "Unit": "day"
-          },
-          "OnlySaveOnChange": true,
-          "MaxStorageSpace": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        }
-      },
-      {
-        "SourcePath": "D:\\TEMP\\Source",
-        "DestinationPath": "J:\\Backups",
-        "ID": 0,
-        "Label": null,
-        "LastSaved": "2023-01-23T14:34:00.9749199+01:00",
-        "IsEnabled": true,
-        "Configuration": {
-          "Method": "F",
-          "NumberOfCycles": 0,
-          "CycleInterval": {
-            "Time": 10.0,
-            "Unit": "day"
-          },
-          "OnlySaveOnChange": true,
-          "MaxStorageSpace": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        }
-      }
-    ]
+    "BackupTasks": []
   }
 ]
