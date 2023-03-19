@@ -577,7 +577,7 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
-                    BackupTaskConfiguration Settings = CreateBackupsettings_Local();
+                    BackupTaskConfiguration Settings = CreateBackupConfiguration();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     BackupDrive Target = (BackupDrive)CI.Tag;
                     Target.AddBackupTask(CreateBackupitem(Settings));
@@ -602,7 +602,7 @@ namespace File_Master_project
                     BackupTask SelectedItem = GetSelectedBackupTask();
                     SelectedItem.BackupDriveOfItem.RemoveBackupTask(SelectedItem); //deletes itself
 
-                    BackupTaskConfiguration Settings = CreateBackupsettings_Local();
+                    BackupTaskConfiguration Settings = CreateBackupConfiguration();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     BackupDrive Target = (BackupDrive)CI.Tag;
                     Target.AddBackupTask(CreateBackupitem(Settings));
@@ -653,19 +653,21 @@ namespace File_Master_project
             return Item;
         }
 
-        private BackupTaskConfiguration CreateBackupsettings_Local()
+        private BackupTaskConfiguration CreateBackupConfiguration()
         {
             char Method = 'F';
-            int NumberOfCopies = 1;
+            int CycleLength = 1;
+            int NumberofCycles = 1;
             ComboBoxItem CI = (ComboBoxItem)Intervalselection_combobox.SelectedItem;
             Interval CycleInterval = new Interval(CI.Tag.ToString());
-            int MaxStorageData = 0;
+            DiskSpace MaxStorageData = new DiskSpace(0);
             Interval RetryWaitTime = new Interval("5 minute");
             int MaxNumberOfRetries = 3;
             bool PopupOnFail = false;
             BackupTaskConfiguration Settings = new BackupTaskConfiguration(
                 Method,
-                NumberOfCopies,
+                CycleLength,
+                NumberofCycles,
                 CycleInterval,
                 OnlySaveOnChange_checkbox.IsChecked.Value,
                 MaxStorageData,

@@ -27,18 +27,20 @@ namespace File_Master_project
     public struct BackupTaskConfiguration
     {
         [JsonProperty] public char Method { get; } // F -> Full , I -> Incremental, D -> Differential
+        [JsonProperty] public int CycleLength { get; }
         [JsonProperty] public int NumberOfCycles { get; }
         [JsonProperty] public Interval CycleInterval  { get; }
         [JsonProperty] public bool OnlySaveOnChange  { get; }
-        [JsonProperty] public int MaxStorageSpace { get; }
+        [JsonProperty] public DiskSpace MaxStorageSpace { get; }
         [JsonProperty] public Interval RetryWaitTime  { get; }
         [JsonProperty] public int MaxNumberOfRetries  { get; }
         [JsonProperty] public bool PopupOnFail  { get; }
         [JsonProperty] public bool FileCompression  { get; }
 
-        [JsonConstructor] public BackupTaskConfiguration(char method, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, int maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+        [JsonConstructor] public BackupTaskConfiguration(char method, int cycleLength, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, DiskSpace maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
             Method = method;
+            CycleLength = cycleLength;
             NumberOfCycles = numberOfCycles;
             CycleInterval = cycleInterval;
             OnlySaveOnChange = onlySaveOnChange;
@@ -59,6 +61,20 @@ namespace File_Master_project
         [JsonProperty] public DateTime Creation { get; }
         [JsonProperty] public Backup Reference { get; }
         [JsonIgnore] public bool Partial { get { if (Reference != null) return true; else return false; } } //partial if it is not a full backup (differential / incremental)
+        [JsonIgnore] public int NumberID
+        {
+            get
+            {
+                string SID = new DirectoryInfo(Root).Name;
+                int ID;
+                SID = SID.Trim();
+                if (int.TryParse(SID, out ID))
+                {
+                    return ID;
+                }
+                else return -1;
+            }
+        }
 
         // constructor for storing a folder
         public Backup(string root, List<string> files, List<string> folders, Backup reference = null)
@@ -171,7 +187,12 @@ namespace File_Master_project
         }
         [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }
         [JsonIgnore] public List<Backup> Backups { get; private set; }
-        [JsonIgnore] public DateTime LastSaved { get; private set; }
+        [JsonIgnore] public DateTime LastSaved { 
+            get 
+            {
+                return DateTime.Today;
+            } 
+        }
         [JsonProperty] public bool IsEnabled { get; set; }
         [JsonIgnore] public bool IsAvailable { 
             get 
@@ -269,9 +290,8 @@ namespace File_Master_project
 
         public Backup SelectNextBackup()
         {
-            Backup Target = null;
-
-            if (Backups.Count < Configuration.NumberOfCycles) return Target;
+            Backup Target = null;           
+            if (Backups.Count < (Configuration.NumberOfCycles * Configuration.CycleLength)) return Target;
             foreach (var item in Backups)
             {
                 if (Target == null || item.Creation.Ticks < Target.Creation.Ticks)
@@ -327,7 +347,7 @@ namespace File_Master_project
             CancelBackup = new CancellationTokenSource();
         }
 
-        private Backup CreateBackup(IProgress<BackupProgressReportModel> ProgressReport, FileSystemInfo Source)
+        private Backup CreateBackup(IProgress<BackupProgressReportModel> ProgressReport, FileSystemInfo Source, string Destination)
         {
             Backup Result;
             BackupProgressReportModel Progress;
@@ -370,7 +390,7 @@ namespace File_Master_project
                     }
                     Progress = new BackupProgressReportModel(this, SourceFiles.Count, BackupFiles.Count, All, Finished, "none");
                     ProgressReport.Report(Progress);
-                    Result = new Backup("", BackupFiles, BackupFolders);
+                    Result = new Backup(Destination, BackupFiles, BackupFolders);
                 }
                 else
                 {
@@ -388,10 +408,9 @@ namespace File_Master_project
 
                     Progress = new BackupProgressReportModel(this, 1, 1, All, Finished, "none");
                     ProgressReport.Report(Progress);
-                    Result = new Backup("", BackupFile);
+                    Result = new Backup(Destination, BackupFile);
                 }
 
-                LastSaved = DateTime.Now;
                 BackupProcess.Upload_BackupInfo();
                 return Result;
             }

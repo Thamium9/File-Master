@@ -29,6 +29,7 @@ in 0.7:
 + async backuping process
 + indication for ongoing backup process (show progress in 'manage selected item menu', color backupitem blue, display notification)
 + cancel operation button for ongoing backup process
++ backup task configuration modification implementation
 + fix: view destination button visibility when it does not exists yet
 + fix: size limit check always resets after restart
 + fix: upon first opening the add new task menu, the modify button is seen
