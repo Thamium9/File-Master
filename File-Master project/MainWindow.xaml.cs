@@ -1367,7 +1367,7 @@ namespace File_Master_project
                 #endregion
 
                 #region Loads backup file size
-                Backupfilesize_label.Content = $"Backup file size: {Item.GetBackupsSize().Humanize()}";
+                Backupfilesize_label.Content = $"Backup file size: {Item.BackupsSize.Humanize()}";
                 #endregion
 
                 #region Buttons
@@ -1480,7 +1480,7 @@ namespace File_Master_project
         {
             ListBoxItem LBI = new ListBoxItem();
             LBI.Opacity = 0.8;
-            LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Source.FullName} - ({Item.GetBackupsSize().Humanize()})";
+            LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Source.FullName} - ({Item.BackupsSize.Humanize()})";
             LBI.Tag = Item;
 
             #region Status color    

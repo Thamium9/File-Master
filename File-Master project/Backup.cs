@@ -52,6 +52,39 @@ namespace File_Master_project
         }
     }
 
+    public struct BackupProgressReportModel
+    {
+        public double Percentage { get { return Math.Round((double)((FinishedData.Bytes * 100) / AllData.Bytes), 1); } }
+        public BackupTask Item;
+        public bool FoldersCreated;
+        public int AllFiles;
+        public int FinisedFiles;
+        public DiskSpace AllData;
+        public DiskSpace FinishedData;
+        public string NextItem;
+
+        public BackupProgressReportModel(BackupTask item, int allFiles, int finisedFiles, DiskSpace allData, DiskSpace finishedData, string nextItem)
+        {
+            Item = item;
+            FoldersCreated = true;
+            AllFiles = allFiles;
+            FinisedFiles = finisedFiles;
+            AllData = allData;
+            FinishedData = finishedData;
+            NextItem = nextItem;
+        }
+        public BackupProgressReportModel(BackupTask item)
+        {
+            Item = item;
+            FoldersCreated = false;
+            AllFiles = 0;
+            FinisedFiles = 0;
+            AllData = null;
+            FinishedData = null;
+            NextItem = null;
+        }
+    }
+
     public class Backup
     {
         [JsonProperty] public string Root { get; }
@@ -65,7 +98,7 @@ namespace File_Master_project
         {
             get
             {
-                string SID = new DirectoryInfo(Root).Name;
+                string SID = new DirectoryInfo(Root).Name.Split('-')[0];                
                 int ID;
                 SID = SID.Trim();
                 if (int.TryParse(SID, out ID))
@@ -74,6 +107,16 @@ namespace File_Master_project
                 }
                 else return -1;
             }
+        }
+
+        [JsonConstructor] private Backup(string root, List<string> files, List<string> folders, DiskSpace size, DateTime creation, Backup reference)
+        {
+            Root = root;
+            Files = files;
+            Folders = folders;
+            Size = size;
+            Creation = creation;
+            Reference = reference;
         }
 
         // constructor for storing a folder
@@ -130,39 +173,6 @@ namespace File_Master_project
         }
     }
 
-    public struct BackupProgressReportModel
-    {
-        public double Percentage { get { return Math.Round((double)((FinishedData.Bytes * 100) / AllData.Bytes), 1); } }
-        public BackupTask Item;
-        public bool FoldersCreated;
-        public int AllFiles;
-        public int FinisedFiles;
-        public DiskSpace AllData;
-        public DiskSpace FinishedData;
-        public string NextItem;
-
-        public BackupProgressReportModel(BackupTask item, int allFiles, int finisedFiles, DiskSpace allData, DiskSpace finishedData, string nextItem)
-        {
-            Item = item;
-            FoldersCreated = true;
-            AllFiles = allFiles;
-            FinisedFiles = finisedFiles;
-            AllData = allData;
-            FinishedData = finishedData;
-            NextItem = nextItem;
-        }
-        public BackupProgressReportModel(BackupTask item)
-        {
-            Item = item;
-            FoldersCreated = false;
-            AllFiles = 0;
-            FinisedFiles = 0;
-            AllData = null;
-            FinishedData = null;
-            NextItem = null;
-        }
-    }
-
     public class BackupTask
     {
         [JsonProperty] public int ID { get; private set; }
@@ -181,7 +191,7 @@ namespace File_Master_project
                 }
                 else
                 {
-                    return $@"{Destination.FullName}\{Source.Name}";
+                    return $@"{Destination.FullName}\BACKUP_{Source.Name}";
                 }
             }
         }
@@ -207,6 +217,18 @@ namespace File_Master_project
                 if (BackupDriveOfItem == null) return true;
                 return BackupDriveOfItem.IsOutOfSpace; 
             } 
+        }
+        [JsonIgnore] public DiskSpace BackupsSize
+        {
+            get
+            {
+                DiskSpace Size = new DiskSpace(0);
+                foreach (var backup in Backups)
+                {
+                    Size.Bytes += backup.Size.Bytes;
+                }
+                return Size;
+            }
         }
         [JsonIgnore] public BackupDrive BackupDriveOfItem { get { return BackupProcess.GetBackupDriveFromBackupTask(this); } }
 
@@ -250,31 +272,6 @@ namespace File_Master_project
             return LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks());
         }
 
-        public DiskSpace GetBackupsSize()
-        {
-            DiskSpace space = new DiskSpace(0);
-            if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
-            {
-                DirectoryInfo backup = new DirectoryInfo($@"{Destination.FullName}\{Source.Name}");
-                if (backup.Exists)
-                {
-                    foreach (var item in Directory.GetFiles(backup.FullName, "*", SearchOption.AllDirectories))
-                    {
-                        space.Bytes += new FileInfo(item).Length;
-                    }
-                }
-            }
-            else
-            {
-                FileInfo backup = new FileInfo($@"{Destination.FullName}\{Source.Name}");
-                if (backup.Exists)
-                {
-                    space.Bytes += backup.Length;
-                }
-            }
-            return space;
-        }
-
         private FileSystemInfo GetPathInfo(string Path)
         {
             if (Directory.Exists(Path)) return new DirectoryInfo(Path);
@@ -288,9 +285,9 @@ namespace File_Master_project
             else return "Unknown";
         }
 
-        public Backup SelectNextBackup()
+        public Backup SelectNextBackup() //returns null if the next backup is a new one
         {
-            Backup Target = null;           
+            Backup Target = null;
             if (Backups.Count < (Configuration.NumberOfCycles * Configuration.CycleLength)) return Target;
             foreach (var item in Backups)
             {
@@ -299,55 +296,89 @@ namespace File_Master_project
                     Target = item;
                 }
             }
-            /*if (Target == null || Backups.Count < this.Configuration.NumberOfCycles)
-            {
-                Backups.Add(Target);
-            }*/
             return Target;
+        }
+
+        public string GetNextBackupID()
+        {
+            if(Backups ==  null)
+            {
+                return "01";
+            }
+            else
+            {
+                int ID = 0;
+                bool AlreadyExists;
+                do
+                {
+                    ID++;
+                    AlreadyExists = false;
+                    foreach (var item in Backups)
+                    {
+                        if (item.NumberID == ID)
+                        {
+                            AlreadyExists = true;
+                            break;
+                        }
+                    }
+                } while (AlreadyExists);
+                return ID.ToString("00");
+            }
         }
 
         #endregion
 
         #region Backup management
-        public async Task BackupRequest_Async(bool isManual, Backup OutdatedBackup)
+        public async Task BackupRequest_Async(bool isManual, Backup OutdatedBackup = null)
         {
             if (CheckPermission(isManual))
             {
-                bool done = false;
+                bool completed = false;
                 try
                 {
                     Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
                     progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
+                    string id;
+                    if (OutdatedBackup != null) id = OutdatedBackup.NumberID.ToString("00");
+                    else id = GetNextBackupID();
+                    string BackupRoot = $@"{RootDirectoty}\{id} - BACKUP";
 
-                    CurrentTask = Task.Run(() => CreateBackup(progress, Source));
+                    CurrentTask = Task.Run(() => CreateBackup(progress, Source, BackupRoot));
                     BackupProcess.BackupTasks.Add(this, CurrentTask);
                     Backup NewBackup = await CurrentTask;
                     if(OutdatedBackup != null) Backups.Remove(OutdatedBackup);
                     Backups.Add(NewBackup);
-                    done = true;
+                    completed = true;
+                    StoreBackupInfo();
                 }
                 catch (Exception error)
                 {
                     if (isManual) MessageBox.Show(error.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    //else
                     //LOG
                 }
 
                 if (isManual)
                 {
-                    if (done) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
-                    else if(isManual) MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
-                    //else
-                    //LOG
+                    if (completed) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+
                 BackupProcess.BackupTasks.Remove(this);
                 CurrentTask = null;
+                CancelBackup = new CancellationTokenSource();
+                StartTimer();
             }
-            StartTimer();
-            CancelBackup = new CancellationTokenSource();
+            else
+            {
+                if(isManual)
+                {
+                    
+                }
+                //LOG
+            }
         }
 
-        private Backup CreateBackup(IProgress<BackupProgressReportModel> ProgressReport, FileSystemInfo Source, string Destination)
+        private Backup CreateBackup(IProgress<BackupProgressReportModel> ProgressReport, FileSystemInfo Source, string BackupRoot)
         {
             Backup Result;
             BackupProgressReportModel Progress;
@@ -356,7 +387,7 @@ namespace File_Master_project
                 throw new Exception("System files are not allowed to be accessed!");
             }
             try
-            {
+            {                
                 if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
                 {
                     List<string> SourceFiles, BackupFiles = new List<string>();
@@ -364,7 +395,7 @@ namespace File_Master_project
                     GetDirectoryContent((DirectoryInfo)Source, out SourceFiles, out SourceFolders);
                     foreach (var SourceItem in SourceFolders)
                     {
-                        string Target = ConvertPath_Destination(SourceItem);
+                        string Target = ConvertPath_Destination(SourceItem, BackupRoot);
                         BackupFolders.Add(Directory.CreateDirectory(Target).FullName);
 
                         Progress = new BackupProgressReportModel(this);
@@ -384,18 +415,18 @@ namespace File_Master_project
                         Progress = new BackupProgressReportModel(this, SourceFiles.Count, BackupFiles.Count, All, Finished, new FileInfo(SourceItem).Name);
                         ProgressReport.Report(Progress);
 
-                        string Target = ConvertPath_Destination(SourceItem);
+                        string Target = ConvertPath_Destination(SourceItem, BackupRoot);
                         BackupFiles.Add(Target);
                         CopyFile(SourceItem, Target, ProgressReport, Progress, CancelBackup.Token);
                     }
                     Progress = new BackupProgressReportModel(this, SourceFiles.Count, BackupFiles.Count, All, Finished, "none");
                     ProgressReport.Report(Progress);
-                    Result = new Backup(Destination, BackupFiles, BackupFolders);
+                    Result = new Backup(BackupRoot, BackupFiles, BackupFolders);
                 }
                 else
                 {
                     FileInfo SourceFile = new FileInfo(Source.FullName);
-                    string BackupFile = ConvertPath_Destination(SourceFile.FullName);
+                    string BackupFile = ConvertPath_Destination(SourceFile.FullName, BackupRoot);
                     #region DiskSpaces
                     DiskSpace All = new DiskSpace(SourceFile.Length);
                     DiskSpace Finished = new DiskSpace(0);
@@ -408,7 +439,7 @@ namespace File_Master_project
 
                     Progress = new BackupProgressReportModel(this, 1, 1, All, Finished, "none");
                     ProgressReport.Report(Progress);
-                    Result = new Backup(Destination, BackupFile);
+                    Result = new Backup(BackupRoot, BackupFile);
                 }
 
                 BackupProcess.Upload_BackupInfo();
@@ -459,12 +490,10 @@ namespace File_Master_project
             }
         }
 
-        private string ConvertPath_Destination(string Item)
+        private string ConvertPath_Destination(string Item, string BackupRoot)
         {
-            string Result = Item;
             string Parent = Directory.GetParent(Source.FullName).FullName;
-            Result = Result.Replace(Parent, $@"{RootDirectoty}");
-            return Result;
+            return Item.Replace(Parent, $@"{BackupRoot}");
         }
 
         private bool CheckPermission(bool isManual)
@@ -500,6 +529,11 @@ namespace File_Master_project
             Backuptimer.Start();
         }
 
+        public void RenameBackupLabel(string newName)
+        {
+            //update every backup path data
+        }
+
         public void DeleteBackups()
         {
             //code
@@ -518,7 +552,9 @@ namespace File_Master_project
         private void StoreBackupConfig()
         {
             string data = JsonConvert.SerializeObject(Configuration, Newtonsoft.Json.Formatting.Indented);
-            File.WriteAllText($@"{RootDirectoty}\configuration.json", data);
+            FileInfo target =  new FileInfo($@"{RootDirectoty}\configuration.json");
+            target.Directory.Create();
+            File.WriteAllText(target.FullName, data);
         }
 
         private void LoadBackupConfig()
@@ -539,7 +575,9 @@ namespace File_Master_project
         private void StoreBackupInfo()
         {
             string data = JsonConvert.SerializeObject(Backups, Newtonsoft.Json.Formatting.Indented);
-            File.WriteAllText($@"{RootDirectoty}\backups.json", data);
+            FileInfo target = new FileInfo($@"{RootDirectoty}\backups.json");
+            target.Directory.Create();
+            File.WriteAllText(target.FullName, data);
         }
 
         private void LoadBackupInfo()
@@ -708,7 +746,7 @@ namespace File_Master_project
             DiskSpace space = new DiskSpace(0);
             foreach (var item in BackupTasks)
             {
-                space.Bytes += item.GetBackupsSize().Bytes;
+                space.Bytes += item.BackupsSize.Bytes;
             }
             return space;
         }
@@ -846,7 +884,14 @@ namespace File_Master_project
             Load_BackupInfo(out string Backupinfo);
             try
             {
-                BackupDrives = JsonConvert.DeserializeObject<List<BackupDrive>>(Backupinfo);
+                //https://stackoverflow.com/questions/26107656/ignore-parsing-errors-during-json-net-data-parsing               
+                var settings = new JsonSerializerSettings { Error = (se, ev) => 
+                { 
+                    ev.ErrorContext.Handled = true; 
+                    MessageBox.Show("An error was encountered while loading data!\nSome data may have been lost!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly); 
+                    //LOG
+                } }; 
+                BackupDrives = JsonConvert.DeserializeObject<List<BackupDrive>>(Backupinfo, settings);
                 if (BackupDrives == null || !IntegrityCheck())
                 {
                     BackupDrives = new List<BackupDrive>();

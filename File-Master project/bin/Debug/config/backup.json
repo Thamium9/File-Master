@@ -3,7 +3,31 @@
     "DefaultVolumeLabel": "KINGSTON_C",
     "DriveID": "E9EFF223",
     "SizeLimit": {
+      "Bytes": 2147483648
+    },
+    "BackupTasks": [
+      {
+        "SourcePath": "C:\\Program Files\\Notepad++",
+        "DestinationPath": "K:\\Backups",
+        "ID": 0,
+        "Label": null,
+        "IsEnabled": true
+      }
+    ]
+  },
+  {
+    "DefaultVolumeLabel": "HDD",
+    "DriveID": "4CCE358A",
+    "SizeLimit": {
       "Bytes": 0
+    },
+    "BackupTasks": []
+  },
+  {
+    "DefaultVolumeLabel": "HDD-K01",
+    "DriveID": "02466E75",
+    "SizeLimit": {
+      "Bytes": 107374182400
     },
     "BackupTasks": []
   }
