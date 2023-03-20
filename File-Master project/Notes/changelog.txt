@@ -30,6 +30,7 @@ in 0.7:
 + indication for ongoing backup process (show progress in 'manage selected item menu', color backupitem blue, display notification)
 + cancel operation button for ongoing backup process
 - backup task configuration modification implementation
+- save backup task configuration in spearate files in local folder
 + fix: view destination button visibility when it does not exists yet
 + fix: size limit check always resets after restart
 + fix: upon first opening the add new task menu, the modify button is seen
@@ -43,6 +44,7 @@ in 0.7:
 + fix: pendrive not showing up in the 'manage backup drives' menu
 + fix: crash when during backup a backupdrive is selected
 + fix: crash when backup configuration failes to load, and there is already a stored config file in the 'corrupted' folder
++ fix: crash when backups.json does not exists, and the list became null
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
 
 in 0.8:
@@ -57,6 +59,7 @@ in 0.8:
 - global settings menu implementation
 - file browser menu implementation
 - remove canncelled operation files
+- handle when a drive letter changes (rename associated backup paths)
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15
 

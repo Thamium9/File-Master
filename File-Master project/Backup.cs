@@ -12,7 +12,7 @@ using Timer = System.Timers.Timer;
 
 namespace File_Master_project
 {
-    public struct BackupSettings
+    public class BackupSettings
     {
         public bool IsTempFolderEnabled {get;set;}
         public DirectoryInfo TempFolder { get;set;} 
@@ -24,8 +24,10 @@ namespace File_Master_project
         }
     }
 
-    public struct BackupTaskConfiguration
+    public class BackupTaskConfiguration
     {
+        //[JsonProperty] public string SourcePath { get; }
+        //[JsonProperty] public string Label { get; }
         [JsonProperty] public char Method { get; } // F -> Full , I -> Incremental, D -> Differential
         [JsonProperty] public int CycleLength { get; }
         [JsonProperty] public int NumberOfCycles { get; }
@@ -37,7 +39,7 @@ namespace File_Master_project
         [JsonProperty] public bool PopupOnFail  { get; }
         [JsonProperty] public bool FileCompression  { get; }
 
-        [JsonConstructor] public BackupTaskConfiguration(char method, int cycleLength, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, DiskSpace maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+        public BackupTaskConfiguration(char method, int cycleLength, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, DiskSpace maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
             Method = method;
             CycleLength = cycleLength;
@@ -207,7 +209,7 @@ namespace File_Master_project
         [JsonIgnore] public bool IsAvailable { 
             get 
             {
-                if(BackupDriveOfItem == null) return false;
+                if(BackupDriveOfItem == null || Configuration == null) return false;
                 else return BackupDriveOfItem.IsAvailable;
             }
         }
@@ -560,15 +562,22 @@ namespace File_Master_project
         private void LoadBackupConfig()
         {
             string path = $@"{RootDirectoty}\configuration.json";
-            try
+            if(File.Exists(path))
             {
-                string data = File.ReadAllText(path);
-                Configuration = JsonConvert.DeserializeObject<BackupTaskConfiguration>(data);
+                try
+                {
+                    string data = File.ReadAllText(path);
+                    Configuration = JsonConvert.DeserializeObject<BackupTaskConfiguration>(data);
+                }
+                catch (Exception)
+                {
+                    //LOG
+                    throw;
+                }
             }
-            catch (Exception)
+            else
             {
                 //LOG
-                throw;
             }
         }
 
@@ -595,6 +604,10 @@ namespace File_Master_project
                     //LOG
                     throw;
                 }
+            }
+            else
+            {
+                Backups = new List<Backup>();
             }
         }
         #endregion
@@ -888,8 +901,8 @@ namespace File_Master_project
                 var settings = new JsonSerializerSettings { Error = (se, ev) => 
                 { 
                     ev.ErrorContext.Handled = true; 
-                    MessageBox.Show("An error was encountered while loading data!\nSome data may have been lost!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly); 
-                    //LOG
+                    MessageBox.Show("An error was encountered while loading data!\nSome data may have been lost!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+                    CopyConfigToCorruptedFolder();
                 } }; 
                 BackupDrives = JsonConvert.DeserializeObject<List<BackupDrive>>(Backupinfo, settings);
                 if (BackupDrives == null || !IntegrityCheck())
@@ -901,10 +914,7 @@ namespace File_Master_project
             catch (Exception)
             {
                 MessageBox.Show("Unable to load in the user data due to data corruption!\nAll backup configurations are cleared!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
-                Directory.CreateDirectory(@".\config\corrupted");
-                string dest = $@".\config\corrupted\{DateTime.Now.ToString("yyyyMMddHHmm")}_backup.json";
-                if (File.Exists(dest)) File.Delete(dest);
-                File.Move(@".\config\backup.json", dest);
+                CopyConfigToCorruptedFolder();
                 Upload_BackupInfo();
             }
             #endregion
@@ -962,14 +972,23 @@ namespace File_Master_project
                     {
                         if (Item.Source == null) Intact = false;
                         else if (Item.Destination == null) Intact = false;                  
-                        else if (Item.LastSaved == null) Intact = false;
+                        //else if (Item.LastSaved == null) Intact = false;
                         //else if (Item.Configuration == null) Intact = false;
-                        else if (Item.Configuration.CycleInterval == null) Intact = false;
-                        else if (Item.Configuration.RetryWaitTime == null) Intact = false;
+                        //else if (Item.Configuration.CycleInterval == null) Intact = false;
+                        //else if (Item.Configuration.RetryWaitTime == null) Intact = false;
                     }
                 }
             }
             return Intact;
+        }
+
+        static private void CopyConfigToCorruptedFolder()
+        {
+            Directory.CreateDirectory(@".\config\corrupted");
+            string dest = $@".\config\corrupted\{DateTime.Now.ToString("yyyyMMddHHmm")}_backup.json";
+            if (File.Exists(dest)) File.Delete(dest);
+            File.Move(@".\config\backup.json", dest);
+            //LOG
         }
         #endregion
 

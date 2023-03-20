@@ -1268,9 +1268,138 @@ namespace File_Master_project
             {
                 BackupProgress_grid.Visibility = Visibility.Hidden;
                 BackupManaging_grid.Visibility = Visibility.Visible;
-                #region Loads interval
-                Item.Configuration.CycleInterval.Humanize();
-                Interval_label.Content = $"Save interval: {Item.Configuration.CycleInterval.GetTime()}";
+                if(Item.IsAvailable)
+                {
+                    #region Loads interval
+                    Item.Configuration.CycleInterval.Humanize();
+                    Interval_label.Content = $"Save interval: {Item.Configuration.CycleInterval.GetTime()}";
+                    #endregion
+
+                    #region Loads OSC
+                    if (Item.Configuration.OnlySaveOnChange) OnlySaveOnChange_label.Content = "Only save if data is modified: ON";
+                    else OnlySaveOnChange_label.Content = "Only save if data is modified: OFF";
+                    #endregion
+
+                    #region Loads Last saved
+                    if (Item.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
+                    else
+                    {
+                        Interval lastsaved = new Interval(DateTime.Now - Item.LastSaved);
+                        if (lastsaved.IsPlural())
+                        {
+                            Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()}s ago";
+                        }
+                        else
+                        {
+                            Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()} ago";
+                        }
+                    }
+                    #endregion
+
+                    #region Loads backup file size
+                    Backupfilesize_label.Content = $"Backup file size: {Item.BackupsSize.Humanize()}";
+                    #endregion
+
+                    #region Buttons
+                    #region Enable/Disable
+                    if (Item.IsAvailable && !Item.IsOutOfSpace)
+                    {
+                        if (!Item.IsEnabled)
+                        {
+                            Disablebackup_button.Visibility = Visibility.Hidden;
+                            Enablebackup_button.Visibility = Visibility.Visible;
+                            Enablebackup_button.IsEnabled = true;
+                            Enablebackup_button.Opacity = 1;
+                        }
+                        else
+                        {
+                            Disablebackup_button.Visibility = Visibility.Visible;
+                            Enablebackup_button.Visibility = Visibility.Hidden;
+                        }
+                    }
+                    else
+                    {
+                        Disablebackup_button.Visibility = Visibility.Hidden;
+                        Enablebackup_button.Visibility = Visibility.Visible;
+                        Enablebackup_button.IsEnabled = false;
+                        Enablebackup_button.Opacity = 0.5;
+                    }
+                    #endregion
+                    #region Modification
+                    if (!Item.Source.Exists)
+                    {
+                        Modification_button.Opacity = 0.5;
+                        Modification_button.IsEnabled = false;
+                    }
+                    else
+                    {
+                        Modification_button.Opacity = 1;
+                        Modification_button.IsEnabled = true;
+                    }
+                    #endregion
+                    #region Restore
+                    Restorefiles_button.IsEnabled = true;
+                    Restorefiles_button.Opacity = 1;
+                    #endregion
+                    #region Manual save
+                    if (Item.ActiveTask)
+                    {
+                        Manualsave_button.IsEnabled = false;
+                        Manualsave_button.Opacity = 0.5;
+                        Manualsave_button.Content = "Saving...";
+                    }
+                    else
+                    {
+                        if (Item.IsAvailable && !Item.IsOutOfSpace)
+                        {
+                            Manualsave_button.IsEnabled = true;
+                            Manualsave_button.Opacity = 1;
+                            Manualsave_button.Content = "Manual save";
+                        }
+                        else
+                        {
+                            Manualsave_button.IsEnabled = false;
+                            Manualsave_button.Opacity = 0.5;
+                            Manualsave_button.Content = "Manual save";
+                        }
+                    }
+                    #endregion
+                    #endregion
+                }
+                #region Buttons
+                #region Remove
+                Removeitem_button.IsEnabled = true;
+                Removeitem_button.Opacity = 1;
+                #endregion
+                #region View Selected Path
+                if (ViewPathSelection_Combobox.SelectedIndex == 0)
+                {
+                    if (Item.IsAvailable && Item.Destination.Exists)
+                    {
+                        ViewSelectedPath_button.IsEnabled = true;
+                        ViewSelectedPath_button.Opacity = 1;
+                    }
+                    else
+                    {
+                        ViewSelectedPath_button.IsEnabled = false;
+                        ViewSelectedPath_button.Opacity = 0.5;
+                    }
+                }
+                else
+                {
+                    if (Item.IsAvailable && Item.Source.Exists)
+                    {
+                        ViewSelectedPath_button.IsEnabled = true;
+                        ViewSelectedPath_button.Opacity = 1;
+                    }
+                    else
+                    {
+                        ViewSelectedPath_button.IsEnabled = false;
+                        ViewSelectedPath_button.Opacity = 0.5;
+                    }
+                }
+
+                #endregion
                 #endregion
 
                 #region Loads path
@@ -1297,27 +1426,6 @@ namespace File_Master_project
                     else
                     {
                         ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    }
-                }
-                #endregion
-
-                #region Loads Smart save
-                if (Item.Configuration.OnlySaveOnChange) OnlySaveOnChange_label.Content = "Only save if data is modified: ON";
-                else OnlySaveOnChange_label.Content = "Only save if data is modified: OFF";
-                #endregion
-
-                #region Loads Last saved
-                if (Item.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
-                else
-                {
-                    Interval lastsaved = new Interval(DateTime.Now - Item.LastSaved);
-                    if (lastsaved.IsPlural())
-                    {
-                        Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()}s ago";
-                    }
-                    else
-                    {
-                        Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()} ago";
                     }
                 }
                 #endregion
@@ -1364,111 +1472,6 @@ namespace File_Master_project
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
                     Status_label.Content = "Status info: An unknown issue has occurred!";
                 }
-                #endregion
-
-                #region Loads backup file size
-                Backupfilesize_label.Content = $"Backup file size: {Item.BackupsSize.Humanize()}";
-                #endregion
-
-                #region Buttons
-                #region Remove
-                Removeitem_button.IsEnabled = true;
-                Removeitem_button.Opacity = 1;
-                #endregion
-                #region Enable/Disable
-                if (Item.IsAvailable && !Item.IsOutOfSpace)
-                {
-                    if (!Item.IsEnabled)
-                    {
-                        Disablebackup_button.Visibility = Visibility.Hidden;
-                        Enablebackup_button.Visibility = Visibility.Visible;
-                        Enablebackup_button.IsEnabled = true;
-                        Enablebackup_button.Opacity = 1;
-                    }
-                    else
-                    {
-                        Disablebackup_button.Visibility = Visibility.Visible;
-                        Enablebackup_button.Visibility = Visibility.Hidden;
-                    }
-                }
-                else
-                {
-                    Disablebackup_button.Visibility = Visibility.Hidden;
-                    Enablebackup_button.Visibility = Visibility.Visible;
-                    Enablebackup_button.IsEnabled = false;
-                    Enablebackup_button.Opacity = 0.5;
-                }
-                #endregion
-                #region Modification
-                if (!Item.Source.Exists)
-                {
-                    Modification_button.Opacity = 0.5;
-                    Modification_button.IsEnabled = false;
-                }
-                else
-                {
-                    Modification_button.Opacity = 1;
-                    Modification_button.IsEnabled = true;
-                }
-                #endregion
-                #region Restore
-                Restorefiles_button.IsEnabled = true;
-                Restorefiles_button.Opacity = 1;
-                #endregion
-                #region Manual save
-                if (Item.ActiveTask)
-                {
-                    Manualsave_button.IsEnabled = false;
-                    Manualsave_button.Opacity = 0.5;
-                    Manualsave_button.Content = "Saving...";
-                }
-                else
-                {
-                    if (Item.IsAvailable && !Item.IsOutOfSpace)
-                    {
-                        Manualsave_button.IsEnabled = true;
-                        Manualsave_button.Opacity = 1;
-                        Manualsave_button.Content = "Manual save";
-                    }
-                    else
-                    {
-                        Manualsave_button.IsEnabled = false;
-                        Manualsave_button.Opacity = 0.5;
-                        Manualsave_button.Content = "Manual save";
-                    }
-                }
-                #endregion
-
-                #region View Selected Path
-                if (ViewPathSelection_Combobox.SelectedIndex == 0)
-                {
-                    if (Item.IsAvailable && Item.Destination.Exists)
-                    {
-                        ViewSelectedPath_button.IsEnabled = true;
-                        ViewSelectedPath_button.Opacity = 1;
-                    }
-                    else
-                    {
-                        ViewSelectedPath_button.IsEnabled = false;
-                        ViewSelectedPath_button.Opacity = 0.5;
-                    }
-                }
-                else
-                {
-                    if (Item.IsAvailable && Item.Source.Exists)
-                    {
-                        ViewSelectedPath_button.IsEnabled = true;
-                        ViewSelectedPath_button.Opacity = 1;
-                    }
-                    else
-                    {
-                        ViewSelectedPath_button.IsEnabled = false;
-                        ViewSelectedPath_button.Opacity = 0.5;
-                    }
-                }
-
-                #endregion
-
                 #endregion
             }
 
