@@ -326,29 +326,37 @@ namespace File_Master_project
                     #endregion
 
                     #region Delete button
-                    Button button = new Button();
-                    button.Content = "Delete";
-                    button.Height = 25;
-                    button.Width = 80;
-                    button.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
-                    button.Foreground = new SolidColorBrush(Color.FromRgb(235,235,235));
-                    button.Style = this.FindResource("CustomButtonStyle1") as Style;
-                    button.VerticalAlignment = VerticalAlignment.Bottom;
-                    DockPanel.SetDock(button, Dock.Left);
-                    dp.Children.Add(button);
+                    Button DeleteButton = new Button();
+                    DeleteButton.Content = "Delete";
+                    DeleteButton.Height = 25;
+                    DeleteButton.Width = 80;
+                    DeleteButton.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
+                    DeleteButton.Foreground = new SolidColorBrush(Color.FromRgb(235,235,235));
+                    DeleteButton.Style = this.FindResource("CustomButtonStyle1") as Style;
+                    DeleteButton.VerticalAlignment = VerticalAlignment.Bottom;
+                    DeleteButton.Click += async (ds, de) => 
+                    {
+                        var Deletion = Task.Run(() => { Selected.DeleteBackup(Backup); });
+                        DeleteButton.Content = "Deleting";
+                        await Deletion;
+                        Update_Backupmenu(); 
+                    };
+                    DockPanel.SetDock(DeleteButton, Dock.Left);
+                    dp.Children.Add(DeleteButton);
                     #endregion
 
                     #region Recover button
-                    button = new Button();
-                    button.Content = "Recover";
-                    button.Height = 25;
-                    button.Width = 80;
-                    button.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
-                    button.Foreground = new SolidColorBrush(Color.FromRgb(235, 235, 235));
-                    button.Style = this.FindResource("CustomButtonStyle1") as Style;
-                    button.VerticalAlignment = VerticalAlignment.Bottom;
-                    DockPanel.SetDock(button, Dock.Right);
-                    dp.Children.Add(button);
+                    Button RecoverButton = new Button();
+                    RecoverButton = new Button();
+                    RecoverButton.Content = "Recover";
+                    RecoverButton.Height = 25;
+                    RecoverButton.Width = 80;
+                    RecoverButton.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
+                    RecoverButton.Foreground = new SolidColorBrush(Color.FromRgb(235, 235, 235));
+                    RecoverButton.Style = this.FindResource("CustomButtonStyle1") as Style;
+                    RecoverButton.VerticalAlignment = VerticalAlignment.Bottom;
+                    DockPanel.SetDock(RecoverButton, Dock.Right);
+                    dp.Children.Add(RecoverButton);
                     #endregion
 
                     StoredBackups_stackpanel.Children.Add(dp);
@@ -387,7 +395,7 @@ namespace File_Master_project
 
             #region Data load
             BackupTask temp = GetSelectedBackupTask();
-            Destinationinput_textbox.Text = temp.Destination.ToString();
+            Destinationinput_textbox.Text = temp.DestinationPath.ToString();
             Sourceinput_textbox.Text = temp.Source.ToString();
             foreach (ComboBoxItem item in Intervalselection_combobox.Items)
             {
@@ -433,6 +441,7 @@ namespace File_Master_project
             {
                 BackupTask Item = GetSelectedBackupTask();
                 var Backup = Task.Run(() => BackupProcess.Manualsave_Async(Item));
+                System.Threading.Thread.Sleep(100);
                 Update_Backupmenu();
                 await Backup;
                 Update_Backupmenu();
@@ -647,14 +656,16 @@ namespace File_Master_project
 
         private BackupTask CreateBackupitem(BackupTaskConfiguration Settings)
         {
-            string Source = Sourceinput_textbox.Text;
             string Destination = Destinationinput_textbox.Text;
-            BackupTask Item = new BackupTask(BackupProcess.GetNewBackupID(), Source, Destination, Settings);
+            string Label = "";
+            if (Label == "") Label = $"BACKUP_{new FileInfo(Sourceinput_textbox.Text).Name}";
+            BackupTask Item = new BackupTask(BackupProcess.GetNewBackupID(), Destination, Label, Settings);
             return Item;
         }
 
         private BackupTaskConfiguration CreateBackupConfiguration()
         {
+            string Source = Sourceinput_textbox.Text;
             char Method = 'F';
             int CycleLength = 1;
             int NumberofCycles = 1;
@@ -665,6 +676,7 @@ namespace File_Master_project
             int MaxNumberOfRetries = 3;
             bool PopupOnFail = false;
             BackupTaskConfiguration Settings = new BackupTaskConfiguration(
+                Source,
                 Method,
                 CycleLength,
                 NumberofCycles,
@@ -1404,19 +1416,23 @@ namespace File_Master_project
 
                 #region Loads path
                 bool dest = false;
+                ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
                 if (ViewPathSelection_Combobox.SelectedIndex == 0)
                 {
-                    ItemPath_textbox.Text = Item.Destination.FullName;
-                    ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+                    ItemPath_textbox.Text = Item.DestinationPath;
                     dest = true;
                 }
                 else
                 {
-                    ItemPath_textbox.Text = Item.Source.FullName;
-                    ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
+                    if (Item.IsAvailable) ItemPath_textbox.Text = Item.Source.FullName;
+                    else ItemPath_textbox.Text = "The source is unknown!";
                 }
 
-                if (!Item.IsAvailable || Item.IsOutOfSpace)
+                if(!Item.IsAvailable)
+                {
+                    ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                }
+                else if (Item.IsOutOfSpace)
                 {
                     if (BackupProcess.Settings.IsTempFolderEnabled)
                     {
@@ -1436,29 +1452,17 @@ namespace File_Master_project
                 Status_label.Content = "Status: OK!";
                 #endregion
 
-                if (!IsEnabled)
+                if(!Item.IsAvailable)
                 {
-                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
-                    Status_label.Content = "Status info: The backup item is disabled!";
+                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                    Status_label.Content = "Status info: The destination is unreachable!";
                 }
-
-                if (!Item.Source.Exists)
-                {
-                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-                    Status_label.Content = "Status info: The source is missing!";
-                }
-
-                else if (Item.IsOutOfSpace || !Item.IsAvailable) //destination is unusable
+                else if(Item.IsOutOfSpace)
                 {
                     if (BackupProcess.Settings.IsTempFolderEnabled)//Can save to temp-drive temp
                     {
                         Status_label.Foreground = new SolidColorBrush(Color.FromRgb(225, 225, 0));
                         Status_label.Content = "Status info: An alternative destination is used!";
-                    }
-                    else if (!Item.IsAvailable)
-                    {
-                        Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                        Status_label.Content = "Status info: The destination is unreachable!";
                     }
                     else
                     {
@@ -1466,11 +1470,15 @@ namespace File_Master_project
                         Status_label.Content = "Status info: The backup drive has reached its space limit!";
                     }
                 }
-
-                else if (false)//unknown issue
+                else if (!Item.Source.Exists)
                 {
-                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
-                    Status_label.Content = "Status info: An unknown issue has occurred!";
+                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
+                    Status_label.Content = "Status info: The source is missing!";
+                }
+                else if (!IsEnabled)
+                {
+                    Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
+                    Status_label.Content = "Status info: The backup item is disabled!";
                 }
                 #endregion
             }
@@ -1483,7 +1491,7 @@ namespace File_Master_project
         {
             ListBoxItem LBI = new ListBoxItem();
             LBI.Opacity = 0.8;
-            LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Source.FullName} - ({Item.BackupsSize.Humanize()})";
+            LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Label} - ({Item.BackupsSize.Humanize()})";
             LBI.Tag = Item;
 
             #region Status color    
@@ -1500,15 +1508,11 @@ namespace File_Master_project
             }
 
             //Issues
-            if (!Item.IsEnabled)
+            if (!Item.IsAvailable)
             {
-                LBI.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
+                LBI.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
             }
-            if (!Item.Source.Exists)
-            {
-                LBI.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
-            }
-            else if (Item.IsOutOfSpace || !Item.IsAvailable) //destination is unusable
+            else if(Item.IsOutOfSpace)
             {
                 if (BackupProcess.Settings.IsTempFolderEnabled)//Can save to temp-drive temp
                 {
@@ -1519,9 +1523,13 @@ namespace File_Master_project
                     LBI.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
                 }
             }
-            if (false)//unknown issue
+            else if (!Item.Source.Exists)
             {
-                LBI.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
+                LBI.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
+            }
+            else if (!Item.IsEnabled)
+            {
+                LBI.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
             }
             #endregion
 
@@ -1576,7 +1584,7 @@ namespace File_Master_project
                 LBI.BorderBrush = new SolidColorBrush(Color.FromRgb(230, 0, 0));
             }
 
-            if (Drive.IsOutOfSpace == true)
+            else if (Drive.IsOutOfSpace == true)
             {
                 drivespace.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
             }

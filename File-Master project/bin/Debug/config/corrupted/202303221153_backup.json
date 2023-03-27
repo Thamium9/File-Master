@@ -3,13 +3,14 @@
     "DefaultVolumeLabel": "KINGSTON_C",
     "DriveID": "E9EFF223",
     "SizeLimit": {
-      "Bytes": 1073741824
+      "Bytes": 2147483648
     },
     "BackupTasks": [
       {
+        "SourcePath": "C:\\Program Files\\Notepad++",
+        "DestinationPath": "K:\\Backups",
         "ID": 0,
-        "DestinationPath": "D:\\Backups",
-        "Label": "BACKUP_Notepad++",
+        "Label": null,
         "IsEnabled": true
       }
     ]

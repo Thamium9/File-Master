@@ -15,7 +15,8 @@
 in 0.7:
 + should be able to perform manual save while the item is disabled
 + modification menu functions
-- restore files implementation
+- backup restore implementation
++ backup deletion implementation
 + disable add backupitem when there is no available backupdrive
 + 'last saved' info : display how long ago
 + backupdrive menu async load
@@ -30,7 +31,7 @@ in 0.7:
 + indication for ongoing backup process (show progress in 'manage selected item menu', color backupitem blue, display notification)
 + cancel operation button for ongoing backup process
 - backup task configuration modification implementation
-- save backup task configuration in spearate files in local folder
++ save backup task configuration in spearate files in local folder
 + fix: view destination button visibility when it does not exists yet
 + fix: size limit check always resets after restart
 + fix: upon first opening the add new task menu, the modify button is seen
@@ -48,10 +49,9 @@ in 0.7:
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
 
 in 0.8:
+- backup task label (task name)
 - help tooltips
 - available drives update in every 30 seconds
-- support for partitioned drives (drive id)
-- only store supported drive types in "AllDriveInfo" list ()
 - working automated backup process
 - delete backups option when removing backup drives
 - application language settings
@@ -64,19 +64,20 @@ in 0.8:
 Release of Demo version v0.9 -> Deadline: 2023.04.15
 
 in 0.9:
+- support for partitioned drives (drive id)
 - create log file to store events ('//LOG' indicates undefined log in code)
 - make the 'settings' class static, and put it in a separate file
 - create a static UserInterface class
 - make path textboxes responsive by shortening path if necessary
 - use backup size limit implementation
 - display total amount of backup space on drive in backupdrives menu
-- backup task label (task name)
 - events / current operations menu (shows the tasks in order, the time they will deploy and other informations)
 - run on windows startup
 - prevent opening application while it is already running
 - menu redesign
 - import stored backups into the program (search for backups in folder)
 - custom data recovery location (not the source folder)
+- only grab the window from the top section(toolbar)
 
 in the future:
 - low performance demand mode (don't do backup when cpu is load is high)

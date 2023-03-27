@@ -26,8 +26,7 @@ namespace File_Master_project
 
     public class BackupTaskConfiguration
     {
-        //[JsonProperty] public string SourcePath { get; }
-        //[JsonProperty] public string Label { get; }
+        [JsonProperty] public string SourcePath { get; }
         [JsonProperty] public char Method { get; } // F -> Full , I -> Incremental, D -> Differential
         [JsonProperty] public int CycleLength { get; }
         [JsonProperty] public int NumberOfCycles { get; }
@@ -39,8 +38,9 @@ namespace File_Master_project
         [JsonProperty] public bool PopupOnFail  { get; }
         [JsonProperty] public bool FileCompression  { get; }
 
-        public BackupTaskConfiguration(char method, int cycleLength, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, DiskSpace maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
+        public BackupTaskConfiguration(string sourcePath, char method, int cycleLength, int numberOfCycles, Interval cycleInterval, bool onlySaveOnChange, DiskSpace maxStorageSpace, Interval retryWaitTime, int maxNumberOfRetries, bool popupOnFail, bool fileCompression)
         {
+            SourcePath = sourcePath;
             Method = method;
             CycleLength = cycleLength;
             NumberOfCycles = numberOfCycles;
@@ -170,35 +170,38 @@ namespace File_Master_project
         }
 
         public void DeleteBackup()
-        {
-            Directory.Delete(Root, true);
+        {      
+            if(Directory.Exists(Root)) Directory.Delete(Root, true);              
         }
     }
 
     public class BackupTask
     {
         [JsonProperty] public int ID { get; private set; }
+        [JsonProperty] public string DestinationPath { get; private set; }
         [JsonProperty] public string Label { get; private set; }
-        [JsonIgnore] public FileSystemInfo Source { get; private set; }
-        [JsonProperty] private string SourcePath;
-        [JsonIgnore] public DirectoryInfo Destination { get; set; }
-        [JsonProperty] private string DestinationPath;
         [JsonIgnore] public string RootDirectoty
         {
             get
             {
-                if (Label != null && Label != "")
-                {
-                    return $@"{Destination.FullName}\{Label}";
-                }
-                else
-                {
-                    return $@"{Destination.FullName}\BACKUP_{Source.Name}";
-                }
+                return $@"{DestinationPath}\{Label}";                
             }
         }
         [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }
         [JsonIgnore] public List<Backup> Backups { get; private set; }
+        [JsonIgnore] public FileSystemInfo Source //only access it if the item is available!
+        {
+            get
+            {
+                string Path = Configuration.SourcePath;
+                if (Directory.Exists(Path)) return new DirectoryInfo(Path);
+                else return new FileInfo(Path);
+            }
+        }
+        [JsonIgnore] public DirectoryInfo Destination
+        {
+            get { return new DirectoryInfo(DestinationPath); }
+        }
         [JsonIgnore] public DateTime LastSaved { 
             get 
             {
@@ -239,33 +242,38 @@ namespace File_Master_project
         [JsonIgnore] public bool ActiveTask { get { return CurrentTask != null && CurrentTask.Status == TaskStatus.Running; } }
         [JsonIgnore] public CancellationTokenSource CancelBackup { get; private set; }
 
-        [JsonConstructor] private BackupTask(int iD, string sourcePath, string destinationPath, bool isEnabled)
+        [JsonConstructor] private BackupTask(int iD, string destinationPath, string label, bool isEnabled)
         {
+            if (label == null || label == "") throw new Exception("The task label cannot be empty value!");
+            if (destinationPath == null || destinationPath == "") throw new Exception("The destination cannot be empty value!");
             ID = iD;
-            SourcePath = sourcePath;
             DestinationPath = destinationPath;
+            Label = label;
             CancelBackup = new CancellationTokenSource();
-            Destination = new DirectoryInfo(DestinationPath);
-            Source = GetPathInfo(SourcePath);
             IsEnabled = isEnabled;
             LoadBackupConfig();
             LoadBackupInfo();
             // start timer
         }
 
-        public BackupTask(int iD, string sourcePath, string destinationPath, BackupTaskConfiguration configuration)
+        public BackupTask(int iD, string destination, string label, BackupTaskConfiguration configuration)
         {
             ID = iD;
-            SourcePath = sourcePath;
-            DestinationPath = destinationPath;
+            DestinationPath = destination;
+            Label = label;
             Configuration = configuration;
             CancelBackup = new CancellationTokenSource();
-            Destination = new DirectoryInfo(DestinationPath);
-            Source = GetPathInfo(SourcePath);
             Backups = new List<Backup>();
             IsEnabled = false;
             StoreBackupConfig();
             // start timer
+        }
+
+        public void UpdateDriveLetter(char letter)
+        {
+            StringBuilder value = new StringBuilder(DestinationPath);
+            value[0] = letter;
+            DestinationPath = value.ToString();
         }
 
         #region Get data
@@ -274,17 +282,14 @@ namespace File_Master_project
             return LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks());
         }
 
-        private FileSystemInfo GetPathInfo(string Path)
-        {
-            if (Directory.Exists(Path)) return new DirectoryInfo(Path);
-            else return new FileInfo(Path);
-        }
-
         public string GetBackupType()
         {
-            if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
-            else if (Source.GetType() == typeof(FileInfo)) return "File";
-            else return "Unknown";
+            if(IsAvailable)
+            {
+                if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
+                else if (Source.GetType() == typeof(FileInfo)) return "File";
+            }
+            return "Unknown";
         }
 
         public Backup SelectNextBackup() //returns null if the next backup is a new one
@@ -543,7 +548,12 @@ namespace File_Master_project
 
         public void DeleteBackup(Backup Item)
         {
-
+            if (MessageBox.Show("Are you sure you want to delete this backup?\nThis action is irreversable!", "Delete backup", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+            {
+                Item.DeleteBackup();
+                Backups.Remove(Item);
+                StoreBackupInfo();               
+            }
         }
 
         public void RecoverBackup(Backup Item)
@@ -716,9 +726,7 @@ namespace File_Master_project
         {
             foreach (var item in BackupTasks)
             {
-                StringBuilder value = new StringBuilder(item.Destination.FullName);
-                value[0] = DriveInformation.Name[0];
-                item.Destination = new DirectoryInfo(value.ToString());
+                item.UpdateDriveLetter(DriveInformation.Name[0]);
             }
         }
         #endregion
@@ -968,15 +976,16 @@ namespace File_Master_project
                 else if(Drive.SizeLimit == null) Intact = false;
                 else
                 {
-                    foreach (var Item in Drive.BackupTasks)
+                    /*foreach (var Item in Drive.BackupTasks)
                     {
-                        if (Item.Source == null) Intact = false;
-                        else if (Item.Destination == null) Intact = false;                  
+                        //if (Item.Source == null) Intact = false;
+                        if (Item.DestinationPath == null) Intact = false;
                         //else if (Item.LastSaved == null) Intact = false;
-                        //else if (Item.Configuration == null) Intact = false;
-                        //else if (Item.Configuration.CycleInterval == null) Intact = false;
-                        //else if (Item.Configuration.RetryWaitTime == null) Intact = false;
-                    }
+                        else if (Item.Configuration == null) Intact = false;
+                        else if (Item.Configuration.SourcePath == null) Intact = false;
+                        else if (Item.Configuration.CycleInterval == null) Intact = false;
+                        else if (Item.Configuration.RetryWaitTime == null) Intact = false;
+                    }*/
                 }
             }
             return Intact;

@@ -14,7 +14,7 @@
         <Label x:Name="debug_label" Content="" HorizontalAlignment="Left" Margin="303,-32,0,0" VerticalAlignment="Top" Width="155" Height="31" Foreground="#FFACACAC" FontStyle="Italic"/>
         <Image x:Name="Icon_image" HorizontalAlignment="Left" Height="25" Margin="5,-27,0,0" VerticalAlignment="Top" Width="25" Source="Icons/icon-recycle-10.jpg"/>
         <Label Content="File-Master" HorizontalAlignment="Left" Margin="31,-32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="16"/>
-        <Label Content="v0.7.15" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+        <Label Content="v0.7.16" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
         <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="950,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="987,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="983,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown" RenderTransformOrigin="1.156,0.236"/>
@@ -43,8 +43,8 @@
             <GroupBox Header="Manage selected item" HorizontalAlignment="Right" Height="288" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="800" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" FontSize="14">
                 <Grid x:Name="ManageBackupItem_grid" HorizontalAlignment="Left" Height="264" VerticalAlignment="Top" Width="790" Margin="0,0,0,0" Visibility="Visible">
                     <Grid x:Name="StoredBacups_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Hidden">
-                        <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Hidden" VerticalAlignment="Top" Height="200" Margin="0,64,0,0">
-                            <StackPanel x:Name="StoredBackups_stackpanel" Orientation="Horizontal" Width="781" FlowDirection="LeftToRight" UseLayoutRounding="False" Background="#FF151515">
+                        <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Hidden" VerticalAlignment="Top" Height="200" Margin="0,64,0,0" Background="#FF151515">
+                            <StackPanel x:Name="StoredBackups_stackpanel" Orientation="Horizontal" FlowDirection="LeftToRight" UseLayoutRounding="False" HorizontalAlignment="Left">
                                 <DockPanel Width="160" Height="150" HorizontalAlignment="Stretch" Background="#FF212121" Margin="10,0,10,0">
                                     <Label Content="Full backup" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="15" FontWeight="Bold" DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="#FFABA8A8" Padding="5,3,5,2"/>
                                     <Label Content="Files: 502" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,10,0,0"/>
@@ -77,7 +77,7 @@
                         <Label Content="Backup is in progress..." HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="16" FontWeight="Bold" Margin="0,10,0,0" />
                         <Label x:Name="BackupProgressData_label" Content="" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Normal" Margin="0,147,0,0" Height="69" Width="300" />
                     </Grid>
-                    <Grid x:Name="BackupManaging_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Visible">
+                    <Grid x:Name="BackupManaging_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264">
                         <Label x:Name="Status_label" Content="Status info: No items are selected!" HorizontalAlignment="Left" Margin="28,81,282,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" FontWeight="Bold" Width="480"/>
                         <Label x:Name="Interval_label" Content="Save interval: " HorizontalAlignment="Left" Margin="28,115,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Width="250" FontWeight="Bold"/>
                         <Label x:Name="OnlySaveOnChange_label" Content="Only save if data is modified: " HorizontalAlignment="Left" Margin="303,149,237,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold" Width="250"/>
