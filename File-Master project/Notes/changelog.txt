@@ -60,6 +60,7 @@ in 0.8:
 - file browser menu implementation
 - remove canncelled operation files
 - handle when a drive letter changes (rename associated backup paths)
+- fix: notification window for deleting backups can be opened multiple times
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15
 

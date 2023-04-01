@@ -346,7 +346,7 @@ namespace File_Master_project
                     Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
                     progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
                     string id;
-                    if (OutdatedBackup != null) id = OutdatedBackup.NumberID.ToString("00");
+                    if (OutdatedBackup != null) id = OutdatedBackup.NumberID.ToString("000");
                     else id = GetNextBackupID();
                     string BackupRoot = $@"{RootDirectoty}\{id} - BACKUP";
 

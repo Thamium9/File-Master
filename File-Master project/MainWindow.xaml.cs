@@ -269,13 +269,14 @@ namespace File_Master_project
                     dp.Height = 150;
                     dp.HorizontalAlignment = HorizontalAlignment.Stretch;
                     dp.Background = new SolidColorBrush(Color.FromRgb(33, 33, 33));
-                    dp.Margin = new Thickness(10, 0, 10, 0);
+                    
                     #endregion
 
                     #region Backup label
                     Label label = new Label();
-                    if (Backup.Partial) label.Content = "Partial backup";
-                    else label.Content = "Full bakcup";
+                    string format = "000";
+                    if (Backup.Partial) label.Content = $"Partial backup [{Backup.NumberID.ToString(format)}]";
+                    else label.Content = $"Full bakcup [{Backup.NumberID.ToString(format)}]";
                     label.HorizontalAlignment = HorizontalAlignment.Center;
                     label.VerticalAlignment = VerticalAlignment.Top;
                     label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
@@ -359,7 +360,19 @@ namespace File_Master_project
                     dp.Children.Add(RecoverButton);
                     #endregion
 
-                    StoredBackups_stackpanel.Children.Add(dp);
+                    #region Border
+                    if(true)
+                    {
+                        Border newest = new Border();
+                        newest.BorderThickness = new Thickness(4);
+                        newest.BorderBrush = new SolidColorBrush(Colors.Green);
+                        newest.Margin = new Thickness(10, 0, 10, 0);
+                        newest.Child = dp;
+                        StoredBackups_stackpanel.Children.Add(newest);
+                    }
+                    #endregion
+
+                    //StoredBackups_stackpanel.Children.Add(dp);
                 }
             }
             else
