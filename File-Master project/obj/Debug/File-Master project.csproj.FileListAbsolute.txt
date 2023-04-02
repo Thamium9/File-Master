@@ -40,3 +40,5 @@ C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-
 C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master project.csproj.CopyComplete
 C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master.exe
 C:\Users\Daniel\Documents\GitHub\File-Master\File-Master project\obj\Debug\File-Master.pdb
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\RecoverBackup.g.cs
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Debug\RecoverBackup.baml

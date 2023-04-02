@@ -237,17 +237,27 @@ namespace File_Master_project
             Newitemapply_button.Visibility = Visibility.Visible;
         }
 
-        private void Removeitem_button_Click(object sender, RoutedEventArgs e)
+        private async void DeleteTask_button_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to delete this item? \nIt will be deleted permanently!", "Delete", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
+            if (MessageBox.Show("Are you sure you want to delete this task? \nIt will be deleted permanently along with the associated backups!", "Deletion", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
             {
-                BackupTask Item = GetSelectedBackupTask();
-                foreach (var Drive in BackupProcess.BackupDrives)
+                try
                 {
-                    Drive.RemoveBackupTask(Item);
+                    BackupTask Item = GetSelectedBackupTask();
+                    var Deletion = Task.Run(() => { Item.BackupDriveOfItem.RemoveBackupTask(Item); });
+                    DeleteTask_button.Content = "Deleting task";
+                    await Deletion;
+                    DeleteTask_button.Content = "Delete task";
+                    MessageBox.Show("The backup task was successfully deleted", "Deletion", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Reset_Backupmenu();
+                    BackupProcess.Upload_BackupInfo();
                 }
-                Reset_Backupmenu();
-                BackupProcess.Upload_BackupInfo();
+                catch (Exception)
+                {
+                    MessageBox.Show("The deletion of the backup task failed!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    //LOG
+                }
+
             }
         }
 
@@ -261,7 +271,7 @@ namespace File_Master_project
             BackupTask Selected = GetSelectedBackupTask();
             if(Selected.Backups.Count > 0)
             {
-                foreach (var Backup in Selected.Backups)
+                foreach (var Backup in Selected.Backups.Reverse<Backup>())
                 {
                     #region DockPanel
                     DockPanel dp = new DockPanel();
@@ -335,12 +345,16 @@ namespace File_Master_project
                     DeleteButton.Foreground = new SolidColorBrush(Color.FromRgb(235,235,235));
                     DeleteButton.Style = this.FindResource("CustomButtonStyle1") as Style;
                     DeleteButton.VerticalAlignment = VerticalAlignment.Bottom;
+                    DeleteButton.Focusable = false;
                     DeleteButton.Click += async (ds, de) => 
                     {
-                        var Deletion = Task.Run(() => { Selected.DeleteBackup(Backup); });
-                        DeleteButton.Content = "Deleting";
-                        await Deletion;
-                        Update_Backupmenu(); 
+                        if (MessageBox.Show("Are you sure you want to delete this backup?\nThis action is irreversable!", "Delete backup", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+                        {
+                            var Deletion = Task.Run(() => { Selected.DeleteBackup(Backup); });
+                            DeleteButton.Content = "Deleting";
+                            await Deletion;
+                            Update_Backupmenu();
+                        }
                     };
                     DockPanel.SetDock(DeleteButton, Dock.Left);
                     dp.Children.Add(DeleteButton);
@@ -356,23 +370,43 @@ namespace File_Master_project
                     RecoverButton.Foreground = new SolidColorBrush(Color.FromRgb(235, 235, 235));
                     RecoverButton.Style = this.FindResource("CustomButtonStyle1") as Style;
                     RecoverButton.VerticalAlignment = VerticalAlignment.Bottom;
+                    RecoverButton.Focusable = false;
+                    RecoverButton.Click += (ds, de) =>
+                    {
+                        if(Backup.Creation == Selected.LastSaved || MessageBox.Show("The selected backup is not the latest one. \nAre you sure you want to recover this one?", 
+                            "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                        {
+                            RecoverBackup RBwindow = new RecoverBackup(Selected, Backup);
+                            RBwindow.Owner = this;
+                            RBwindow.Show();
+                            Main_grid.Opacity = 0.5;
+                            this.IsHitTestVisible = false;
+                            RecoverButton.Content = "Recovering";
+                        }
+                    };
                     DockPanel.SetDock(RecoverButton, Dock.Right);
                     dp.Children.Add(RecoverButton);
                     #endregion
 
                     #region Border
-                    if(true)
+                    Border ObjectContainer = new Border();
+                    if (Backup.Creation == Selected.LastSaved)
                     {
-                        Border newest = new Border();
-                        newest.BorderThickness = new Thickness(4);
-                        newest.BorderBrush = new SolidColorBrush(Colors.Green);
-                        newest.Margin = new Thickness(10, 0, 10, 0);
-                        newest.Child = dp;
-                        StoredBackups_stackpanel.Children.Add(newest);
+                        ObjectContainer.BorderThickness = new Thickness(5);
+                        ObjectContainer.BorderBrush = this.FindResource("NewestBackup_Border") as LinearGradientBrush;
+                        ObjectContainer.Margin = new Thickness(10, 0, 10, 0);
+                        ObjectContainer.Height = 160;
+                        ObjectContainer.Child = dp;
+                    }
+                    else
+                    {
+                        ObjectContainer.Margin = new Thickness(10, 0, 10, 0);
+                        ObjectContainer.Height = 160;
+                        ObjectContainer.Child = dp;
                     }
                     #endregion
 
-                    //StoredBackups_stackpanel.Children.Add(dp);
+                    StoredBackups_stackpanel.Children.Add(ObjectContainer);
                 }
             }
             else
@@ -1177,8 +1211,8 @@ namespace File_Master_project
             OnlySaveOnChange_label.Content = "Only save if data is modified: ";
             Lastsaved_label.Content = "Last saved:";
             Backupfilesize_label.Content = "Backup file size: ";
-            Removeitem_button.IsEnabled = false;
-            Removeitem_button.Opacity = 0.5;
+            DeleteTask_button.IsEnabled = false;
+            DeleteTask_button.Opacity = 0.5;
             Restorefiles_button.IsEnabled = false;
             Restorefiles_button.Opacity = 0.5;
             Modification_button.IsEnabled = false;
@@ -1393,8 +1427,8 @@ namespace File_Master_project
                 }
                 #region Buttons
                 #region Remove
-                Removeitem_button.IsEnabled = true;
-                Removeitem_button.Opacity = 1;
+                DeleteTask_button.IsEnabled = true;
+                DeleteTask_button.Opacity = 1;
                 #endregion
                 #region View Selected Path
                 if (ViewPathSelection_Combobox.SelectedIndex == 0)

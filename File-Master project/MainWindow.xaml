@@ -14,7 +14,7 @@
         <Label x:Name="debug_label" Content="" HorizontalAlignment="Left" Margin="303,-32,0,0" VerticalAlignment="Top" Width="155" Height="31" Foreground="#FFACACAC" FontStyle="Italic"/>
         <Image x:Name="Icon_image" HorizontalAlignment="Left" Height="25" Margin="5,-27,0,0" VerticalAlignment="Top" Width="25" Source="Icons/icon-recycle-10.jpg"/>
         <Label Content="File-Master" HorizontalAlignment="Left" Margin="31,-32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="16"/>
-        <Label Content="v0.7.16" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+        <Label Content="v0.7.17" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
         <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="950,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="987,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="983,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown" RenderTransformOrigin="1.156,0.236"/>
@@ -39,20 +39,22 @@
         <!--#endregion-->
 
         <!--#region Backup -->
-        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865" Visibility="Visible">
+        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865">
             <GroupBox Header="Manage selected item" HorizontalAlignment="Right" Height="288" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="800" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" FontSize="14">
                 <Grid x:Name="ManageBackupItem_grid" HorizontalAlignment="Left" Height="264" VerticalAlignment="Top" Width="790" Margin="0,0,0,0" Visibility="Visible">
-                    <Grid x:Name="StoredBacups_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264">
+                    <Grid x:Name="StoredBacups_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Hidden">
                         <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Hidden" VerticalAlignment="Top" Height="200" Margin="0,64,0,0" Background="#FF151515">
                             <StackPanel x:Name="StoredBackups_stackpanel" Orientation="Horizontal" FlowDirection="LeftToRight" UseLayoutRounding="False" HorizontalAlignment="Left">
-                                <DockPanel Width="160" Height="150" HorizontalAlignment="Stretch" Margin="10,0,10,0" Background="#FF212121">
-                                    <Label Content="Full backup" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="15" FontWeight="Bold" DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="#FFABA8A8" Padding="5,3,5,2"/>
-                                    <Label Content="Files: 502" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,10,0,0"/>
-                                    <Label Content="Size: 22 GB" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top"/>
-                                    <Label Content="Created: 2022.12.24" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top"/>
-                                    <Button Content="Recover" Width="80" DockPanel.Dock="Right" Height="25" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="#FF373737" Foreground="#FFEDEDED"/>
-                                    <Button Content="Delete" Width="80" DockPanel.Dock="Left" Height="25" VerticalAlignment="Bottom" Background="#FF373737" Foreground="#FFEDEDED" Style="{DynamicResource CustomButtonStyle1}"/>
-                                </DockPanel>
+                                <Border BorderBrush="{DynamicResource NewestBackup_Border}" Margin="10,0,10,0" BorderThickness="5,5,5,5" Height="160">
+                                    <DockPanel Width="160" Height="150" HorizontalAlignment="Stretch" Background="#FF212121">
+                                        <Label Content="Full backup" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="15" FontWeight="Bold" DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="#FFABA8A8" Padding="5,3,5,2"/>
+                                        <Label Content="Files: 502" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,10,0,0"/>
+                                        <Label Content="Size: 22 GB" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top"/>
+                                        <Label Content="Created: 2022.12.24" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top"/>
+                                        <Button Content="Recover" Width="80" DockPanel.Dock="Right" Height="25" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="#FF373737" Foreground="#FFEDEDED"/>
+                                        <Button Content="Delete" Width="80" DockPanel.Dock="Left" Height="25" VerticalAlignment="Bottom" Background="#FF373737" Foreground="#FFEDEDED" Style="{DynamicResource CustomButtonStyle1}"/>
+                                    </DockPanel>
+                                </Border>
                                 <DockPanel Width="160" Height="150" HorizontalAlignment="Stretch" Background="#FF212121" Margin="10,0,10,0">
                                     <Label Content="Partial backup" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="15" FontWeight="Bold" DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="#FFABA8A8" Padding="5,3,5,2"/>
                                     <Label Content="Size: 22 GB" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,35,0,0"/>
@@ -62,11 +64,11 @@
                                 </DockPanel>
                             </StackPanel>
                         </ScrollViewer>
-                        <Label Content="Backup name: " Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="202,1,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Label Content="Backup name: " Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="95,18,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Button x:Name="StoredBackupsBack_button" Content="Back" HorizontalAlignment="Right" Margin="0,18,700,0" VerticalAlignment="Top" Width="80" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="30" FontWeight="Bold" FontSize="14" Click="StoredBackupsBack_button_Click"/>
                         <Label Content="Number of backups: 0" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="567,1,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Label Content="Number of allowed: 0" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="567,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Label Content="Total backup space: 0 GB" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="202,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Label Content="Total backup space: 0 GB" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="347,18,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                     </Grid>
                     <Grid x:Name="BackupProgress_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Hidden">
                         <ProgressBar x:Name="BackupProgress_progressbar" HorizontalAlignment="Center" Height="20" VerticalAlignment="Center" Width="300" Margin="0,0,0,0"/>
@@ -77,21 +79,21 @@
                         <Label Content="Backup is in progress..." HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="16" FontWeight="Bold" Margin="0,10,0,0" />
                         <Label x:Name="BackupProgressData_label" Content="" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Normal" Margin="0,147,0,0" Height="69" Width="300" />
                     </Grid>
-                    <Grid x:Name="BackupManaging_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Hidden">
+                    <Grid x:Name="BackupManaging_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264">
                         <Label x:Name="Status_label" Content="Status info: No items are selected!" HorizontalAlignment="Left" Margin="28,81,282,0" VerticalAlignment="Top" Foreground="#FFE29A06" FontSize="14" FontWeight="Bold" Width="480"/>
                         <Label x:Name="Interval_label" Content="Save interval: " HorizontalAlignment="Left" Margin="28,115,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Width="250" FontWeight="Bold"/>
                         <Label x:Name="OnlySaveOnChange_label" Content="Only save if data is modified: " HorizontalAlignment="Left" Margin="303,149,237,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold" Width="250"/>
                         <Label x:Name="Lastsaved_label" Content="Last saved:" HorizontalAlignment="Left" Margin="28,183,512,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" FontWeight="Bold" Width="250"/>
                         <Label x:Name="Backupfilesize_label" Content="Backup file size: " HorizontalAlignment="Left" Margin="28,217,512,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" FontWeight="Bold" Width="250"/>
-                        <Button x:Name="Removeitem_button" Content="Remove item" HorizontalAlignment="Right" Margin="0,5,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" Click="Removeitem_button_Click" FontSize="14" RenderTransformOrigin="0.582,0.444" FontStyle="Italic" IsEnabled="False" Opacity="0.5"/>
-                        <Button x:Name="Enablebackup_button" Content="Enable backup" HorizontalAlignment="Right" Margin="0,58,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" Opacity="0.5" IsEnabled="False" FontStyle="Italic" Click="Enablebackup_button_Click"/>
-                        <Button x:Name="Disablebackup_button" Content="Disable backup" HorizontalAlignment="Right" Margin="0,58,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Visibility="Hidden" Click="Disablebackup_button_Click"/>
+                        <Button x:Name="DeleteTask_button" Content="Delete task" HorizontalAlignment="Right" Margin="0,5,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" Click="DeleteTask_button_Click" FontSize="14" RenderTransformOrigin="0.582,0.444" FontStyle="Italic" IsEnabled="False" Opacity="0.5"/>
+                        <Button x:Name="Enablebackup_button" Content="Enable task" HorizontalAlignment="Right" Margin="0,58,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" Opacity="0.5" IsEnabled="False" FontStyle="Italic" Click="Enablebackup_button_Click"/>
+                        <Button x:Name="Disablebackup_button" Content="Disable task" HorizontalAlignment="Right" Margin="0,58,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Visibility="Hidden" Click="Disablebackup_button_Click"/>
                         <Button x:Name="Modification_button" Content="Modification" HorizontalAlignment="Right" Margin="0,110,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontStyle="Italic" FontWeight="Bold" FontSize="14" Click="Modification_button_Click" Opacity="0.5" IsEnabled="False"/>
                         <Button x:Name="Restorefiles_button" Content="Restore files" HorizontalAlignment="Right" Margin="0,160,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" Click="Restorefiles_button_Click" IsEnabled="False"/>
                         <Button x:Name="Manualsave_button" Content="Manual save" HorizontalAlignment="Right" Margin="0,212,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" IsEnabled="False" Click="Manualsave_button_Click"/>
                         <Image x:Name="Settings_image" HorizontalAlignment="Right" Height="24" Margin="0,115,147,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-settings-48.png"/>
                         <Image x:Name="Save_image" HorizontalAlignment="Right" Height="24" Margin="0,217,147,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(grey-dark).png" Opacity="0.5"/>
-                        <TextBox x:Name="ItemPath_textbox" HorizontalAlignment="Left" Height="44" Margin="28,39,282,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="480" Background="#FF151515" Text="Select a source folder!" Foreground="#FFE29A06" VerticalContentAlignment="Center" Padding="5,0,0,0" IsReadOnly="True" Focusable="False" FontWeight="Bold"/>
+                        <TextBox x:Name="ItemPath_textbox" HorizontalAlignment="Left" Height="44" Margin="28,39,282,0" VerticalAlignment="Top" Width="480" Background="#FF151515" Text="Select a source folder!" Foreground="#FFE29A06" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" IsReadOnlyCaretVisible="True" IsReadOnly="True"/>
                         <Button x:Name="ViewSelectedPath_button" Content="View" HorizontalAlignment="Left" Margin="508,40,0,0" VerticalAlignment="Top" Width="45" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="43" FontSize="14" Opacity="0.5" IsEnabled="False" FontStyle="Italic" Click="ViewSelectedPath_button_Click"/>
                         <Label x:Name="NumberOfBackups_label" Content="Current number of backups:" HorizontalAlignment="Left" Margin="28,149,512,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold" Width="250"/>
                         <Label x:Name="Smartsave_label_Copy1" Content="File compression:" HorizontalAlignment="Left" Margin="303,217,237,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" FontWeight="Bold" Width="250"/>
@@ -161,7 +163,7 @@
                 <TextBox HorizontalAlignment="Left" Height="22" Margin="236,152,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="40" Background="#FF151515" Foreground="#FFACACAC" HorizontalContentAlignment="Center" IsEnabled="False" Padding="0,2,0,0" Opacity="0.5"/>
             </Grid>
             <Label Content="Source path (can be file or folder):" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-            <TextBox x:Name="Sourceinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="768" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
+            <TextBox x:Name="Sourceinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,44,0,0" VerticalAlignment="Top" Width="768" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
             <Button x:Name="Newitemapply_button" Content="Apply" HorizontalAlignment="Right" Margin="0,0,45,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Newitemapply_button_Click" Visibility="Hidden"/>
             <Button x:Name="Modifyitemapply_button" Content="Modify" HorizontalAlignment="Right" Margin="0,0,45,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Visibility="Hidden" Click="Updateitemapply_button_Click"/>
             <Button x:Name="Backupsubmenu1cancel_button" Content="Cancel" HorizontalAlignment="Right" Margin="0,0,170,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Backupsubmenu1cancel_button_Click"/>
@@ -170,7 +172,7 @@
             <RadioButton x:Name="temp_Copy5" Content="Custom " HorizontalAlignment="Left" Margin="1038,389,-129,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro" GroupName="Destination type"/>
             <!--#region New destination -->
             <Label Content="Destination path (folder):" HorizontalAlignment="Left" Margin="258,471,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-            <TextBox x:Name="Destinationinput_textbox" HorizontalAlignment="Left" Height="44" Margin="258,505,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="530" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
+            <TextBox x:Name="Destinationinput_textbox" HorizontalAlignment="Left" Height="44" Margin="258,505,0,0" VerticalAlignment="Top" Width="530" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
             <Button x:Name="Destinationpathselect_button" Content="..." HorizontalAlignment="Left" Margin="788,504.334,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False" Padding="1,1,1,5"/>
             <!--#endregion-->
             <Label Content="Destination drive:" HorizontalAlignment="Left" Margin="21,471,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Padding="5,5,0,5"/>
@@ -291,5 +293,10 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <LinearGradientBrush x:Key="NewestBackup_Border" EndPoint="0.5,1" StartPoint="0.5,0">
+            <GradientStop Color="#FF05FA05"/>
+            <GradientStop Color="#FF056405" Offset="1"/>
+        </LinearGradientBrush>
     </Window.Resources>
 </Window>

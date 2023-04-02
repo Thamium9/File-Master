@@ -205,7 +205,12 @@ namespace File_Master_project
         [JsonIgnore] public DateTime LastSaved { 
             get 
             {
-                return DateTime.Today;
+                DateTime Latest = DateTime.MinValue;
+                foreach (var Backup in Backups)
+                {
+                    if (Backup.Creation > Latest) Latest = Backup.Creation;
+                }
+                return Latest;
             } 
         }
         [JsonProperty] public bool IsEnabled { get; set; }
@@ -543,20 +548,28 @@ namespace File_Master_project
 
         public void DeleteBackups()
         {
-            //code
+            if(Backups != null)
+            {
+                foreach (var Item in Backups)
+                {
+                    Item.DeleteBackup();
+                }
+                Backups.Clear();
+                StoreBackupInfo();
+            }
         }
 
         public void DeleteBackup(Backup Item)
         {
-            if (MessageBox.Show("Are you sure you want to delete this backup?\nThis action is irreversable!", "Delete backup", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+            if(Backups.Contains(Item))
             {
                 Item.DeleteBackup();
                 Backups.Remove(Item);
-                StoreBackupInfo();               
+                StoreBackupInfo();
             }
         }
 
-        public void RecoverBackup(Backup Item)
+        public void RecoverBackup(Backup Item, string Destination)
         {
 
         }
@@ -618,6 +631,23 @@ namespace File_Master_project
             else
             {
                 Backups = new List<Backup>();
+            }
+        }
+
+        public void DeleteTask()
+        {
+            DeleteBackups();
+            FileInfo config = new FileInfo($@"{RootDirectoty}\configuration.json");
+            if (config.Exists) config.Delete();
+            FileInfo backups = new FileInfo($@"{RootDirectoty}\backups.json");
+            if (backups.Exists) backups.Delete();
+            try
+            {
+                Directory.Delete(RootDirectoty, false);
+            }
+            catch (Exception)
+            {
+                //LOG
             }
         }
         #endregion
@@ -705,7 +735,7 @@ namespace File_Master_project
         }        
         #endregion
 
-        #region Modify backupitems
+        #region Modify backuptasks
         public void AddBackupTask(BackupTask Item)
         {
             BackupTasks.Add(Item);
@@ -713,7 +743,7 @@ namespace File_Master_project
 
         public void RemoveBackupTask(BackupTask Item)
         {
-            Item.DeleteBackups();
+            Item.DeleteTask();
             BackupTasks.Remove(Item);
         }
 
