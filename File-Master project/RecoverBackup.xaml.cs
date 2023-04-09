@@ -42,7 +42,7 @@ namespace File_Master_project
         {
             MainWindow Main = System.Windows.Application.Current.MainWindow as MainWindow;
             string Destination = RecoveryPath_textbox.Text;           
-            var Recovery = Task.Run(() => { Selected.RecoverBackup(BC, Destination); });
+            var Recovery = Task.Run(() => { Selected.BackupRecoveryRequest(BC, Destination); });
             this.Close();
             Main.Activate();
             await Recovery;

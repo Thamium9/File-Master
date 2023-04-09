@@ -453,7 +453,6 @@ namespace File_Master_project
             }
             BackupDrive Drive = temp.BackupDriveOfItem;
             ComboBoxItem CI = new ComboBoxItem();
-            CI = new ComboBoxItem();
             CI.Content = $"({Drive.GetDriveLetter()}:) {Drive.GetVolumeLabel()}";
             CI.Tag = Drive;
             Backupdriveselect_combobox_Refresh(CI);

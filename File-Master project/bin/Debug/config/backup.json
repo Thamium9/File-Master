@@ -8,7 +8,7 @@
     "BackupTasks": [
       {
         "ID": 0,
-        "DestinationPath": "K:\\Backups",
+        "DestinationPath": "D:\\Backups",
         "Label": "BACKUP_Notepad++",
         "IsEnabled": true
       }

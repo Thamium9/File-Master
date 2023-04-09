@@ -58,27 +58,30 @@ namespace File_Master_project
     {
         public double Percentage { get { return Math.Round((double)((FinishedData.Bytes * 100) / AllData.Bytes), 1); } }
         public BackupTask Item;
-        public bool FoldersCreated;
+        public bool Recovery;
+        public bool Preparation;
         public int AllFiles;
         public int FinisedFiles;
         public DiskSpace AllData;
         public DiskSpace FinishedData;
         public string NextItem;
 
-        public BackupProgressReportModel(BackupTask item, int allFiles, int finisedFiles, DiskSpace allData, DiskSpace finishedData, string nextItem)
+        public BackupProgressReportModel(BackupTask item, bool recovery, int allFiles, int finisedFiles, DiskSpace allData, DiskSpace finishedData, string nextItem)
         {
             Item = item;
-            FoldersCreated = true;
+            Recovery = recovery;
+            Preparation = false;
             AllFiles = allFiles;
             FinisedFiles = finisedFiles;
             AllData = allData;
             FinishedData = finishedData;
             NextItem = nextItem;
         }
-        public BackupProgressReportModel(BackupTask item)
+        public BackupProgressReportModel(BackupTask item, bool recovery)
         {
             Item = item;
-            FoldersCreated = false;
+            Recovery = recovery;
+            Preparation = true;
             AllFiles = 0;
             FinisedFiles = 0;
             AllData = null;
@@ -244,7 +247,7 @@ namespace File_Master_project
 
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
         [JsonIgnore] private Task<Backup> CurrentTask;
-        [JsonIgnore] public bool ActiveTask { get { return CurrentTask != null && CurrentTask.Status == TaskStatus.Running; } }
+        [JsonIgnore] public bool ActiveTask { get; private set; }
         [JsonIgnore] public CancellationTokenSource CancelBackup { get; private set; }
 
         [JsonConstructor] private BackupTask(int iD, string destinationPath, string label, bool isEnabled)
@@ -258,6 +261,7 @@ namespace File_Master_project
             IsEnabled = isEnabled;
             LoadBackupConfig();
             LoadBackupInfo();
+            ActiveTask = false;
             // start timer
         }
 
@@ -271,6 +275,7 @@ namespace File_Master_project
             Backups = new List<Backup>();
             IsEnabled = false;
             StoreBackupConfig();
+            ActiveTask = false;
             // start timer
         }
 
@@ -315,7 +320,7 @@ namespace File_Master_project
         {
             if(Backups ==  null)
             {
-                return "01";
+                return "001";
             }
             else
             {
@@ -334,7 +339,7 @@ namespace File_Master_project
                         }
                     }
                 } while (AlreadyExists);
-                return ID.ToString("00");
+                return ID.ToString("000");
             }
         }
 
@@ -345,13 +350,19 @@ namespace File_Master_project
         {
             if (CheckPermission(isManual))
             {
+                ActiveTask = true;
                 bool completed = false;
                 try
                 {
+                    BackupProcess.DisplayBackupProgress();
                     Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
                     progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
                     string id;
-                    if (OutdatedBackup != null) id = OutdatedBackup.NumberID.ToString("000");
+                    if (OutdatedBackup != null)
+                    {
+                        id = OutdatedBackup.NumberID.ToString("000");
+                        await Task.Run(() => DeleteBackup(OutdatedBackup));
+                    }
                     else id = GetNextBackupID();
                     string BackupRoot = $@"{RootDirectoty}\{id} - BACKUP";
 
@@ -379,6 +390,7 @@ namespace File_Master_project
                 CurrentTask = null;
                 CancelBackup = new CancellationTokenSource();
                 StartTimer();
+                ActiveTask = false;
             }
             else
             {
@@ -405,12 +417,13 @@ namespace File_Master_project
                     List<string> SourceFiles, BackupFiles = new List<string>();
                     List<string> SourceFolders, BackupFolders = new List<string>();
                     GetDirectoryContent((DirectoryInfo)Source, out SourceFiles, out SourceFolders);
-                    foreach (var SourceItem in SourceFolders)
+                    foreach (var Item in SourceFolders)
                     {
-                        string Target = ConvertPath_Destination(SourceItem, BackupRoot);
+                        string Parent = Directory.GetParent(Source.FullName).FullName;              
+                        string Target = Item.Replace(Parent, $@"{BackupRoot}");
                         BackupFolders.Add(Directory.CreateDirectory(Target).FullName);
 
-                        Progress = new BackupProgressReportModel(this);
+                        Progress = new BackupProgressReportModel(this, false);
                         ProgressReport.Report(Progress);
                     }
                     #region DiskSpaces
@@ -422,40 +435,80 @@ namespace File_Master_project
                     }
                     DiskSpace Finished = new DiskSpace(0);
                     #endregion
-                    foreach (var SourceItem in SourceFiles)
+                    foreach (var Item in SourceFiles)
                     {
-                        Progress = new BackupProgressReportModel(this, SourceFiles.Count, BackupFiles.Count, All, Finished, new FileInfo(SourceItem).Name);
+                        Progress = new BackupProgressReportModel(this, false, SourceFiles.Count, BackupFiles.Count, All, Finished, new FileInfo(Item).Name);
                         ProgressReport.Report(Progress);
 
-                        string Target = ConvertPath_Destination(SourceItem, BackupRoot);
+                        string Parent = Directory.GetParent(Source.FullName).FullName;
+                        string Target = Item.Replace(Parent, $@"{BackupRoot}");
                         BackupFiles.Add(Target);
-                        CopyFile(SourceItem, Target, ProgressReport, Progress, CancelBackup.Token);
+                        CopyFile(Item, Target, ProgressReport, Progress, CancelBackup.Token);
                     }
-                    Progress = new BackupProgressReportModel(this, SourceFiles.Count, BackupFiles.Count, All, Finished, "none");
+                    Progress = new BackupProgressReportModel(this, false, SourceFiles.Count, BackupFiles.Count, All, Finished, "none");
                     ProgressReport.Report(Progress);
                     Result = new Backup(BackupRoot, BackupFiles, BackupFolders);
                 }
                 else
                 {
                     FileInfo SourceFile = new FileInfo(Source.FullName);
-                    string BackupFile = ConvertPath_Destination(SourceFile.FullName, BackupRoot);
+                    string Parent = Directory.GetParent(Source.FullName).FullName;
+                    string BackupFile = SourceFile.FullName.Replace(Parent, $@"{BackupRoot}");
                     #region DiskSpaces
                     DiskSpace All = new DiskSpace(SourceFile.Length);
                     DiskSpace Finished = new DiskSpace(0);
                     #endregion
-                    Progress = new BackupProgressReportModel(this, 1, 0, All, Finished, SourceFile.Name);
+                    Progress = new BackupProgressReportModel(this, false, 1, 0, All, Finished, SourceFile.Name);
                     ProgressReport.Report(Progress);
 
                     Directory.CreateDirectory(new FileInfo(BackupFile).Directory.FullName);
                     CopyFile(SourceFile.FullName, BackupFile, ProgressReport, Progress, CancelBackup.Token);
 
-                    Progress = new BackupProgressReportModel(this, 1, 1, All, Finished, "none");
+                    Progress = new BackupProgressReportModel(this, false, 1, 1, All, Finished, "none");
                     ProgressReport.Report(Progress);
                     Result = new Backup(BackupRoot, BackupFile);
                 }
 
                 BackupProcess.Upload_BackupInfo();
                 return Result;
+            }
+            catch (Exception error)
+            {
+                throw new Exception($"{error.Message}");
+            }
+        }
+
+        private void RecoverBackup(IProgress<BackupProgressReportModel> ProgressReport, Backup BackupObject, string Destination)
+        {
+            BackupProgressReportModel Progress;
+            try
+            {
+                foreach (var Item in BackupObject.Folders)
+                {
+                    string Target = Item.Replace(BackupObject.Root, Destination);
+                    Directory.CreateDirectory(Target);
+                }
+                #region DiskSpaces
+                DiskSpace All = new DiskSpace(0);
+                foreach (var item in BackupObject.Files)
+                {
+                    FileInfo file = new FileInfo(item);
+                    All.Bytes += file.Length;
+                }
+                DiskSpace Finished = new DiskSpace(0);
+                #endregion
+                int completed = 0;
+                foreach (var Item in BackupObject.Files)
+                {
+                    Progress = new BackupProgressReportModel(this, true, BackupObject.Files.Count, completed, All, Finished, new FileInfo(Item).Name);
+                    ProgressReport.Report(Progress);
+
+                    string Target = Item.Replace(BackupObject.Root, Destination);
+                    CopyFile(Item, Target, ProgressReport, Progress, CancelBackup.Token);
+                    completed++;
+                }
+                Progress = new BackupProgressReportModel(this, true, BackupObject.Files.Count, completed, All, Finished, "none");
+                ProgressReport.Report(Progress);
             }
             catch (Exception error)
             {
@@ -502,7 +555,7 @@ namespace File_Master_project
             }
         }
 
-        private string ConvertPath_Destination(string Item, string BackupRoot)
+        private string ConvertPath_Backup(string Item, string BackupRoot)
         {
             string Parent = Directory.GetParent(Source.FullName).FullName;
             return Item.Replace(Parent, $@"{BackupRoot}");
@@ -569,8 +622,20 @@ namespace File_Master_project
             }
         }
 
-        public void RecoverBackup(Backup Item, string Destination)
+        public async Task BackupRecoveryRequest(Backup Item, string Destination)
         {
+            try
+            {
+                BackupProcess.DisplayBackupProgress();
+                Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
+                progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
+
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //LOG
+            }
 
         }
 
@@ -1062,7 +1127,9 @@ namespace File_Master_project
                 MainWindow MW = Application.Current.Windows[0] as MainWindow;
                 if (MW.GetSelectedBackupTask() == report.Item)
                 {
-                    if(report.FoldersCreated)
+                    if (report.Recovery) MW.BackupOperation_label.Content = "Recovery is in progress...";
+                    else MW.BackupOperation_label.Content = "Backup is in progress...";
+                    if (report.Preparation)
                     {
                         MW.BackupProgress_progressbar.Value = report.Percentage;
                         MW.BackupProgressPercentage_label.Content = $"{report.Percentage} % complete";
@@ -1082,6 +1149,18 @@ namespace File_Master_project
                         MW.CancelBackupOperation_button.Opacity = 1;
                     }
                 }
+            });
+        }
+        static public void DisplayBackupProgress()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                MainWindow MW = Application.Current.Windows[0] as MainWindow;
+                MW.BackupProgress_progressbar.Value = 0;
+                MW.BackupProgressPercentage_label.Content = $"Loading...";
+                MW.BackupProgressData_label.Content = $"Preparing for backup operations...";
+                MW.CancelBackupOperation_button.IsEnabled = false;
+                MW.CancelBackupOperation_button.Opacity = 0.5;
             });
         }
         #endregion

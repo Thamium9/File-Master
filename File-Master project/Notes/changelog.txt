@@ -48,6 +48,8 @@ in 0.7:
 + fix: crash when during backup a backupdrive is selected
 + fix: crash when backup configuration failes to load, and there is already a stored config file in the 'corrupted' folder
 + fix: crash when backups.json does not exists, and the list became null
++ fix: crash when trying to create a backup with the same id when the backup slots are full
++ fix: backup progress menu sometimes not appearing (when the current task gets assigned later than the Update_Backupmenu() gets processed)
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
 
 in 0.8:
@@ -81,6 +83,7 @@ in 0.9:
 - import stored backups into the program (search for backups in folder)
 - custom data recovery location (not the source folder)
 - only grab the window from the top section(toolbar)
+- add option to store backup task information globally too (to have the data when the destination is unreachable)
 
 in the future:
 - low performance demand mode (don't do backup when cpu is load is high)
