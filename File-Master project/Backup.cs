@@ -246,7 +246,6 @@ namespace File_Master_project
         [JsonIgnore] public BackupDrive BackupDriveOfItem { get { return BackupProcess.GetBackupDriveFromBackupTask(this); } }
 
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
-        [JsonIgnore] private Task<Backup> CurrentTask;
         [JsonIgnore] public bool ActiveTask { get; private set; }
         [JsonIgnore] public CancellationTokenSource CancelBackup { get; private set; }
 
@@ -346,15 +345,14 @@ namespace File_Master_project
         #endregion
 
         #region Backup management
-        public async Task BackupRequest_Async(bool isManual, Backup OutdatedBackup = null)
+        public async Task BackupRequest(bool isManual, Backup OutdatedBackup = null)
         {
             if (CheckPermission(isManual))
             {
                 ActiveTask = true;
                 bool completed = false;
                 try
-                {
-                    BackupProcess.DisplayBackupProgress();
+                {                    
                     Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
                     progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
                     string id;
@@ -365,10 +363,9 @@ namespace File_Master_project
                     }
                     else id = GetNextBackupID();
                     string BackupRoot = $@"{RootDirectoty}\{id} - BACKUP";
+                    System.Threading.Thread.Sleep(10000);
 
-                    CurrentTask = Task.Run(() => CreateBackup(progress, Source, BackupRoot));
-                    BackupProcess.BackupTasks.Add(this, CurrentTask);
-                    Backup NewBackup = await CurrentTask;
+                    Backup NewBackup = await Task.Run(() => CreateBackup(progress, Source, BackupRoot));
                     if(OutdatedBackup != null) Backups.Remove(OutdatedBackup);
                     Backups.Add(NewBackup);
                     completed = true;
@@ -382,12 +379,10 @@ namespace File_Master_project
 
                 if (isManual)
                 {
-                    if (completed) MessageBox.Show("The operation was successful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Information);
-                    else MessageBox.Show("The operation was unsuccessful!", "Manual save report", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (completed) MessageBox.Show("The operation was successful!", "Backup report", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else MessageBox.Show("The operation was unsuccessful!", "Backup report", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
-                BackupProcess.BackupTasks.Remove(this);
-                CurrentTask = null;
                 CancelBackup = new CancellationTokenSource();
                 StartTimer();
                 ActiveTask = false;
@@ -478,6 +473,29 @@ namespace File_Master_project
             }
         }
 
+        public async Task RecoveryRequest(Backup Item, string Destination)
+        {
+            ActiveTask = true;
+            bool completed = false;
+            try
+            {
+                Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
+                progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
+
+                await Task.Run(() => RecoverBackup(progress, Item, Destination));
+                completed = true;
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(error.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //LOG
+            }
+
+            if (completed) MessageBox.Show("The operation was successful!", "Recovery report", MessageBoxButton.OK, MessageBoxImage.Information);
+            else MessageBox.Show("The operation was unsuccessful!", "Recovery report", MessageBoxButton.OK, MessageBoxImage.Error);
+            ActiveTask = false;
+        }
+
         private void RecoverBackup(IProgress<BackupProgressReportModel> ProgressReport, Backup BackupObject, string Destination)
         {
             BackupProgressReportModel Progress;
@@ -555,12 +573,6 @@ namespace File_Master_project
             }
         }
 
-        private string ConvertPath_Backup(string Item, string BackupRoot)
-        {
-            string Parent = Directory.GetParent(Source.FullName).FullName;
-            return Item.Replace(Parent, $@"{BackupRoot}");
-        }
-
         private bool CheckPermission(bool isManual)
         {
             bool result = true;
@@ -620,23 +632,6 @@ namespace File_Master_project
                 Backups.Remove(Item);
                 StoreBackupInfo();
             }
-        }
-
-        public async Task BackupRecoveryRequest(Backup Item, string Destination)
-        {
-            try
-            {
-                BackupProcess.DisplayBackupProgress();
-                Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
-                progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
-
-            }
-            catch (Exception error)
-            {
-                MessageBox.Show(error.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                //LOG
-            }
-
         }
 
         private void StoreBackupConfig()
@@ -873,7 +868,7 @@ namespace File_Master_project
         {
             foreach (var item in BackupTasks)
             {
-                await item.BackupRequest_Async(true, item.SelectNextBackup());
+                await item.BackupRequest(true, item.SelectNextBackup());
             }
         }
         #endregion
@@ -884,14 +879,12 @@ namespace File_Master_project
         static public List<BackupDrive> BackupDrives { get; private set; }
         static public BackupSettings Settings { get; private set; }
         static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } //key: serial number , value: DriveInfo
-        static public Dictionary<BackupTask, Task<Backup>> BackupTasks;
         public delegate void UIChanges();
 
         static BackupProcess()
         {
             BackupDrives = new List<BackupDrive>();
             AllDriveInfo = new Dictionary<string, AdvancedDriveInfo>();
-            BackupTasks = new Dictionary<BackupTask, Task<Backup>>();
             LoadAllDriveInfo();
             LoadBackupProcess();
             Upload_BackupInfo();
@@ -1110,7 +1103,7 @@ namespace File_Master_project
         #region Backup
         static public async Task Manualsave_Async(BackupTask Item)
         {
-            await Item.BackupRequest_Async(true, Item.SelectNextBackup());
+            await Item.BackupRequest(true, Item.SelectNextBackup());
         }
 
         static private void ManualsaveALL()
@@ -1129,7 +1122,7 @@ namespace File_Master_project
                 {
                     if (report.Recovery) MW.BackupOperation_label.Content = "Recovery is in progress...";
                     else MW.BackupOperation_label.Content = "Backup is in progress...";
-                    if (report.Preparation)
+                    if (!report.Preparation)
                     {
                         MW.BackupProgress_progressbar.Value = report.Percentage;
                         MW.BackupProgressPercentage_label.Content = $"{report.Percentage} % complete";
@@ -1151,16 +1144,19 @@ namespace File_Master_project
                 }
             });
         }
-        static public void DisplayBackupProgress()
+        static public void DisplayBackupProgress(object sender)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
                 MainWindow MW = Application.Current.Windows[0] as MainWindow;
-                MW.BackupProgress_progressbar.Value = 0;
-                MW.BackupProgressPercentage_label.Content = $"Loading...";
-                MW.BackupProgressData_label.Content = $"Preparing for backup operations...";
-                MW.CancelBackupOperation_button.IsEnabled = false;
-                MW.CancelBackupOperation_button.Opacity = 0.5;
+                if(MW.GetSelectedBackupTask() == sender)
+                {
+                    MW.BackupProgress_progressbar.Value = 0;
+                    MW.BackupProgressPercentage_label.Content = $"Loading...";
+                    MW.BackupProgressData_label.Content = $"Preparing for backup operations...";
+                    MW.CancelBackupOperation_button.IsEnabled = false;
+                    MW.CancelBackupOperation_button.Opacity = 0.5;
+                }                
             });
         }
         #endregion

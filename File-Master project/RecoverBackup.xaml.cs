@@ -35,17 +35,22 @@ namespace File_Master_project
 
         private void BackupRecovery_window_Loaded(object sender, RoutedEventArgs e)
         {
-            RecoveryPath_textbox.Text = Selected.Source.FullName;
+            //RecoveryPath_textbox.Text = Selected.Source.FullName;
+            RecoveryPath_textbox.Text = "D:\\Backups\\Recovery";
         }
 
         private async void Recover_button_Click(object sender, RoutedEventArgs e)
         {
             MainWindow Main = System.Windows.Application.Current.MainWindow as MainWindow;
             string Destination = RecoveryPath_textbox.Text;           
-            var Recovery = Task.Run(() => { Selected.BackupRecoveryRequest(BC, Destination); });
+            var Recovery = Task.Run(() =>  Selected.RecoveryRequest(BC, Destination));
             this.Close();
+            Main.IsHitTestVisible = true;
+            Main.Main_grid.Opacity = 1;
+            Main.Update_Backupmenu();
             Main.Activate();
             await Recovery;
+            Main.Update_Backupmenu();
         }
 
         private void CancelRecovery_button_Click(object sender, RoutedEventArgs e)

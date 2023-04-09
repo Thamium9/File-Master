@@ -1321,6 +1321,7 @@ namespace File_Master_project
             {
                 BackupProgress_grid.Visibility = Visibility.Visible;
                 BackupManaging_grid.Visibility = Visibility.Hidden;
+                BackupProcess.DisplayBackupProgress(Item);
             }
             else
             {

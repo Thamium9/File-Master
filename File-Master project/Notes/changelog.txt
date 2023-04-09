@@ -15,7 +15,7 @@
 in 0.7:
 + should be able to perform manual save while the item is disabled
 + modification menu functions
-- backup restore implementation
++ backup restore implementation
 + backup deletion implementation
 + disable add backupitem when there is no available backupdrive
 + 'last saved' info : display how long ago

@@ -10,6 +10,12 @@
         "ID": 0,
         "DestinationPath": "D:\\Backups",
         "Label": "BACKUP_Notepad++",
+        "IsEnabled": false
+      },
+      {
+        "ID": 1,
+        "DestinationPath": "D:\\Backups",
+        "Label": "BACKUP_Wallpapers",
         "IsEnabled": true
       }
     ]
