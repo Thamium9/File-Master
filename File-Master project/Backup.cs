@@ -93,8 +93,8 @@ namespace File_Master_project
     public class Backup
     {
         [JsonProperty] public string Root { get; }
-        [JsonProperty] public List<string> Files { get; }
-        [JsonProperty] public List<string> Folders { get; }
+        [JsonProperty] public List<string> Files { get; private set; }
+        [JsonProperty] public List<string> Folders { get; private set; }
         [JsonProperty] public DiskSpace Size { get; }
         [JsonProperty] public DateTime Creation { get; }
         [JsonProperty] public Backup Reference { get; }
@@ -144,6 +144,27 @@ namespace File_Master_project
             Size = GetSize();
             Reference = reference;
             Root = root;
+        }
+
+        public void UpdateDriveLetter(char DriveLetter)
+        {
+            List<string> UpdatedFolders = new List<string>();
+            List<string> UpdatedFiles = new List<string>();
+            StringBuilder PathBuilder = new StringBuilder();
+            foreach (var folder in Folders)
+            {
+                PathBuilder = new StringBuilder(folder);
+                PathBuilder[0] = DriveLetter;
+                UpdatedFolders.Add(PathBuilder.ToString());
+            }
+            foreach (var file in Files)
+            {
+                PathBuilder = new StringBuilder(file);
+                PathBuilder[0] = DriveLetter;
+                UpdatedFiles.Add(PathBuilder.ToString());
+            }
+            Folders = UpdatedFolders;
+            Files = UpdatedFiles;
         }
 
         private DiskSpace GetSize()
@@ -196,14 +217,20 @@ namespace File_Master_project
         {
             get
             {
-                string Path = Configuration.SourcePath;
-                if (Directory.Exists(Path)) return new DirectoryInfo(Path);
-                else return new FileInfo(Path);
+                StringBuilder Path = new StringBuilder(Configuration.SourcePath);
+                Path[0] = BackupDriveOfItem.GetDriveLetter();
+                if (Directory.Exists(Path.ToString())) return new DirectoryInfo(Path.ToString());
+                else return new FileInfo(Path.ToString());
             }
         }
         [JsonIgnore] public DirectoryInfo Destination
         {
-            get { return new DirectoryInfo(DestinationPath); }
+            get 
+            {
+                StringBuilder Path = new StringBuilder(DestinationPath);
+                Path[0] = BackupDriveOfItem.GetDriveLetter();
+                return new DirectoryInfo(Path.ToString()); 
+            }
         }
         [JsonIgnore] public DateTime LastSaved { 
             get 
@@ -276,13 +303,6 @@ namespace File_Master_project
             StoreBackupConfig();
             ActiveTask = false;
             // start timer
-        }
-
-        public void UpdateDriveLetter(char letter)
-        {
-            StringBuilder value = new StringBuilder(DestinationPath);
-            value[0] = letter;
-            DestinationPath = value.ToString();
         }
 
         #region Get data
@@ -681,6 +701,8 @@ namespace File_Master_project
                 {
                     string data = File.ReadAllText(path);
                     Backups = JsonConvert.DeserializeObject<List<Backup>>(data);
+                    //foreach (var Backup in Backups) { Backup.UpdateDriveLetter(BackupDriveOfItem.GetDriveLetter()); }
+                    //StoreBackupInfo();
                 }
                 catch (Exception)
                 {
@@ -765,7 +787,6 @@ namespace File_Master_project
                 {
                     DriveInformation = thisDriveInfo.Value.DriveInformation;
                     DefaultVolumeLabel = DriveInformation.VolumeLabel;
-                    UpdateBackupTaskDestination();
                 }
             }
             if (DriveInformation == null) IsAvailable = false;
@@ -810,14 +831,6 @@ namespace File_Master_project
         public void SetBackupTaskState(bool State, BackupTask Item)
         {
             Item.IsEnabled = State;
-        }
-
-        private void UpdateBackupTaskDestination()
-        {
-            foreach (var item in BackupTasks)
-            {
-                item.UpdateDriveLetter(DriveInformation.Name[0]);
-            }
         }
         #endregion
 
@@ -1122,6 +1135,7 @@ namespace File_Master_project
                 {
                     if (report.Recovery) MW.BackupOperation_label.Content = "Recovery is in progress...";
                     else MW.BackupOperation_label.Content = "Backup is in progress...";
+
                     if (!report.Preparation)
                     {
                         MW.BackupProgress_progressbar.Value = report.Percentage;
@@ -1151,6 +1165,7 @@ namespace File_Master_project
                 MainWindow MW = Application.Current.Windows[0] as MainWindow;
                 if(MW.GetSelectedBackupTask() == sender)
                 {
+                    //MW.BackupOperation_label.Content = "Recovery is in progress...";
                     MW.BackupProgress_progressbar.Value = 0;
                     MW.BackupProgressPercentage_label.Content = $"Loading...";
                     MW.BackupProgressData_label.Content = $"Preparing for backup operations...";

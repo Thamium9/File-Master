@@ -1361,7 +1361,7 @@ namespace File_Master_project
 
                     #region Buttons
                     #region Enable/Disable
-                    if (Item.IsAvailable && !Item.IsOutOfSpace)
+                    if (Item.IsAvailable && !Item.IsOutOfSpace && Item.Source.Exists)
                     {
                         if (!Item.IsEnabled)
                         {
@@ -1385,16 +1385,8 @@ namespace File_Master_project
                     }
                     #endregion
                     #region Modification
-                    if (!Item.Source.Exists)
-                    {
-                        Modification_button.Opacity = 0.5;
-                        Modification_button.IsEnabled = false;
-                    }
-                    else
-                    {
-                        Modification_button.Opacity = 1;
-                        Modification_button.IsEnabled = true;
-                    }
+                    Modification_button.Opacity = 1;
+                    Modification_button.IsEnabled = true;
                     #endregion
                     #region Restore
                     Restorefiles_button.IsEnabled = true;
@@ -1409,7 +1401,7 @@ namespace File_Master_project
                     }
                     else
                     {
-                        if (Item.IsAvailable && !Item.IsOutOfSpace)
+                        if (Item.IsAvailable && !Item.IsOutOfSpace && Item.Source.Exists)
                         {
                             Manualsave_button.IsEnabled = true;
                             Manualsave_button.Opacity = 1;

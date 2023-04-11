@@ -50,7 +50,9 @@ in 0.7:
 + fix: crash when backups.json does not exists, and the list became null
 + fix: crash when trying to create a backup with the same id when the backup slots are full
 + fix: backup progress menu sometimes not appearing (when the current task gets assigned later than the Update_Backupmenu() gets processed)
++ fix: manual save and enable task buttons available when the backup source is missing
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
+- test for bugs before release
 
 in 0.8:
 - backup task label (task name)
@@ -65,7 +67,9 @@ in 0.8:
 - remove canncelled operation files
 - handle when a drive letter changes (rename associated backup paths)
 - make the forms foolproof
+- integrity check for backup files (items and their size must match)
 - fix: notification window for deleting backups can be opened multiple times
+- test for bugs before release
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15
 
@@ -84,6 +88,7 @@ in 0.9:
 - custom data recovery location (not the source folder)
 - only grab the window from the top section(toolbar)
 - add option to store backup task information globally too (to have the data when the destination is unreachable)
+- test for bugs before release
 
 in the future:
 - low performance demand mode (don't do backup when cpu is load is high)

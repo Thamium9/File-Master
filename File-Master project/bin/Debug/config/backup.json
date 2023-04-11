@@ -8,13 +8,13 @@
     "BackupTasks": [
       {
         "ID": 0,
-        "DestinationPath": "D:\\Backups",
+        "DestinationPath": "K:\\Backups",
         "Label": "BACKUP_Notepad++",
-        "IsEnabled": false
+        "IsEnabled": true
       },
       {
         "ID": 1,
-        "DestinationPath": "D:\\Backups",
+        "DestinationPath": "K:\\Backups",
         "Label": "BACKUP_Wallpapers",
         "IsEnabled": true
       }
