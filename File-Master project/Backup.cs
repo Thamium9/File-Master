@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Management;
 using System.Text;
@@ -8,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
+using System.Windows.Controls;
 using Timer = System.Timers.Timer;
 
 namespace File_Master_project
@@ -92,7 +94,7 @@ namespace File_Master_project
 
     public class Backup
     {
-        [JsonProperty] public string Root { get; }
+        [JsonProperty] public string Root { get; private set; }
         [JsonProperty] public List<string> Files { get; private set; }
         [JsonProperty] public List<string> Folders { get; private set; }
         [JsonProperty] public DiskSpace Size { get; }
@@ -146,25 +148,42 @@ namespace File_Master_project
             Root = root;
         }
 
-        public void UpdateDriveLetter(char DriveLetter)
+        public bool UpdateDriveLetter(char DriveLetter) //returns true if the function changed something (if nothing changed it returns false)
         {
+            bool changed = false;
             List<string> UpdatedFolders = new List<string>();
             List<string> UpdatedFiles = new List<string>();
-            StringBuilder PathBuilder = new StringBuilder();
+            StringBuilder PathBuilder;
             foreach (var folder in Folders)
             {
                 PathBuilder = new StringBuilder(folder);
-                PathBuilder[0] = DriveLetter;
+                if (PathBuilder[0] != DriveLetter)
+                {
+                    changed = true;
+                    PathBuilder[0] = DriveLetter;
+                }
                 UpdatedFolders.Add(PathBuilder.ToString());
             }
             foreach (var file in Files)
             {
                 PathBuilder = new StringBuilder(file);
-                PathBuilder[0] = DriveLetter;
+                if (PathBuilder[0] != DriveLetter)
+                {
+                    changed = true;
+                    PathBuilder[0] = DriveLetter;
+                }
                 UpdatedFiles.Add(PathBuilder.ToString());
             }
+            PathBuilder = new StringBuilder(Root);
+            if (PathBuilder[0] != DriveLetter)
+            {
+                changed = true;
+                PathBuilder[0] = DriveLetter;
+            }
+            Root = PathBuilder.ToString();
             Folders = UpdatedFolders;
             Files = UpdatedFiles;
+            return changed;
         }
 
         private DiskSpace GetSize()
@@ -202,35 +221,28 @@ namespace File_Master_project
     public class BackupTask
     {
         [JsonProperty] public int ID { get; private set; }
-        [JsonProperty] public string DestinationPath { get; private set; }
+        [JsonProperty] private string DestinationPath { get; set; }
         [JsonProperty] public string Label { get; private set; }
+        [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }
+        [JsonIgnore] public List<Backup> Backups { get; private set; }
         [JsonIgnore] public string RootDirectoty
         {
             get
             {
-                return $@"{DestinationPath}\{Label}";                
+                return $@"{DestinationPath}\{Label}";
             }
         }
-        [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }
-        [JsonIgnore] public List<Backup> Backups { get; private set; }
         [JsonIgnore] public FileSystemInfo Source //only access it if the item is available!
         {
             get
             {
-                StringBuilder Path = new StringBuilder(Configuration.SourcePath);
-                Path[0] = BackupDriveOfItem.GetDriveLetter();
-                if (Directory.Exists(Path.ToString())) return new DirectoryInfo(Path.ToString());
-                else return new FileInfo(Path.ToString());
+                if (Directory.Exists(Configuration.SourcePath)) return new DirectoryInfo(Configuration.SourcePath);
+                else return new FileInfo(Configuration.SourcePath);
             }
         }
         [JsonIgnore] public DirectoryInfo Destination
         {
-            get 
-            {
-                StringBuilder Path = new StringBuilder(DestinationPath);
-                Path[0] = BackupDriveOfItem.GetDriveLetter();
-                return new DirectoryInfo(Path.ToString()); 
-            }
+            get { return new DirectoryInfo(DestinationPath); }
         }
         [JsonIgnore] public DateTime LastSaved { 
             get 
@@ -291,10 +303,10 @@ namespace File_Master_project
             // start timer
         }
 
-        public BackupTask(int iD, string destination, string label, BackupTaskConfiguration configuration)
+        public BackupTask(int iD, string destinationPath, string label, BackupTaskConfiguration configuration)
         {
             ID = iD;
-            DestinationPath = destination;
+            DestinationPath = destinationPath;
             Label = label;
             Configuration = configuration;
             CancelBackup = new CancellationTokenSource();
@@ -383,7 +395,6 @@ namespace File_Master_project
                     }
                     else id = GetNextBackupID();
                     string BackupRoot = $@"{RootDirectoty}\{id} - BACKUP";
-                    System.Threading.Thread.Sleep(10000);
 
                     Backup NewBackup = await Task.Run(() => CreateBackup(progress, Source, BackupRoot));
                     if(OutdatedBackup != null) Backups.Remove(OutdatedBackup);
@@ -653,11 +664,31 @@ namespace File_Master_project
                 StoreBackupInfo();
             }
         }
+        #endregion
+
+        #region Data management
+        public void UpdateDriveLetter(char DriveLetter)
+        {
+            #region UpdateDestination
+            StringBuilder PathBuilder = new StringBuilder(DestinationPath);
+            if (PathBuilder[0] != DriveLetter)
+            {
+                PathBuilder[0] = DriveLetter;
+                DestinationPath = PathBuilder.ToString();
+            }
+            #endregion
+
+            #region UpdateBackups
+            bool changed = false;
+            foreach (var Backup in Backups) { if (Backup.UpdateDriveLetter(DriveLetter)) changed = true; }
+            if (changed) StoreBackupInfo();
+            #endregion
+        }
 
         private void StoreBackupConfig()
         {
             string data = JsonConvert.SerializeObject(Configuration, Newtonsoft.Json.Formatting.Indented);
-            FileInfo target =  new FileInfo($@"{RootDirectoty}\configuration.json");
+            FileInfo target = new FileInfo($@"{RootDirectoty}\configuration.json");
             target.Directory.Create();
             File.WriteAllText(target.FullName, data);
         }
@@ -665,7 +696,7 @@ namespace File_Master_project
         private void LoadBackupConfig()
         {
             string path = $@"{RootDirectoty}\configuration.json";
-            if(File.Exists(path))
+            if (File.Exists(path))
             {
                 try
                 {
@@ -701,8 +732,6 @@ namespace File_Master_project
                 {
                     string data = File.ReadAllText(path);
                     Backups = JsonConvert.DeserializeObject<List<Backup>>(data);
-                    //foreach (var Backup in Backups) { Backup.UpdateDriveLetter(BackupDriveOfItem.GetDriveLetter()); }
-                    //StoreBackupInfo();
                 }
                 catch (Exception)
                 {
@@ -715,6 +744,7 @@ namespace File_Master_project
                 Backups = new List<Backup>();
             }
         }
+        #endregion
 
         public void DeleteTask()
         {
@@ -732,7 +762,6 @@ namespace File_Master_project
                 //LOG
             }
         }
-        #endregion
     }
 
     public class BackupDrive
@@ -790,6 +819,13 @@ namespace File_Master_project
                 }
             }
             if (DriveInformation == null) IsAvailable = false;
+            else
+            {
+                foreach (var item in BackupTasks)
+                {
+                    item.UpdateDriveLetter(GetDriveLetter());
+                }
+            }
         }
 
         private void LimitCheck()// sets the isOutOfSpace value
@@ -1107,9 +1143,6 @@ namespace File_Master_project
         {
             string Code = JsonConvert.SerializeObject(BackupDrives, Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText( @".\config\backup.json", Code);
-            #region UI-changes
-            
-            #endregion
         }
         #endregion
 
@@ -1165,7 +1198,7 @@ namespace File_Master_project
                 MainWindow MW = Application.Current.Windows[0] as MainWindow;
                 if(MW.GetSelectedBackupTask() == sender)
                 {
-                    //MW.BackupOperation_label.Content = "Recovery is in progress...";
+                    MW.BackupOperation_label.Content = "Doing preparations...";
                     MW.BackupProgress_progressbar.Value = 0;
                     MW.BackupProgressPercentage_label.Content = $"Loading...";
                     MW.BackupProgressData_label.Content = $"Preparing for backup operations...";

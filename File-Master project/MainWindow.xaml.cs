@@ -441,17 +441,17 @@ namespace File_Master_project
             Modifyitemapply_button.Visibility = Visibility.Visible;
 
             #region Data load
-            BackupTask temp = GetSelectedBackupTask();
-            Destinationinput_textbox.Text = temp.DestinationPath.ToString();
-            Sourceinput_textbox.Text = temp.Source.ToString();
+            BackupTask BTask = GetSelectedBackupTask();
+            Destinationinput_textbox.Text = BTask.Destination.FullName;
+            Sourceinput_textbox.Text = BTask.Source.FullName;
             foreach (ComboBoxItem item in Intervalselection_combobox.Items)
             {
-                if(item.Tag.ToString() == temp.Configuration.CycleInterval.GetTime())
+                if(item.Tag.ToString() == BTask.Configuration.CycleInterval.GetTime())
                 {
                     Intervalselection_combobox.SelectedItem = item;
                 }
             }
-            BackupDrive Drive = temp.BackupDriveOfItem;
+            BackupDrive Drive = BTask.BackupDriveOfItem;
             ComboBoxItem CI = new ComboBoxItem();
             CI.Content = $"({Drive.GetDriveLetter()}:) {Drive.GetVolumeLabel()}";
             CI.Tag = Drive;
@@ -1458,7 +1458,7 @@ namespace File_Master_project
                 ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
                 if (ViewPathSelection_Combobox.SelectedIndex == 0)
                 {
-                    ItemPath_textbox.Text = Item.DestinationPath;
+                    ItemPath_textbox.Text = Item.Destination.FullName;
                     dest = true;
                 }
                 else
