@@ -1,36 +1,34 @@
 [
   {
-    "DefaultVolumeLabel": "KINGSTON_C",
     "DriveID": "E9EFF223",
+    "DefaultVolumeLabel": "KINGSTON_C",
     "SizeLimit": {
       "Bytes": 1073741824
     },
     "BackupTasks": [
       {
-        "ID": 0,
-        "DestinationPath": "D:\\Backups",
         "Label": "BACKUP_Notepad++",
+        "DestinationPath": "K:\\Backups",
         "IsEnabled": true
       },
       {
-        "ID": 1,
-        "DestinationPath": "D:\\Backups",
         "Label": "BACKUP_Wallpapers",
+        "DestinationPath": "K:\\Backups",
         "IsEnabled": true
       }
     ]
   },
   {
-    "DefaultVolumeLabel": "HDD",
     "DriveID": "4CCE358A",
+    "DefaultVolumeLabel": "HDD",
     "SizeLimit": {
       "Bytes": 0
     },
     "BackupTasks": []
   },
   {
-    "DefaultVolumeLabel": "HDD-K01",
     "DriveID": "02466E75",
+    "DefaultVolumeLabel": "HDD-K01",
     "SizeLimit": {
       "Bytes": 107374182400
     },

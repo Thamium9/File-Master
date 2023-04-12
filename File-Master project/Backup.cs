@@ -220,9 +220,8 @@ namespace File_Master_project
 
     public class BackupTask
     {
-        [JsonProperty] public int ID { get; private set; }
-        [JsonProperty] private string DestinationPath { get; set; }
         [JsonProperty] public string Label { get; private set; }
+        [JsonProperty] private string DestinationPath { get; set; }
         [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }
         [JsonIgnore] public List<Backup> Backups { get; private set; }
         [JsonIgnore] public string RootDirectoty
@@ -288,11 +287,10 @@ namespace File_Master_project
         [JsonIgnore] public bool ActiveTask { get; private set; }
         [JsonIgnore] public CancellationTokenSource CancelBackup { get; private set; }
 
-        [JsonConstructor] private BackupTask(int iD, string destinationPath, string label, bool isEnabled)
+        [JsonConstructor] private BackupTask(string destinationPath, string label, bool isEnabled)
         {
             if (label == null || label == "") throw new Exception("The task label cannot be empty value!");
             if (destinationPath == null || destinationPath == "") throw new Exception("The destination cannot be empty value!");
-            ID = iD;
             DestinationPath = destinationPath;
             Label = label;
             CancelBackup = new CancellationTokenSource();
@@ -303,9 +301,8 @@ namespace File_Master_project
             // start timer
         }
 
-        public BackupTask(int iD, string destinationPath, string label, BackupTaskConfiguration configuration)
+        public BackupTask(string destinationPath, string label, BackupTaskConfiguration configuration)
         {
-            ID = iD;
             DestinationPath = destinationPath;
             Label = label;
             Configuration = configuration;
@@ -667,6 +664,15 @@ namespace File_Master_project
         #endregion
 
         #region Data management
+        public void UpdateConfiguration(string destination, string label, BackupTaskConfiguration configuration)
+        {
+            //DestinationPath = destination;
+            //Label = label;
+            Configuration = configuration;
+            StoreBackupConfig();
+            BackupProcess.Upload_BackupInfo();
+        }
+
         public void UpdateDriveLetter(char DriveLetter)
         {
             #region UpdateDestination
@@ -767,7 +773,7 @@ namespace File_Master_project
     public class BackupDrive
     {
         [JsonProperty] public string DriveID { get; private set; }
-        [JsonProperty] private string DefaultVolumeLabel;
+        [JsonProperty] private string DefaultVolumeLabel { get; set; }
         [JsonIgnore] public DriveInfo DriveInformation { get; private set; }
         [JsonIgnore] public bool IsAvailable { get; private set; }
         [JsonIgnore] public bool IsOutOfSpace { get; private set; }
@@ -871,16 +877,6 @@ namespace File_Master_project
         #endregion
 
         #region Get data
-        public List<int> GetIDs()
-        {
-            List<int> temp = new List<int>();
-            foreach (var BackupItem in BackupTasks)
-            {
-                temp.Add(BackupItem.ID);
-            }
-            return temp;
-        }
-
         public string GetVolumeLabel()
         {
             if (DriveInformation == null)
@@ -1007,31 +1003,6 @@ namespace File_Master_project
                 if (Drive.DriveID == serial) return true;
             }
             return false;
-        }
-
-        static public int GetNewBackupID()
-        {
-            List<int> IDs = new List<int>();
-            foreach (var Drive in BackupDrives)
-            {
-                foreach (var ID in Drive.GetIDs())
-                {
-                    IDs.Add(ID);
-                }
-            }
-            int newID = 0;
-            foreach (var ID in IDs)
-            {
-                if (newID == ID)
-                {
-                    newID++;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            return newID;
         }
         #endregion
 

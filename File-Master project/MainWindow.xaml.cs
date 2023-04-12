@@ -206,9 +206,6 @@ namespace File_Master_project
                 if (Item != null)
                 {
                     Display_BackupTask(Item);
-                    #region UI-changes
-                    Warning1_label.Visibility = Visibility.Hidden;
-                    #endregion
                 }
                 else
                 {
@@ -632,10 +629,9 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
-                    BackupTaskConfiguration Settings = CreateBackupConfiguration();
                     ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
                     BackupDrive Target = (BackupDrive)CI.Tag;
-                    Target.AddBackupTask(CreateBackupitem(Settings));
+                    Target.AddBackupTask(CreateBackupitem());
                     BackupProcess.Upload_BackupInfo();
                     #region UI changes
                     Reset_Backupmenu();
@@ -652,24 +648,50 @@ namespace File_Master_project
         {
             if (CheckInfo())
             {
-                if (MessageBox.Show("Are you sure you want to modify this item?\nThis action will delete all the backups associated with this item!", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+                BackupTask SelectedItem = GetSelectedBackupTask();
+                BackupTaskConfiguration Settings = CreateBackupConfiguration();
+                if(SelectedItem.Backups.Count > 0)
                 {
-                    BackupTask SelectedItem = GetSelectedBackupTask();
-                    SelectedItem.BackupDriveOfItem.RemoveBackupTask(SelectedItem); //deletes itself
+                    if (SelectedItem.Configuration.SourcePath != Settings.SourcePath ||
+                        SelectedItem.Configuration.Method != Settings.Method ||
+                        SelectedItem.Configuration.CycleLength != Settings.CycleLength ||
+                        SelectedItem.Configuration.FileCompression != Settings.FileCompression)
+                    {
+                        if (MessageBox.Show("You have made changes that are not compatible with the currently stored backups! The backups associated with this backup task will be deleted permanently! Do you still want to proceed?", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+                        {
+                            SelectedItem.DeleteBackups();
+                            SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                        }
+                    }
+                    else if (Destinationinput_textbox.Text != SelectedItem.Destination.FullName)
+                    {
+                        if (MessageBox.Show("You have changed the destination of the backup task! \nWould you like to move the stored backups to this new location? \nClick 'yes' to move the backups and click 'no' to delete the stored backups.", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+                        {
 
-                    BackupTaskConfiguration Settings = CreateBackupConfiguration();
-                    ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
-                    BackupDrive Target = (BackupDrive)CI.Tag;
-                    Target.AddBackupTask(CreateBackupitem(Settings));
-                    BackupProcess.Upload_BackupInfo();
-                    #region UI changes
-                    HideAllMenu();
-                    Reset_Backupmenu();
-                    Reset_BackupSubmenu1();
-                    Backup_grid.Visibility = Visibility.Visible;
-                    Menu = "Backup";
-                    #endregion
+                        }
+                        else if (MessageBox.Show("Are you sure you want to delete all stored backups associated with this task? This action is permanent!", "Delete backups", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+                        {
+                            SelectedItem.DeleteBackups();
+                            SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                        }
+                    }
+                    else
+                    {
+                        SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                    }
                 }
+                else
+                {
+                    SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                }
+                BackupProcess.Upload_BackupInfo();
+                #region UI changes
+                HideAllMenu();
+                Reset_Backupmenu();
+                Reset_BackupSubmenu1();
+                Backup_grid.Visibility = Visibility.Visible;
+                Menu = "Backup";
+                #endregion
             }
         }
 
@@ -700,12 +722,13 @@ namespace File_Master_project
             return false;
         }
 
-        private BackupTask CreateBackupitem(BackupTaskConfiguration Settings)
+        private BackupTask CreateBackupitem()
         {
+            BackupTaskConfiguration Settings = CreateBackupConfiguration();
             string Destination = Destinationinput_textbox.Text;
             string Label = "";
             if (Label == "") Label = $"BACKUP_{new FileInfo(Sourceinput_textbox.Text).Name}";
-            BackupTask Item = new BackupTask(BackupProcess.GetNewBackupID(), Destination, Label, Settings);
+            BackupTask Item = new BackupTask(Destination, Label, Settings);
             return Item;
         }
 
@@ -1200,11 +1223,12 @@ namespace File_Master_project
         #region Menu control
         public void Reset_Backupmenu()
         {
-            Backuptask_listbox.SelectedIndex = -1;
-            Warning1_label.Visibility = Visibility.Visible;
+            Backuptask_listbox.SelectedIndex = -1;         
             ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
             ItemPath_textbox.Text = "Select a source folder!";
             Interval_label.Content = "Save interval: ";
+            NumberOfBackups_label.Content = $"Current number of backups: ";
+            Method_label.Content = "Method: ";
             Status_label.Content = "Status info: No items are selected!";
             Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
             OnlySaveOnChange_label.Content = "Only save if data is modified: ";
@@ -1259,9 +1283,6 @@ namespace File_Master_project
         {
             Backuptask_listbox.Items.Clear();
             Backuptask_listbox.IsHitTestVisible = true;
-            Warning2_label.Visibility = Visibility.Hidden;
-            Warning3_label.Visibility = Visibility.Hidden;
-            Warning4_label.Visibility = Visibility.Hidden;
             ListBoxItem ListItem;
             foreach (var Drive in BackupProcess.BackupDrives)
             {
@@ -1293,8 +1314,8 @@ namespace File_Master_project
             {
                 DockPanel container = new DockPanel
                 {
-                    Height = 270,
-                    Width = 475,
+                    Height = Backuptask_listbox.Height,
+                    Width = Backuptask_listbox.Width - 25,
                     IsEnabled = false
                 };
                 ListItem = new ListBoxItem
@@ -1334,9 +1355,33 @@ namespace File_Master_project
                     Interval_label.Content = $"Save interval: {Item.Configuration.CycleInterval.GetTime()}";
                     #endregion
 
+                    #region Loads current number of backup
+                    NumberOfBackups_label.Content = $"Current number of backups: {Item.Backups.Count}";
+                    #endregion
+
+                    #region Loads Method
+                    string method;
+                    switch (Item.Configuration.Method)
+                    {
+                        case 'F': 
+                            method = "Full backup";
+                            break;
+                        case 'I':
+                            method = "Incremental backup";
+                            break;
+                        case 'D':
+                            method = "Differential backup";
+                            break;
+                        default:
+                            method = "Unknown";
+                            break;
+                    }
+                    Method_label.Content = $"Method: {method}";
+                    #endregion
+
                     #region Loads OSC
-                    if (Item.Configuration.OnlySaveOnChange) OnlySaveOnChange_label.Content = "Only save if data is modified: ON";
-                    else OnlySaveOnChange_label.Content = "Only save if data is modified: OFF";
+                    //if (Item.Configuration.OnlySaveOnChange) OnlySaveOnChange_label.Content = "Only save if data is modified: ON";
+                    //else OnlySaveOnChange_label.Content = "Only save if data is modified: OFF";
                     #endregion
 
                     #region Loads Last saved
@@ -1514,7 +1559,7 @@ namespace File_Master_project
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
                     Status_label.Content = "Status info: The source is missing!";
                 }
-                else if (!IsEnabled)
+                else if (!Item.IsEnabled)
                 {
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
                     Status_label.Content = "Status info: The backup item is disabled!";
@@ -1532,6 +1577,7 @@ namespace File_Master_project
             LBI.Opacity = 0.8;
             LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Label} - ({Item.BackupsSize.Humanize()})";
             LBI.Tag = Item;
+            LBI.Padding = new Thickness(15, 0, 0, 0);           
 
             #region Status color    
 
@@ -1579,7 +1625,6 @@ namespace File_Master_project
         {
             #region Initialization
             ListBoxItem LBI = new ListBoxItem();
-            LBI = new ListBoxItem();
             DockPanel Drive_dockpanel = new DockPanel();
             TextBox drivename = new TextBox();
             TextBox drivespace = new TextBox();
@@ -1594,7 +1639,7 @@ namespace File_Master_project
 
             #region Customization
             DockPanel.SetDock(drivespace, Dock.Right);
-            Drive_dockpanel.Width = 475;
+            Drive_dockpanel.Width = Backuptask_listbox.Width - 25;
             Drive_dockpanel.LastChildFill = false;
             drivename.Background = Brushes.Transparent;
             drivespace.Background = Brushes.Transparent;

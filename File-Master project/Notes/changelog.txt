@@ -35,6 +35,9 @@ in 0.7:
 + highlight the newest backup from the backup list
 + enable horizontal scrolling in textboxes (it won't brake the line) / enable text selection in readonly textbox
 + handle when a drive letter changes while the application is running (rename associated backup paths)
+- recovery location should be allowed when the folder is not empty, except when the folder contains an item with the same name as the recoverable item
++ removed useless backuptask id
++ UI upgrades
 + fix: view destination button visibility when it does not exists yet
 + fix: size limit check always resets after restart
 + fix: upon first opening the add new task menu, the modify button is seen
@@ -52,12 +55,14 @@ in 0.7:
 + fix: crash when trying to create a backup with the same id when the backup slots are full
 + fix: backup progress menu sometimes not appearing (when the current task gets assigned later than the Update_Backupmenu() gets processed)
 + fix: manual save and enable task buttons available when the backup source is missing
++ fix: the status info doesn't show if the task is disabled
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
 - test for bugs before release
 
 in 0.8:
 - backup task label (task name)
 - help tooltips
+- allow custom interval for backuptask
 - available drives update in every 30 seconds
 - working automated backup process
 - delete backups option when removing backup drives
@@ -70,6 +75,7 @@ in 0.8:
 - make the forms foolproof
 - integrity check for backup files (items and their size must match)
 - fix: notification window for deleting backups can be opened multiple times
+- fix: application can be opened multiple times
 - test for bugs before release
 
 Release of Demo version v0.9 -> Deadline: 2023.04.15
