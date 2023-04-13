@@ -8,12 +8,12 @@
     "BackupTasks": [
       {
         "Label": "BACKUP_Notepad++",
-        "DestinationPath": "K:\\Backups",
+        "DestinationPath": "D:\\Backups",
         "IsEnabled": true
       },
       {
         "Label": "BACKUP_Wallpapers",
-        "DestinationPath": "K:\\Backups",
+        "DestinationPath": "D:\\Backups",
         "IsEnabled": true
       }
     ]

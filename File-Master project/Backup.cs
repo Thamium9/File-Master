@@ -186,6 +186,24 @@ namespace File_Master_project
             return changed;
         }
 
+        public void UpdateRoot(string taskroot)
+        {
+            string replaceable = Root;
+            List<string> UpdatedFolders = new List<string>();
+            List<string> UpdatedFiles = new List<string>();
+            foreach (var folder in Folders)
+            {
+                UpdatedFolders.Add(folder.Replace(replaceable, taskroot));
+            }
+            foreach (var file in Files)
+            {
+                UpdatedFolders.Add(file.Replace(replaceable, taskroot));
+            }
+            Root = Root.Replace(replaceable, taskroot);
+            Folders = UpdatedFolders;
+            Files = UpdatedFiles;
+        }
+
         private DiskSpace GetSize()
         {
             DiskSpace BackupSize = new DiskSpace(0);
@@ -666,8 +684,17 @@ namespace File_Master_project
         #region Data management
         public void UpdateConfiguration(string destination, string label, BackupTaskConfiguration configuration)
         {
-            //DestinationPath = destination;
-            //Label = label;
+            if(Destination.FullName != destination)
+            {
+                MoveBackupTask(destination);
+                DestinationPath = destination;
+            }
+
+            Label = label;
+            foreach (var item in Backups)
+            {
+
+            }
             Configuration = configuration;
             StoreBackupConfig();
             BackupProcess.Upload_BackupInfo();
@@ -749,6 +776,16 @@ namespace File_Master_project
             {
                 Backups = new List<Backup>();
             }
+        }
+
+        private bool MoveBackupTask(string newLocation)
+        {
+            if (!Directory.Exists($@"{newLocation}\{Label}"))
+            {
+                Directory.Move(RootDirectoty, newLocation);
+                return true;
+            }
+            else return false;
         }
         #endregion
 

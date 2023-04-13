@@ -650,6 +650,7 @@ namespace File_Master_project
             {
                 BackupTask SelectedItem = GetSelectedBackupTask();
                 BackupTaskConfiguration Settings = CreateBackupConfiguration();
+                bool cancelled = true;
                 if(SelectedItem.Backups.Count > 0)
                 {
                     if (SelectedItem.Configuration.SourcePath != Settings.SourcePath ||
@@ -661,37 +662,52 @@ namespace File_Master_project
                         {
                             SelectedItem.DeleteBackups();
                             SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                            cancelled = false;
                         }
                     }
                     else if (Destinationinput_textbox.Text != SelectedItem.Destination.FullName)
                     {
-                        if (MessageBox.Show("You have changed the destination of the backup task! \nWould you like to move the stored backups to this new location? \nClick 'yes' to move the backups and click 'no' to delete the stored backups.", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+                        MessageBoxResult mbr = MessageBox.Show("You have changed the destination of the backup task! \nWould you like to move the stored backups to this new location? \n\nClick 'yes' to move the backups \nClick 'no' to delete the stored backups.", "Modify", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+                        if (mbr == MessageBoxResult.Yes)
                         {
-
+                            cancelled = false;
                         }
-                        else if (MessageBox.Show("Are you sure you want to delete all stored backups associated with this task? This action is permanent!", "Delete backups", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+                        else if (mbr == MessageBoxResult.No && MessageBox.Show("Are you sure you want to delete all stored backups associated with this task? This action is permanent!", "Delete backups", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
                         {
                             SelectedItem.DeleteBackups();
                             SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                            cancelled = false;
+                        }
+                    }
+                    else if(SelectedItem.Label != SelectedItem.Label)
+                    {
+                        if (MessageBox.Show("You have changed the label of the backup task! \nThe backup containing folder will be renamed.", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+                        {
+                            cancelled = false;
                         }
                     }
                     else
                     {
                         SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                        cancelled = false;
                     }
                 }
                 else
                 {
                     SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
+                    cancelled = false;
                 }
-                BackupProcess.Upload_BackupInfo();
-                #region UI changes
-                HideAllMenu();
-                Reset_Backupmenu();
-                Reset_BackupSubmenu1();
-                Backup_grid.Visibility = Visibility.Visible;
-                Menu = "Backup";
-                #endregion
+                if(!cancelled)
+                {
+                    BackupProcess.Upload_BackupInfo();
+                    #region UI changes
+                    HideAllMenu();
+                    Reset_Backupmenu();
+                    Reset_BackupSubmenu1();
+                    Backup_grid.Visibility = Visibility.Visible;
+                    Menu = "Backup";
+                    #endregion
+                }
             }
         }
 
