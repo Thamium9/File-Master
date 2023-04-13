@@ -35,8 +35,8 @@ namespace File_Master_project
 
         private void BackupRecovery_window_Loaded(object sender, RoutedEventArgs e)
         {
-            //RecoveryPath_textbox.Text = Selected.Source.FullName;
-            RecoveryPath_textbox.Text = "D:\\Backups\\Recovery";
+            RecoveryPath_textbox.Text = Selected.Source.FullName.Replace($@"\{Selected.Source.Name}", "");
+            //RecoveryPath_textbox.Text = "D:\\Backups\\Recovery";
         }
 
         private async void Recover_button_Click(object sender, RoutedEventArgs e)
@@ -45,10 +45,8 @@ namespace File_Master_project
             string Destination = RecoveryPath_textbox.Text;           
             var Recovery = Task.Run(() =>  Selected.RecoveryRequest(BC, Destination));
             this.Close();
-            Main.IsHitTestVisible = true;
-            Main.Main_grid.Opacity = 1;
+            Main.ActivateWindow();
             Main.Update_Backupmenu();
-            Main.Activate();
             await Recovery;
             Main.Update_Backupmenu();
         }
@@ -83,7 +81,8 @@ namespace File_Master_project
                     DirectoryInfo Path = new DirectoryInfo(RecoveryPath_textbox.Text);
                     if (Path.Exists)
                     {
-                        if (Path.GetFiles().Length == 0 && Path.GetDirectories().Length == 0)
+                        string temp = $@"{Path}\{Selected.Source.Name}";
+                        if (!File.Exists(temp) && !Directory.Exists(temp))
                         {
                             Recover_button.IsEnabled = true;
                             Recover_button.Opacity = 1;
@@ -93,7 +92,7 @@ namespace File_Master_project
                         {
                             Recover_button.IsEnabled = false;
                             Recover_button.Opacity = 0.5;
-                            RecoveryLocError_label.Content = "The specified location is not empty!";
+                            RecoveryLocError_label.Content = "The specified location already contains an item with the same name!";
                         }
                     }
                     else

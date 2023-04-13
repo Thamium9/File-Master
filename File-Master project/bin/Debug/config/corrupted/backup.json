@@ -1,85 +1,42 @@
 [
   {
-    "DriveID": "4CCE358A",
-    "DefaultVolumeLabel": "HDD",
+    "DriveID": "E9EFF223",
+    "DefaultVolumeLabel": "KINGSTON_C",
     "SizeLimit": {
-      "Bytes": 53687091200
+      "Bytes": 1073741824
     },
-    "Backups": [
+    "BackupTasks": [
       {
-        "SourcePath": "H:\\Filmek",
-        "DestinationPath": "D:\\Biztonsági mentések",
-        "LastSaved": "0001-01-01T00:00:00",
-        "Configuration": {
-          "IsSingleCopy": true,
-          "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 5.0,
-            "Unit": "day"
-          },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        },
-        "ID": 0,
-        "IsEnabled": false
+        "Label": "BACKUP_Notepad++",
+        "DestinationPath": "K:\\Backups\\TEMP",
+        "IsEnabled": true
       },
       {
-        "SourcePath": "H:\\Phone media\\2020-2022\\Home\\My room 🧡",
-        "DestinationPath": "D:\\TEMP",
-        "LastSaved": "2022-08-10T01:30:54.706946+02:00",
-        "Configuration": {
-          "IsSingleCopy": true,
-          "NumberOfCopies": 1,
-          "Save_interval": {
-            "Time": 1.0,
-            "Unit": "day"
-          },
-          "AbsoluteCopy": true,
-          "ManualDetermination": false,
-          "StoreDeletedInRBin": false,
-          "PopupWhenRBinIsFull": false,
-          "SmartSave": true,
-          "UseMaxStorageData": false,
-          "MaxStorageData": 0,
-          "RetryWaitTime": {
-            "Time": 5.0,
-            "Unit": "minute"
-          },
-          "MaxNumberOfRetries": 3,
-          "PopupOnFail": false,
-          "FileCompression": false
-        },
-        "ID": 1,
+        "Label": "BACKUP_Wallpapers",
+        "DestinationPath": "K:\\Backups",
+        "IsEnabled": true
+      },
+      {
+        "Label": "BACKUP_Screenshot 2023-04-11 122146.png",
+        "DestinationPath": "K:\\Backups",
         "IsEnabled": true
       }
     ]
   },
   {
-    "DriveID": "3C920CC7",
-    "DefaultVolumeLabel": "",
+    "DriveID": "4CCE358A",
+    "DefaultVolumeLabel": "HDD",
     "SizeLimit": {
-      "Bytes": 10737418240
+      "Bytes": 0
     },
-    "Backups": []
+    "BackupTasks": []
   },
   {
-    "DriveID": "3A380DA4",
-    "DefaultVolumeLabel": "HDD-K02",
+    "DriveID": "02466E75",
+    "DefaultVolumeLabel": "HDD-K01",
     "SizeLimit": {
-      "Bytes": 536870912000
+      "Bytes": 107374182400
     },
-    "Backups": []
+    "BackupTasks": []
   }
 ]

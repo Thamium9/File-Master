@@ -188,7 +188,7 @@ namespace File_Master_project
 
         public void UpdateRoot(string taskroot)
         {
-            string replaceable = Root;
+            string replaceable = new DirectoryInfo(Root).Parent.FullName;
             List<string> UpdatedFolders = new List<string>();
             List<string> UpdatedFiles = new List<string>();
             foreach (var folder in Folders)
@@ -197,7 +197,7 @@ namespace File_Master_project
             }
             foreach (var file in Files)
             {
-                UpdatedFolders.Add(file.Replace(replaceable, taskroot));
+                UpdatedFiles.Add(file.Replace(replaceable, taskroot));
             }
             Root = Root.Replace(replaceable, taskroot);
             Folders = UpdatedFolders;
@@ -686,15 +686,28 @@ namespace File_Master_project
         {
             if(Destination.FullName != destination)
             {
-                MoveBackupTask(destination);
-                DestinationPath = destination;
+                try
+                {
+                    MoveBackupTask(destination);                   
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Unable to move the backup to the new locaiton!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
 
-            Label = label;
-            foreach (var item in Backups)
+            if(Label != label)
             {
-
+                try
+                {
+                    RenameTaskLabel(label);
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Unable to change the task label!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
+           
             Configuration = configuration;
             StoreBackupConfig();
             BackupProcess.Upload_BackupInfo();
@@ -778,14 +791,35 @@ namespace File_Master_project
             }
         }
 
-        private bool MoveBackupTask(string newLocation)
+        private void MoveBackupTask(string newLocation)
         {
-            if (!Directory.Exists($@"{newLocation}\{Label}"))
+            string Target = $@"{newLocation}\{Label}";
+            if (!Directory.Exists(Target))
             {
-                Directory.Move(RootDirectoty, newLocation);
-                return true;
+                Directory.Move(RootDirectoty, Target);
+                DestinationPath = newLocation;
+                foreach (var item in Backups)
+                {
+                    item.UpdateRoot(RootDirectoty);
+                }
+                StoreBackupInfo();
             }
-            else return false;
+            else throw new Exception("The new location already contains an item with the same name!");
+        }
+
+        private void RenameTaskLabel(string label)
+        {
+            if(!Directory.Exists($@"{DestinationPath}\{label}"))
+            {
+                string oldRoot = RootDirectoty;
+                Label = label;
+                foreach (var item in Backups)
+                {
+                    item.UpdateRoot(RootDirectoty);
+                }
+                Directory.Move(oldRoot, RootDirectoty);
+            }
+            else throw new Exception("The parent directory already contains an item with the same name!");
         }
         #endregion
 

@@ -30,12 +30,12 @@ in 0.7:
 + async backuping process
 + indication for ongoing backup process (show progress in 'manage selected item menu', color backupitem blue, display notification)
 + cancel operation button for ongoing backup process
-- backup task configuration modification implementation
++ backup task configuration modification implementation
 + save backup task configuration in spearate files in local folder
 + highlight the newest backup from the backup list
 + enable horizontal scrolling in textboxes (it won't brake the line) / enable text selection in readonly textbox
 + handle when a drive letter changes while the application is running (rename associated backup paths)
-- recovery location should be allowed when the folder is not empty, except when the folder contains an item with the same name as the recoverable item
++ recovery location should be allowed when the folder is not empty, except when the folder contains an item with the same name as the recoverable item
 + removed useless backuptask id
 + UI upgrades
 + fix: view destination button visibility when it does not exists yet
@@ -56,8 +56,9 @@ in 0.7:
 + fix: backup progress menu sometimes not appearing (when the current task gets assigned later than the Update_Backupmenu() gets processed)
 + fix: manual save and enable task buttons available when the backup source is missing
 + fix: the status info doesn't show if the task is disabled
++ fix: renaming the backuptask puts the files list's content into the folders list
 + (replace the GetBackupdrive function in backupitem to a variable, then make the function private)
-- test for bugs before release
++ test for bugs before release
 
 in 0.8:
 - backup task label (task name)

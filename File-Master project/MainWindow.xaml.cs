@@ -376,8 +376,7 @@ namespace File_Master_project
                             RecoverBackup RBwindow = new RecoverBackup(Selected, Backup);
                             RBwindow.Owner = this;
                             RBwindow.Show();
-                            Main_grid.Opacity = 0.5;
-                            this.IsHitTestVisible = false;
+                            InactivateWindow();
                             RecoverButton.Content = "Recovering";
                         }
                     };
@@ -540,6 +539,15 @@ namespace File_Master_project
             BackupProgress_grid.Visibility = Visibility.Hidden;
             StoredBacups_grid.Visibility = Visibility.Hidden;
         }
+
+        private void DeleteAllBackup_button_Click(object sender, RoutedEventArgs e)
+        {
+            if(MessageBox.Show("Are you sure you want to delete every backup associated with the selected backup task?", "Delete backups", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
+            {
+                GetSelectedBackupTask().DeleteBackups();
+                Update_Backupmenu();
+            }
+        }
         #endregion
 
         #region Submenu1
@@ -650,7 +658,7 @@ namespace File_Master_project
             {
                 BackupTask SelectedItem = GetSelectedBackupTask();
                 BackupTaskConfiguration Settings = CreateBackupConfiguration();
-                bool cancelled = true;
+                bool update = false;
                 if(SelectedItem.Backups.Count > 0)
                 {
                     if (SelectedItem.Configuration.SourcePath != Settings.SourcePath ||
@@ -661,8 +669,7 @@ namespace File_Master_project
                         if (MessageBox.Show("You have made changes that are not compatible with the currently stored backups! The backups associated with this backup task will be deleted permanently! Do you still want to proceed?", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
                         {
                             SelectedItem.DeleteBackups();
-                            SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
-                            cancelled = false;
+                            update = true;
                         }
                     }
                     else if (Destinationinput_textbox.Text != SelectedItem.Destination.FullName)
@@ -670,35 +677,36 @@ namespace File_Master_project
                         MessageBoxResult mbr = MessageBox.Show("You have changed the destination of the backup task! \nWould you like to move the stored backups to this new location? \n\nClick 'yes' to move the backups \nClick 'no' to delete the stored backups.", "Modify", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
                         if (mbr == MessageBoxResult.Yes)
                         {
-                            cancelled = false;
+                            update = true;
                         }
                         else if (mbr == MessageBoxResult.No && MessageBox.Show("Are you sure you want to delete all stored backups associated with this task? This action is permanent!", "Delete backups", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
                         {
                             SelectedItem.DeleteBackups();
-                            SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
-                            cancelled = false;
+                            update = true;
                         }
                     }
                     else if(SelectedItem.Label != SelectedItem.Label)
                     {
                         if (MessageBox.Show("You have changed the label of the backup task! \nThe backup containing folder will be renamed.", "Modify", MessageBoxButton.YesNo, MessageBoxImage.Warning).Equals(MessageBoxResult.Yes))
                         {
-                            cancelled = false;
+                            update = true;
                         }
                     }
                     else
                     {
-                        SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
-                        cancelled = false;
+                        update = true;
                     }
                 }
                 else
-                {
-                    SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, "", Settings);
-                    cancelled = false;
+                {                    
+                    update = true;
                 }
-                if(!cancelled)
+                if(update)
                 {
+                    InactivateWindow();
+                    //make this async!!!!
+                    SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, SelectedItem.Label, Settings);
+                    ActivateWindow();
                     BackupProcess.Upload_BackupInfo();
                     #region UI changes
                     HideAllMenu();
@@ -1247,7 +1255,7 @@ namespace File_Master_project
             Method_label.Content = "Method: ";
             Status_label.Content = "Status info: No items are selected!";
             Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            OnlySaveOnChange_label.Content = "Only save if data is modified: ";
+            OnlySaveOnChange_label.Content = "Only save if data is modified: -";
             Lastsaved_label.Content = "Last saved:";
             Backupfilesize_label.Content = "Backup file size: ";
             DeleteTask_button.IsEnabled = false;
@@ -1911,6 +1919,21 @@ namespace File_Master_project
 
         #endregion
 
+        #region Window Control
+        public void InactivateWindow()
+        {
+            Main_grid.Opacity = 0.5;
+            this.IsHitTestVisible = false;
+        }
+
+        public void ActivateWindow()
+        {
+            this.IsHitTestVisible = true;
+            this.Main_grid.Opacity = 1;
+            this.Activate();
+        }
+        #endregion
+
         #endregion
 
         #region debug
@@ -1983,6 +2006,5 @@ namespace File_Master_project
             debug_label.Content = Menu;
         }
         #endregion
-
     }
 }
