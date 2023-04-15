@@ -14,7 +14,7 @@
         <Label x:Name="debug_label" Content="" HorizontalAlignment="Left" Margin="303,-32,0,0" VerticalAlignment="Top" Width="155" Height="31" Foreground="#FFACACAC" FontStyle="Italic" Visibility="Hidden"/>
         <Image x:Name="Icon_image" HorizontalAlignment="Left" Height="25" Margin="5,-27,0,0" VerticalAlignment="Top" Width="25" Source="Icons/icon-recycle-10.jpg"/>
         <Label Content="File-Master" HorizontalAlignment="Left" Margin="31,-32,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontWeight="Bold" FontSize="16"/>
-        <Label Content="v0.8" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
+        <Label Content="v0.8.1" HorizontalAlignment="Left" Margin="126,-28,0,0" VerticalAlignment="Top" Foreground="#FFACACAC"/>
         <Rectangle x:Name="Minimizebackground_rectangle" Fill="#FF404040" HorizontalAlignment="Left" Height="24" Margin="950,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Rectangle x:Name="Closebackground_rectangle" Fill="#FFC80000" HorizontalAlignment="Left" Height="24" Margin="987,-28,0,0" Stroke="Black" VerticalAlignment="Top" Width="24" Visibility="Hidden"/>
         <Image x:Name="Close_image" HorizontalAlignment="Left" Height="32" Margin="983,-32,0,0" VerticalAlignment="Top" Width="32" Source="Icons/icons8-close-window-64v2.png" MouseEnter="Close_image_MouseEnter" MouseLeave="Close_image_MouseLeave" MouseLeftButtonDown="Close_image_MouseLeftButtonDown" RenderTransformOrigin="1.156,0.236"/>
@@ -39,7 +39,7 @@
         <!--#endregion-->
 
         <!--#region Backup -->
-        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865">
+        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865" Visibility="Hidden">
             <GroupBox Header="Manage selected item" HorizontalAlignment="Right" Height="288" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="800" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" FontSize="14">
                 <Grid x:Name="ManageBackupItem_grid" HorizontalAlignment="Left" Height="264" VerticalAlignment="Top" Width="790" Margin="0,0,0,0" Visibility="Visible">
                     <Grid x:Name="StoredBacups_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Hidden">
@@ -116,7 +116,7 @@
         </Grid>
 
         <!--#region Submenu1 -->
-        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865" Visibility="Hidden">
+        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865">
             <GroupBox Header="Settings" HorizontalAlignment="Left" Height="334" Margin="21,111,0,0" VerticalAlignment="Top" Width="799" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB"/>
             <Grid x:Name="Backupsubmenu1_settings_grid" HorizontalAlignment="Left" Height="319" VerticalAlignment="Top" Width="799"  Margin="21,126,0,0">
                 <Label Content="Method:" HorizontalAlignment="Left" Margin="30,45,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="0.647,1.625"/>
@@ -144,33 +144,44 @@
                 <Label Content="MB" HorizontalAlignment="Left" Margin="559,57,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Opacity="0.5"/>
                 <Label Content="Limit:" HorizontalAlignment="Left" Margin="459,57,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Opacity="0.5"/>
                 <CheckBox x:Name="Compress_checkbox" Content="Compress backup files (.zip)" HorizontalAlignment="Left" Margin="430,265,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" Opacity="0.5" Padding="4,-3,0,0"/>
-                <Label Content="Action for failed attempt:" HorizontalAlignment="Left" Margin="430,107,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Opacity="0.5"/>
-                <Image x:Name="Help_OnlySaveWhenModified_image" HorizontalAlignment="Left" Height="20" Margin="357,263,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png"/>
+                <Label Content="Action on failed attempt:" HorizontalAlignment="Left" Margin="430,107,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Opacity="0.5"/>
+                <Image x:Name="Help_OnlySaveWhenModified_image" HorizontalAlignment="Left" Height="20" Margin="357,263,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png" Opacity="0.5"/>
                 <Rectangle Stroke="#FFA0A0A0" Width="1" Margin="0,10,0,20" HorizontalAlignment="Center"/>
                 <CheckBox x:Name="temp1_Copy2" Content="Send popup message notification after last try" HorizontalAlignment="Left" Margin="459,196,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Padding="4,-3,0,0" IsEnabled="False" Opacity="0.5"/>
                 <Label Content="Wait time until the next attempt: " HorizontalAlignment="Left" Margin="459,136,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Opacity="0.5"/>
-                <Slider x:Name="NumberOfCycles_slider" HorizontalAlignment="Left" Margin="35,154,0,0" VerticalAlignment="Top" Width="196" Minimum="1" SmallChange="1" IsEnabled="False" Opacity="0.5"/>
-                <Image x:Name="Help_NumberOfCycles_image" HorizontalAlignment="Left" Height="20" Margin="152,113,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png"/>
-                <TextBox HorizontalAlignment="Left" Height="22" Margin="236,152,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="40" Background="#FF151515" Foreground="#FFACACAC" HorizontalContentAlignment="Center" IsEnabled="False" Padding="0,2,0,0" Opacity="0.5"/>
+                <Image x:Name="Help_NumberOfCycles_image" HorizontalAlignment="Left" Height="20" Margin="217,113,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png" Opacity="0.5"/>
+                <TextBox x:Name="NumberOfCycles_textbox" HorizontalAlignment="Left" Height="22" Margin="152,110,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="60" Background="#FF151515" Foreground="#FFACACAC" HorizontalContentAlignment="Center" Padding="0,2,0,0"/>
+                <Label x:Name="NoC_label_Copy" Content="Cycle length:" HorizontalAlignment="Left" Margin="31,154,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Padding="5,5,0,5" Opacity="0.2"/>
+                <Image x:Name="Help_NumberOfCycles_image_Copy1" HorizontalAlignment="Left" Height="20" Margin="217,160,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png" Opacity="0.5"/>
+                <TextBox HorizontalAlignment="Left" Height="22" Margin="152,156,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="60" Background="#FF151515" Foreground="#FFACACAC" HorizontalContentAlignment="Center" IsEnabled="False" Padding="0,2,0,0" Opacity="0.2"/>
             </Grid>
-            <Label Content="Source path (can be file or folder):" HorizontalAlignment="Left" Margin="20,10,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
-            <TextBox x:Name="Sourceinput_textbox" HorizontalAlignment="Left" Height="44" Margin="20,44,0,0" VerticalAlignment="Top" Width="768" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
+            <TextBox x:Name="BackupTaskLabel_textbox" HorizontalAlignment="Left" Height="44" Margin="21,44,0,0" VerticalAlignment="Top" Width="232" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
+            <Label Content="Task label:" HorizontalAlignment="Left" Margin="21,10,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <Image x:Name="Help_NumberOfCycles_image_Copy2" HorizontalAlignment="Left" Height="20" Margin="93,14,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png" ToolTipService.ShowDuration="15000">
+                <Image.ToolTip>
+                    <ToolTip>
+                        <TextBlock><Run Text="The task label is what will show up in the backptask list as the name of this task."/><LineBreak /><Run Text="This will also be the name of the root directory of the backuptask."/></TextBlock>
+                    </ToolTip>
+                </Image.ToolTip>
+            </Image>
+            <Label Content="Source path (can be file or folder):" HorizontalAlignment="Left" Margin="258,10,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
+            <TextBox x:Name="Sourceinput_textbox" HorizontalAlignment="Left" Height="44" Margin="258,44,0,0" VerticalAlignment="Top" Width="530" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
             <Button x:Name="Newitemapply_button" Content="Apply" HorizontalAlignment="Right" Margin="0,0,45,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Newitemapply_button_Click" Visibility="Hidden"/>
             <Button x:Name="Modifyitemapply_button" Content="Modify" HorizontalAlignment="Right" Margin="0,0,45,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Visibility="Hidden" Click="Updateitemapply_button_Click"/>
             <Button x:Name="Backupsubmenu1cancel_button" Content="Cancel" HorizontalAlignment="Right" Margin="0,0,170,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Backupsubmenu1cancel_button_Click"/>
             <Button x:Name="Sourcepathselect_button" Content="..." HorizontalAlignment="Left" Margin="788,44,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False" Padding="1,1,1,5"/>
             <RadioButton x:Name="temp_Copy4" Content="Several copies" HorizontalAlignment="Left" Margin="1038,348,-166,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro" GroupName="Destination type"/>
             <RadioButton x:Name="temp_Copy5" Content="Custom " HorizontalAlignment="Left" Margin="1038,389,-129,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="-0.177,-0.389" Background="Gainsboro" GroupName="Destination type"/>
-            <!--#region New destination -->
+            <!--#region Destination -->
             <Label Content="Destination path (folder):" HorizontalAlignment="Left" Margin="258,471,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14"/>
             <TextBox x:Name="Destinationinput_textbox" HorizontalAlignment="Left" Height="44" Margin="258,505,0,0" VerticalAlignment="Top" Width="530" Background="#FF151515" Foreground="#FFACACAC" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" BorderBrush="#FFAAAAAA"/>
             <Button x:Name="Destinationpathselect_button" Content="..." HorizontalAlignment="Left" Margin="788,504.334,0,0" VerticalAlignment="Top" Width="32" Height="44" FontWeight="Bold" FontSize="14" Background="#FFACACAC" UseLayoutRounding="False" Padding="1,1,1,5"/>
             <!--#endregion-->
             <Label Content="Destination drive:" HorizontalAlignment="Left" Margin="21,471,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" Padding="5,5,0,5"/>
-            <Image x:Name="Help_NumberOfCycles_image_Copy" HorizontalAlignment="Left" Height="20" Margin="139,477,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png" ToolTipService.ShowDuration="15000">
+            <Image x:Name="Help_NumberOfCycles_image_Copy3" HorizontalAlignment="Left" Height="20" Margin="139,477,0,0" VerticalAlignment="Top" Width="20" Source="/Icons/Help icon mini IV.png" ToolTipService.ShowDuration="15000">
                 <Image.ToolTip>
                     <ToolTip>
-                        <TextBlock>Select which drive you want to store the backups on<LineBreak />(If the needed drive is not listed below, then try to enable it in the 'Manage backup drives' menu)</TextBlock>
+                        <TextBlock><Run Text="Choose which drive this backuptask will store its backups on."/><LineBreak /><Run Text="(If a drive is not listed below, then try to enable it in the 'Manage backup drives' menu)"/></TextBlock>
                     </ToolTip>
                 </Image.ToolTip>
             </Image>

@@ -61,27 +61,31 @@ in 0.7:
 + test for bugs before release
 
 in 0.8:
-- backup task label (task name)
++ backup task label (task name)
++ number of cycles
 - help tooltips
 - allow custom interval for backuptask
+- file browser menu implementation
+- hide manage backup task menu when no task is selected
 - available drives update in every 30 seconds
 - working automated backup process
 - delete backups option when removing backup drives
+- remove canncelled operation files
 - application language settings
 - compress backup files implementation
 - global settings menu implementation
-- file browser menu implementation
-- remove canncelled operation files
-- handle when a drive letter changes while the application is running (rename associated backup paths)
 - make the forms foolproof
 - integrity check for backup files (items and their size must match)
++ fix: drive name is not showing if it is default(example : Local Disk (C:))
++ fix: the backup drives menu excludes underscores from drive names
 - fix: notification window for deleting backups can be opened multiple times
 - fix: application can be opened multiple times
 - test for bugs before release
 
-Release of Demo version v0.9 -> Deadline: 2023.04.15
+Release of Demo version v0.8.* -> Deadline: 2023.04.16
 
 in 0.9:
+- make the bakcup source path adaptive (change the drive letter if necessary, store the drive id in configuration)
 - support for partitioned drives (drive id)
 - create log file to store events ('//LOG' indicates undefined log in code)
 - make the 'settings' class static, and put it in a separate file

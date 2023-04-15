@@ -351,6 +351,7 @@ namespace File_Master_project
         public Backup SelectNextBackup() //returns null if the next backup is a new one
         {
             Backup Target = null;
+            if (Configuration.NumberOfCycles == 0) return Target; // if the number of cycles is zero, it is unlimited
             if (Backups.Count < (Configuration.NumberOfCycles * Configuration.CycleLength)) return Target;
             foreach (var item in Backups)
             {
@@ -813,11 +814,12 @@ namespace File_Master_project
             {
                 string oldRoot = RootDirectoty;
                 Label = label;
+                Directory.Move(oldRoot, RootDirectoty);
                 foreach (var item in Backups)
                 {
                     item.UpdateRoot(RootDirectoty);
                 }
-                Directory.Move(oldRoot, RootDirectoty);
+                StoreBackupInfo();
             }
             else throw new Exception("The parent directory already contains an item with the same name!");
         }
@@ -954,11 +956,15 @@ namespace File_Master_project
             {
                 if (DefaultVolumeLabel == null)
                 {
-                    return "?";
+                    return "Unknown";
                 }
                 return DefaultVolumeLabel;
             }
-
+            else if (DriveInformation.VolumeLabel == "")
+            {
+                    if (DriveInformation.DriveType == DriveType.Fixed) return "Local Disk";
+                    else return "Drive";
+            }
             else return DriveInformation.VolumeLabel;
         }
 

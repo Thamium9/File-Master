@@ -440,6 +440,8 @@ namespace File_Master_project
             BackupTask BTask = GetSelectedBackupTask();
             Destinationinput_textbox.Text = BTask.Destination.FullName;
             Sourceinput_textbox.Text = BTask.Source.FullName;
+            BackupTaskLabel_textbox.Text = BTask.Label;
+            NumberOfCycles_textbox.Text = BTask.Configuration.NumberOfCycles.ToString();
             foreach (ComboBoxItem item in Intervalselection_combobox.Items)
             {
                 if(item.Tag.ToString() == BTask.Configuration.CycleInterval.GetTime())
@@ -705,7 +707,9 @@ namespace File_Master_project
                 {
                     InactivateWindow();
                     //make this async!!!!
-                    SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, SelectedItem.Label, Settings);
+                    string Label = BackupTaskLabel_textbox.Text;
+                    if (Label == "") Label = $"BACKUP_{new FileInfo(Sourceinput_textbox.Text).Name}";
+                    SelectedItem.UpdateConfiguration(Destinationinput_textbox.Text, Label, Settings);
                     ActivateWindow();
                     BackupProcess.Upload_BackupInfo();
                     #region UI changes
@@ -722,6 +726,8 @@ namespace File_Master_project
         private bool CheckInfo()
         {
             ComboBoxItem Selection = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
+            int NumberOfCycles;
+            if (!int.TryParse(NumberOfCycles_textbox.Text, out NumberOfCycles)) NumberOfCycles = -1;
             BackupDrive Target = null;
             if (Selection.Tag != null && Selection.Tag.GetType() == typeof(BackupDrive))
             {
@@ -739,6 +745,10 @@ namespace File_Master_project
             {
                 MessageBox.Show("The destination is not located in the selected backup drive!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            else if (NumberOfCycles < 0)
+            {
+                MessageBox.Show("The number of cycles must be a valid integer number greater than -1!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             else
             {
                 return true;
@@ -750,7 +760,7 @@ namespace File_Master_project
         {
             BackupTaskConfiguration Settings = CreateBackupConfiguration();
             string Destination = Destinationinput_textbox.Text;
-            string Label = "";
+            string Label = BackupTaskLabel_textbox.Text;
             if (Label == "") Label = $"BACKUP_{new FileInfo(Sourceinput_textbox.Text).Name}";
             BackupTask Item = new BackupTask(Destination, Label, Settings);
             return Item;
@@ -761,7 +771,7 @@ namespace File_Master_project
             string Source = Sourceinput_textbox.Text;
             char Method = 'F';
             int CycleLength = 1;
-            int NumberofCycles = 1;
+            int NumberofCycles = int.Parse(NumberOfCycles_textbox.Text);
             ComboBoxItem CI = (ComboBoxItem)Intervalselection_combobox.SelectedItem;
             Interval CycleInterval = new Interval(CI.Tag.ToString());
             DiskSpace MaxStorageData = new DiskSpace(0);
@@ -991,7 +1001,15 @@ namespace File_Master_project
                 Information.Width = 250;
                 #region Drivename
                 Label Info = new Label();
-                Info.Content = $"{ThisDriveInfo.VolumeLabel} ({ThisDriveInfo.Name})";
+                string volumelabel = ThisDriveInfo.VolumeLabel;
+                if(volumelabel == "")
+                {
+                    if (ThisDriveInfo.DriveType == DriveType.Fixed) volumelabel = "Local Disk";
+                    else volumelabel = "Drive";
+                }
+                TextBlock infotext = new TextBlock();
+                infotext.Text = $"{volumelabel} ({ThisDriveInfo.Name})";
+                Info.Content = infotext;
                 Info.Foreground = Brushes.LightGray;
                 Info.FontSize = 14;
                 Info.FontWeight = FontWeights.Bold;
@@ -1192,7 +1210,9 @@ namespace File_Master_project
                     Information.VerticalAlignment = VerticalAlignment.Center;
                     #region Drivename
                     Label Info = new Label();
-                    Info.Content = $"{ThisDrive.GetVolumeLabel()} ({ThisDrive.GetDriveLetter()})";
+                    TextBlock infotext = new TextBlock();
+                    infotext.Text = $"{ThisDrive.GetVolumeLabel()} ({ThisDrive.GetDriveLetter()})";
+                    Info.Content = infotext;
                     Info.Foreground = Brushes.DarkRed;
                     Info.FontSize = 14;
                     Info.FontWeight = FontWeights.Bold;

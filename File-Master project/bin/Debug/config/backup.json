@@ -1,0 +1,50 @@
+[
+  {
+    "DriveID": "E9EFF223",
+    "DefaultVolumeLabel": "KINGSTON_C",
+    "SizeLimit": {
+      "Bytes": 1073741824
+    },
+    "BackupTasks": [
+      {
+        "Label": "BACKUP_Notepad++",
+        "DestinationPath": "D:\\Backups\\TEMP",
+        "IsEnabled": true
+      },
+      {
+        "Label": "Wallpaper-backup",
+        "DestinationPath": "D:\\Backups",
+        "IsEnabled": true
+      },
+      {
+        "Label": "BACKUP_Screenshot 2023-04-11 122146.png",
+        "DestinationPath": "D:\\Backups",
+        "IsEnabled": true
+      }
+    ]
+  },
+  {
+    "DriveID": "4CCE358A",
+    "DefaultVolumeLabel": "HDD",
+    "SizeLimit": {
+      "Bytes": 0
+    },
+    "BackupTasks": []
+  },
+  {
+    "DriveID": "02466E75",
+    "DefaultVolumeLabel": "HDD-K01",
+    "SizeLimit": {
+      "Bytes": 107374182400
+    },
+    "BackupTasks": []
+  },
+  {
+    "DriveID": "46C7E1A0",
+    "DefaultVolumeLabel": "",
+    "SizeLimit": {
+      "Bytes": 0
+    },
+    "BackupTasks": []
+  }
+]
