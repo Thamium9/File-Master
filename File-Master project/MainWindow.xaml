@@ -68,7 +68,7 @@
                         <Label Content="Number of backups: 0" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="455,1,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Label Content="Number of allowed: 0" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="455,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Label Content="Total backup space: 0 GB" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold" Margin="245,18,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Button x:Name="DeleteAllBackup_button" Content="Delete all backup" HorizontalAlignment="Right" Margin="0,18,10,0" VerticalAlignment="Top" Width="134" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="30" FontWeight="Bold" FontSize="14" Click="DeleteAllBackup_button_Click"/>
+                        <Button x:Name="DeleteAllBackup_button" Content="Delete all backups" HorizontalAlignment="Right" Margin="0,18,10,0" VerticalAlignment="Top" Width="134" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="30" FontWeight="Bold" FontSize="14" Click="DeleteAllBackup_button_Click"/>
                     </Grid>
                     <Grid x:Name="BackupProgress_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Hidden">
                         <ProgressBar x:Name="BackupProgress_progressbar" HorizontalAlignment="Center" Height="20" VerticalAlignment="Center" Width="300" Margin="0,0,0,0"/>
@@ -199,7 +199,7 @@
         <Grid x:Name="Backupsubmenu2_grid" HorizontalAlignment="Left" Height="669" Margin="160,1,0,0" VerticalAlignment="Top" Width="865" Visibility="Hidden">
             <ScrollViewer x:Name="Alldrives_scrollviewer" HorizontalAlignment="Left" Height="494" Margin="33,70,0,0" VerticalAlignment="Top" Width="780" Background="#FF151515" Padding="0,5" Visibility="Visible">
             </ScrollViewer>
-            <CheckBox x:Name="Showunavailable_checkbox" Content="" HorizontalAlignment="Left" Margin="631,36,0,0" VerticalAlignment="Top" Height="29" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Width="17" Click="Showunavailable_checkbox_click" IsChecked="True"/>
+            <CheckBox x:Name="Showunavailable_checkbox" Content="" HorizontalAlignment="Left" Margin="631,36,0,0" VerticalAlignment="Top" Height="29" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Width="17" Click="Showunavailable_checkbox_click" IsChecked="False"/>
             <Label Content="Detected drives:" HorizontalAlignment="Left" Margin="33,36,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold"/>
             <Label Content="Show unavailable:" HorizontalAlignment="Left" Margin="502,36,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" FontWeight="Bold"/>
             <Button x:Name="Backupsubmenu2cancel_button" Content="Back" HorizontalAlignment="Right" Margin="0,0,69,35" VerticalAlignment="Bottom" Width="96" Height="32" FontWeight="Bold" FontSize="14" Background="#FFACACAC" Click="Backupsubmenu2cancel_button_Click"/>

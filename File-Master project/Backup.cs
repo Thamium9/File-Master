@@ -296,7 +296,7 @@ namespace File_Master_project
                 {
                     Size.Bytes += backup.Size.Bytes;
                 }
-                return Size;
+                return Size;               
             }
         }
         [JsonIgnore] public BackupDrive BackupDriveOfItem { get { return BackupProcess.GetBackupDriveFromBackupTask(this); } }
@@ -340,12 +340,12 @@ namespace File_Master_project
 
         public string GetBackupType()
         {
-            if(IsAvailable)
+            if(IsAvailable && Source.Exists)
             {
                 if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
                 else if (Source.GetType() == typeof(FileInfo)) return "File";
             }
-            return "Unknown";
+            return "Item";
         }
 
         public Backup SelectNextBackup() //returns null if the next backup is a new one
@@ -895,6 +895,11 @@ namespace File_Master_project
                 {
                     DriveInformation = thisDriveInfo.Value.DriveInformation;
                     DefaultVolumeLabel = DriveInformation.VolumeLabel;
+                    if(DefaultVolumeLabel == "")
+                    {
+                        if (DriveInformation.DriveType == DriveType.Fixed) DefaultVolumeLabel = "Local Disk";
+                        else DefaultVolumeLabel = "Drive";
+                    }
                 }
             }
             if (DriveInformation == null) IsAvailable = false;
@@ -952,18 +957,13 @@ namespace File_Master_project
         #region Get data
         public string GetVolumeLabel()
         {
-            if (DriveInformation == null)
+            if (DriveInformation == null || DriveInformation.VolumeLabel == "")
             {
                 if (DefaultVolumeLabel == null)
                 {
                     return "Unknown";
                 }
                 return DefaultVolumeLabel;
-            }
-            else if (DriveInformation.VolumeLabel == "")
-            {
-                    if (DriveInformation.DriveType == DriveType.Fixed) return "Local Disk";
-                    else return "Drive";
             }
             else return DriveInformation.VolumeLabel;
         }

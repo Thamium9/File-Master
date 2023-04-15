@@ -454,6 +454,8 @@ namespace File_Master_project
             CI.Content = $"({Drive.GetDriveLetter()}:) {Drive.GetVolumeLabel()}";
             CI.Tag = Drive;
             Backupdriveselect_combobox_Refresh(CI);
+            Backupdriveselect_combobox.IsEnabled = false;
+            Backupdriveselect_combobox.Opacity = 0.5;
             #endregion
         }
 
@@ -835,6 +837,8 @@ namespace File_Master_project
             Intervalselection_combobox.Visibility = Visibility.Visible;
             Newitemapply_button.Visibility = Visibility.Hidden;
             Modifyitemapply_button.Visibility = Visibility.Hidden;
+            Backupdriveselect_combobox.IsEnabled = true;
+            Backupdriveselect_combobox.Opacity = 1;
             Reset_BackupSubmenu1Settings();
         }
         #endregion

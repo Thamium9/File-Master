@@ -8,17 +8,17 @@
     "BackupTasks": [
       {
         "Label": "BACKUP_Notepad++",
-        "DestinationPath": "D:\\Backups\\TEMP",
+        "DestinationPath": "K:\\Backups\\TEMP",
         "IsEnabled": true
       },
       {
         "Label": "Wallpaper-backup",
-        "DestinationPath": "D:\\Backups",
+        "DestinationPath": "K:\\Backups",
         "IsEnabled": true
       },
       {
-        "Label": "BACKUP_Screenshot 2023-04-11 122146.png",
-        "DestinationPath": "D:\\Backups",
+        "Label": "Screenshot-Bakcup",
+        "DestinationPath": "K:\\Backups",
         "IsEnabled": true
       }
     ]
@@ -27,7 +27,7 @@
     "DriveID": "4CCE358A",
     "DefaultVolumeLabel": "HDD",
     "SizeLimit": {
-      "Bytes": 0
+      "Bytes": 268435456000
     },
     "BackupTasks": []
   },
@@ -36,14 +36,6 @@
     "DefaultVolumeLabel": "HDD-K01",
     "SizeLimit": {
       "Bytes": 107374182400
-    },
-    "BackupTasks": []
-  },
-  {
-    "DriveID": "46C7E1A0",
-    "DefaultVolumeLabel": "",
-    "SizeLimit": {
-      "Bytes": 0
     },
     "BackupTasks": []
   }
