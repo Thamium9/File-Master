@@ -1,7 +1,6 @@
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Release\File-Master.exe.config
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Release\File-Master.exe
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Release\File-Master.pdb
-D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\File-Master project.csprojAssemblyReference.cache
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\MainWindow.g.cs
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\App.g.cs
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\File-Master_MarkupCompile.cache
@@ -16,3 +15,9 @@ D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\File-Master.p
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Release\Hardcodet.NotifyIcon.Wpf.dll
 D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Release\Hardcodet.NotifyIcon.Wpf.xml
 D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\File-Master project.csproj.CopyComplete
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Release\Newtonsoft.Json.dll
+D:\Dokumentumok\GitHub\File-Master\File-Master project\bin\Release\Newtonsoft.Json.xml
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\File-Master project.csproj.AssemblyReference.cache
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\File-Master project.csproj.SuggestedBindingRedirects.cache
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\RecoverBackup.g.cs
+D:\Dokumentumok\GitHub\File-Master\File-Master project\obj\Release\RecoverBackup.baml

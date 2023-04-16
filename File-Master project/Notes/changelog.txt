@@ -64,10 +64,10 @@ in 0.8:
 + backup task label (task name)
 + number of cycles
 - help tooltips
-- allow custom interval for backuptask
-- file browser menu implementation
++ allow custom interval for backuptask
++ file browser menu implementation
 - hide manage backup task menu when no task is selected
-- available drives update in every 30 seconds
++ available drives update in every 5 seconds
 - working automated backup process
 - delete backups option when removing backup drives
 - remove canncelled operation files
@@ -81,11 +81,13 @@ in 0.8:
 + fix: drive name is not showing correctly if the drive is unavailable
 + fix: user can modify the backup drive of the task, even if it is not implemented yet
 + fix: the backup task list lists folders as files if the source is missing
++ fix: the 'CopyConfigToCorruptedFolder()' - function moved istead of coping the config file
++ fix: the Delete Task button won't change back if the deletion fails
 - fix: notification window for deleting backups can be opened multiple times
 - fix: application can be opened multiple times
 - test for bugs before release
 
-Release of Demo version v0.8.* -> Deadline: 2023.04.16
+Release of Demo version v0.8.2 -> Deadline: 2023.04.16
 
 in 0.9:
 - make the bakcup source path adaptive (change the drive letter if necessary, store the drive id in configuration)
@@ -100,7 +102,6 @@ in 0.9:
 - prevent opening application while it is already running
 - menu redesign
 - import stored backups into the program (search for backups in folder)
-- custom data recovery location (not the source folder)
 - only grab the window from the top section(toolbar)
 - add option to store backup task information globally too (to have the data when the destination is unreachable)
 - test for bugs before release

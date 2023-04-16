@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
+using System.Linq;
 using System.Management;
 using System.Text;
 using System.Threading;
@@ -186,20 +187,20 @@ namespace File_Master_project
             return changed;
         }
 
-        public void UpdateRoot(string taskroot)
+        public void UpdateRoot(string TaskRoot)
         {
             string replaceable = new DirectoryInfo(Root).Parent.FullName;
             List<string> UpdatedFolders = new List<string>();
             List<string> UpdatedFiles = new List<string>();
             foreach (var folder in Folders)
             {
-                UpdatedFolders.Add(folder.Replace(replaceable, taskroot));
+                UpdatedFolders.Add(folder.Replace(replaceable, TaskRoot));
             }
             foreach (var file in Files)
             {
-                UpdatedFiles.Add(file.Replace(replaceable, taskroot));
+                UpdatedFiles.Add(file.Replace(replaceable, TaskRoot));
             }
-            Root = Root.Replace(replaceable, taskroot);
+            Root = Root.Replace(replaceable, TaskRoot);
             Folders = UpdatedFolders;
             Files = UpdatedFiles;
         }
@@ -240,8 +241,8 @@ namespace File_Master_project
     {
         [JsonProperty] public string Label { get; private set; }
         [JsonProperty] private string DestinationPath { get; set; }
-        [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }
-        [JsonIgnore] public List<Backup> Backups { get; private set; }
+        [JsonIgnore] public BackupTaskConfiguration Configuration { get; private set; }  //can be null!!!
+        [JsonIgnore] public List<Backup> Backups { get; private set; } //can be null!!!
         [JsonIgnore] public string RootDirectoty
         {
             get
@@ -292,9 +293,12 @@ namespace File_Master_project
             get
             {
                 DiskSpace Size = new DiskSpace(0);
-                foreach (var backup in Backups)
+                if(IsAvailable)
                 {
-                    Size.Bytes += backup.Size.Bytes;
+                    foreach (var backup in Backups)
+                    {
+                        Size.Bytes += backup.Size.Bytes;
+                    }
                 }
                 return Size;               
             }
@@ -316,7 +320,7 @@ namespace File_Master_project
             LoadBackupConfig();
             LoadBackupInfo();
             ActiveTask = false;
-            // start timer
+            //StartTimer();
         }
 
         public BackupTask(string destinationPath, string label, BackupTaskConfiguration configuration)
@@ -329,7 +333,7 @@ namespace File_Master_project
             IsEnabled = false;
             StoreBackupConfig();
             ActiveTask = false;
-            // start timer
+            //StartTimer();
         }
 
         #region Get data
@@ -431,7 +435,6 @@ namespace File_Master_project
                 }
 
                 CancelBackup = new CancellationTokenSource();
-                StartTimer();
                 ActiveTask = false;
             }
             else
@@ -631,31 +634,25 @@ namespace File_Master_project
             return result;
         }
 
-        private void Backuptimer_Elapsed(object sender, ElapsedEventArgs e)
+        private async void Backuptimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (DateTime.Now >= GetNextCallTime())
+            if (IsAvailable && DateTime.Now >= GetNextCallTime())
             {
-                //Backup_Async(false);
+                await BackupRequest(false, SelectNextBackup());
             }
-            else
-            {
-                StartTimer();
-            }
+            StartTimer();
         }
 
         private void StartTimer()
         {
-            DateTime NextCall = LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks()); //this is the date when the next backup will happen
+            DateTime NextCall;
+            if (Configuration != null) NextCall = LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks()); //this is the date when the next backup will happen
+            else NextCall = DateTime.Now.AddSeconds(30); // if the configuration file is unavailable, the elapes event will happen once every 30 seconds
             TimeSpan diff = (NextCall - DateTime.Now);
-            Backuptimer.Interval = Math.Min(Math.Max(60000, diff.Ticks / 10000), 2147483647); //the interval cannot be less than a second (or in this case 10000000 ticks or 1000 miliseconds)  AND  the interval cannot be more than 2147483647 miliseconds
+            Backuptimer.Interval = Math.Min(Math.Max(10000, diff.Ticks / 10000), 2147483647); //the interval cannot be less than a second (or in this case 10000000 ticks or 1000 miliseconds)  AND  the interval cannot be more than 2147483647 miliseconds
             Backuptimer.Elapsed += Backuptimer_Elapsed;
             Backuptimer.AutoReset = false;
             Backuptimer.Start();
-        }
-
-        public void RenameBackupLabel(string newName)
-        {
-            //update every backup path data
         }
 
         public void DeleteBackups()
@@ -683,6 +680,19 @@ namespace File_Master_project
         #endregion
 
         #region Data management
+        public void RetryDataLoading()
+        {
+            try
+            {
+                LoadBackupConfig();
+                LoadBackupInfo();               
+            }
+            catch (Exception)
+            {
+                //LOG
+            }
+        }
+
         public void UpdateConfiguration(string destination, string label, BackupTaskConfiguration configuration)
         {
             if(Destination.FullName != destination)
@@ -726,9 +736,12 @@ namespace File_Master_project
             #endregion
 
             #region UpdateBackups
-            bool changed = false;
-            foreach (var Backup in Backups) { if (Backup.UpdateDriveLetter(DriveLetter)) changed = true; }
-            if (changed) StoreBackupInfo();
+            if(IsAvailable)
+            {
+                bool changed = false;
+                foreach (var Backup in Backups) { if (Backup.UpdateDriveLetter(DriveLetter)) changed = true; }
+                if (changed) StoreBackupInfo();
+            }
             #endregion
         }
 
@@ -889,6 +902,7 @@ namespace File_Master_project
         private void ValidityCheck() // sets the IsAvailable value
         {
             IsAvailable = true;
+            DriveInformation = null;
             foreach (var thisDriveInfo in BackupProcess.AllDriveInfo)
             {
                 if (thisDriveInfo.Key == DriveID)
@@ -1000,16 +1014,20 @@ namespace File_Master_project
     {
         static public List<BackupDrive> BackupDrives { get; private set; }
         static public BackupSettings Settings { get; private set; }
-        static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; } //key: serial number , value: DriveInfo
-        public delegate void UIChanges();
+        static public Dictionary<string, AdvancedDriveInfo> AllDriveInfo { get; private set; } //key: serial number , value: DriveInfo
+        static private Timer Updater { get; set; }
 
         static BackupProcess()
         {
             BackupDrives = new List<BackupDrive>();
             AllDriveInfo = new Dictionary<string, AdvancedDriveInfo>();
-            LoadAllDriveInfo();
+            AllDriveInfo = LoadAllDriveInfo();
             LoadBackupProcess();
             Upload_BackupInfo();
+            Updater = new Timer();
+            Updater.Interval = 1000;
+            Updater.Elapsed += Updater_Elapsed;
+            Updater.Start();
         }
 
         #region Actions
@@ -1027,6 +1045,32 @@ namespace File_Master_project
                 BackupDrives.Remove(GetBackupDriveFromSerial(Serial));
                 Upload_BackupInfo();
             }
+        }
+
+        private static async void Updater_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            await Task.Run(() => 
+            {
+                UpdateAllDriveInfo();
+                foreach (var drive in BackupDrives)
+                {
+                    drive.Update();
+                    if(drive.IsAvailable) //reloads the backuptask informations if the drive is available but the task is not
+                    {
+                        foreach (var task in drive.BackupTasks)
+                        {
+                            if (!task.IsAvailable) task.RetryDataLoading();
+                        }
+                    }
+                }
+            });
+            await Application.Current.Dispatcher.Invoke(async () =>
+            {
+                MainWindow MW = Application.Current.Windows[0] as MainWindow;
+                if(MW.Backup_grid.Visibility  == Visibility.Visible) MW.Update_Backupmenu();
+                if (MW.Backupsubmenu2_grid.Visibility == Visibility.Visible) await MW.UpdateBackupSubmenu2_Async();
+            });
+            //System.Media.SystemSounds.Beep.Play();
         }
         #endregion
 
@@ -1090,13 +1134,18 @@ namespace File_Master_project
             Load_BackupInfo(out string Backupinfo);
             try
             {
-                //https://stackoverflow.com/questions/26107656/ignore-parsing-errors-during-json-net-data-parsing               
+                bool errorencountered = false;                       
                 var settings = new JsonSerializerSettings { Error = (se, ev) => 
                 { 
-                    ev.ErrorContext.Handled = true; 
-                    MessageBox.Show("An error was encountered while loading data!\nSome data may have been lost!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
-                    CopyConfigToCorruptedFolder();
-                } }; 
+                    ev.ErrorContext.Handled = true;
+                    if(!errorencountered)
+                    {
+                        MessageBox.Show("An error was encountered while loading data!\nSome data may have been lost!", "Data corruption!", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
+                        CopyConfigToCorruptedFolder();
+                        errorencountered = true;
+                    }
+                    //LOG
+                } }; //https://stackoverflow.com/questions/26107656/ignore-parsing-errors-during-json-net-data-parsing  
                 BackupDrives = JsonConvert.DeserializeObject<List<BackupDrive>>(Backupinfo, settings);
                 if (BackupDrives == null || !IntegrityCheck())
                 {
@@ -1131,25 +1180,41 @@ namespace File_Master_project
             }
         }
 
-        static private void LoadAllDriveInfo()
+        static private Dictionary<string, AdvancedDriveInfo> LoadAllDriveInfo()
         {
             DriveInfo[] AllDrives = DriveInfo.GetDrives();
+            Dictionary<string, AdvancedDriveInfo> NewAllDriveInfo = new Dictionary<string, AdvancedDriveInfo>();
             foreach (var Drive in AllDrives)
             {
                 if (Drive.IsReady)
                 {
                     string Serial = GetHardDiskSerialNumber($"{Drive.Name[0]}");
-                    if (AllDriveInfo.ContainsKey(Serial)) // delete drives with conflicting serials
+                    if (NewAllDriveInfo.ContainsKey(Serial)) // delete drives with conflicting serials
                     {
-                        AllDriveInfo.Remove(Serial);
+                        NewAllDriveInfo.Remove(Serial);
                         //LOG
                     }
                     else
                     {
-                        AllDriveInfo.Add(Serial, new AdvancedDriveInfo(Drive, Serial));
+                        NewAllDriveInfo.Add(Serial, new AdvancedDriveInfo(Drive, Serial));
                     }
                 }
             }
+            return NewAllDriveInfo;
+        }
+
+        static private void UpdateAllDriveInfo()
+        {
+            Dictionary<string, AdvancedDriveInfo> NewAllDriveInfo = LoadAllDriveInfo();
+            for (int i = 0; i < NewAllDriveInfo.Count; i++)
+            {
+                string key = NewAllDriveInfo.ElementAt(i).Key;
+                if (AllDriveInfo.ContainsKey(key))
+                {
+                    NewAllDriveInfo[key] = new AdvancedDriveInfo(NewAllDriveInfo[key].DriveInformation, key, AllDriveInfo[key].MediaType);
+                }
+            }
+            AllDriveInfo = NewAllDriveInfo;
         }
 
         static private bool IntegrityCheck()
@@ -1181,7 +1246,7 @@ namespace File_Master_project
             Directory.CreateDirectory(@".\config\corrupted");
             string dest = $@".\config\corrupted\{DateTime.Now.ToString("yyyyMMddHHmm")}_backup.json";
             if (File.Exists(dest)) File.Delete(dest);
-            File.Move(@".\config\backup.json", dest);
+            File.Copy(@".\config\backup.json", dest);
             //LOG
         }
         #endregion
@@ -1260,7 +1325,7 @@ namespace File_Master_project
 
     public class AdvancedDriveInfo
     {
-        public DriveInfo DriveInformation;
+        public DriveInfo DriveInformation { get; private set; }
         public string MediaType 
         { 
             get 
@@ -1274,12 +1339,19 @@ namespace File_Master_project
             }
         }
         private string _MediaType;
-        private string Serial;
+        public string Serial { get; private set; }
 
         public AdvancedDriveInfo(DriveInfo drive, string serial)
         {
             DriveInformation = drive;
             Serial = serial;
+        }
+
+        public AdvancedDriveInfo(DriveInfo drive, string serial, string mediatype)
+        {
+            DriveInformation = drive;
+            Serial = serial;
+            _MediaType = mediatype;
         }
 
         private string GetMediaType() //code from: https://gist.github.com/MiloszKrajewski/352dc8b8eb132d3a2bc7

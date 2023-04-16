@@ -9,17 +9,14 @@ namespace File_Master_project
 {
     public class Interval
     {
-        [JsonProperty] private double Time;
-        [JsonProperty] private string Unit;
+        [JsonProperty] public double Time { get; private set; }
+        [JsonProperty] public string Unit { get; private set; }
 
-        public Interval()
-        {
-        }
-
-        public Interval(double time, string unit)
+        [JsonConstructor] public Interval(double time, string unit)
         {
             Time = time;
             Unit = unit;
+            Simplify();
         }
 
         public Interval(string time)
@@ -27,13 +24,14 @@ namespace File_Master_project
             string[] temp = time.Split(' ');
             Time = double.Parse(temp[0]);
             Unit = temp[1];
+            Simplify();
         }
 
         public Interval(TimeSpan time)
         {
             Time = Math.Max((double)time.TotalMinutes, 1);
             Unit = "minute";
-            Humanize();
+            Simplify();
         }
 
         private double Convert_to_min()
@@ -89,22 +87,38 @@ namespace File_Master_project
             return (long)Convert_to_min() * 60 * 10000000;
         }
 
-        public void Humanize()
+        private void Simplify()
         {
-            if (Convert_to_min() < 60)
+            if (Convert_to_day() >= 1 && Convert_to_day() % 1 == 0)
             {
-                Time = Math.Floor(Convert_to_min());
-                Unit = "minute";
+                Time = Math.Floor(Convert_to_day());
+                Unit = "day";
             }
-            else if (Convert_to_hour() < 24)
+            else if (Convert_to_hour() >= 1 && Convert_to_hour() % 1 == 0)
             {
                 Time = Math.Floor(Convert_to_hour());
                 Unit = "hour";
             }
             else
             {
-                Time = Math.Floor(Convert_to_day());
-                Unit = "day";
+                Time = Math.Floor(Convert_to_min());
+                Unit = "minute";
+            }
+        }
+
+        public string GetRounded()
+        {
+            if (Convert_to_min() < 60)
+            {
+                return $"{Math.Floor(Convert_to_min())} minute";
+            }
+            else if (Convert_to_hour() < 24)
+            {
+                return $"{Math.Floor(Convert_to_hour())} hour";
+            }
+            else
+            {
+                return $"{Math.Floor(Convert_to_day())} day";
             }
         }
 

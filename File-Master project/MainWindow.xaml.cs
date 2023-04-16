@@ -252,6 +252,7 @@ namespace File_Master_project
                 catch (Exception)
                 {
                     MessageBox.Show("The deletion of the backup task failed!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    DeleteTask_button.Content = "Delete task";
                     //LOG
                 }
 
@@ -260,173 +261,7 @@ namespace File_Master_project
 
         private void Restorefiles_button_Click(object sender, RoutedEventArgs e)
         {
-            BackupManaging_grid.Visibility = Visibility.Hidden;
-            BackupProgress_grid.Visibility = Visibility.Hidden;
-            StoredBacups_grid.Visibility = Visibility.Visible;
-            StoredBackups_stackpanel.Children.Clear();
-
-            BackupTask Selected = GetSelectedBackupTask();
-            if(Selected.Backups.Count > 0)
-            {
-                foreach (var Backup in Selected.Backups.Reverse<Backup>())
-                {
-                    #region DockPanel
-                    DockPanel dp = new DockPanel();
-                    dp.Width = 160;
-                    dp.Height = 150;
-                    dp.HorizontalAlignment = HorizontalAlignment.Stretch;
-                    dp.Background = new SolidColorBrush(Color.FromRgb(33, 33, 33));
-                    
-                    #endregion
-
-                    #region Backup label
-                    Label label = new Label();
-                    string format = "000";
-                    if (Backup.Partial) label.Content = $"Partial backup [{Backup.NumberID.ToString(format)}]";
-                    else label.Content = $"Full bakcup [{Backup.NumberID.ToString(format)}]";
-                    label.HorizontalAlignment = HorizontalAlignment.Center;
-                    label.VerticalAlignment = VerticalAlignment.Top;
-                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                    label.FontSize = 15;
-                    label.FontWeight = FontWeights.Bold;
-                    label.BorderThickness = new Thickness(0, 0, 0, 1);
-                    label.BorderBrush = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                    label.Padding = new Thickness(5, 3, 5, 2);
-                    DockPanel.SetDock(label, Dock.Top);
-                    dp.Children.Add(label);
-                    #endregion
-
-                    #region Files label
-                    label = new Label();
-                    label.Content = $"Files: {Backup.Files.Count}";
-                    label.HorizontalAlignment = HorizontalAlignment.Center;
-                    label.VerticalAlignment = VerticalAlignment.Bottom;
-                    label.FontSize = 14;
-                    label.FontWeight = FontWeights.Bold;
-                    label.Margin = new Thickness(0, 10, 0, 0);
-                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                    DockPanel.SetDock(label, Dock.Top);
-                    dp.Children.Add(label);
-                    #endregion
-
-                    #region Size label   
-                    label = new Label();
-                    label.Content = $"Size: {Backup.Size.Humanize()}";
-                    label.HorizontalAlignment = HorizontalAlignment.Center;
-                    label.VerticalAlignment = VerticalAlignment.Bottom;
-                    label.FontSize = 14;
-                    label.FontWeight = FontWeights.Bold;
-                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                    DockPanel.SetDock(label, Dock.Top);
-                    dp.Children.Add(label);
-                    #endregion
-
-                    #region Created label
-                    label = new Label();
-                    label.Content = $"Created: {Backup.Creation.ToString("yyyy.MM.dd")}";
-                    label.HorizontalAlignment = HorizontalAlignment.Center;
-                    label.VerticalAlignment = VerticalAlignment.Bottom;
-                    label.FontSize = 14;
-                    label.FontWeight = FontWeights.Bold;
-                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
-                    DockPanel.SetDock(label, Dock.Top);
-                    dp.Children.Add(label);
-                    #endregion
-
-                    #region Delete button
-                    Button DeleteButton = new Button();
-                    DeleteButton.Content = "Delete";
-                    DeleteButton.Height = 25;
-                    DeleteButton.Width = 80;
-                    DeleteButton.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
-                    DeleteButton.Foreground = new SolidColorBrush(Color.FromRgb(235,235,235));
-                    DeleteButton.Style = this.FindResource("CustomButtonStyle1") as Style;
-                    DeleteButton.VerticalAlignment = VerticalAlignment.Bottom;
-                    DeleteButton.Focusable = false;
-                    DeleteButton.Click += async (ds, de) => 
-                    {
-                        if (MessageBox.Show("Are you sure you want to delete this backup?\nThis action is irreversable!", "Delete backup", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes) == MessageBoxResult.Yes)
-                        {
-                            var Deletion = Task.Run(() => { Selected.DeleteBackup(Backup); });
-                            DeleteButton.Content = "Deleting";
-                            await Deletion;
-                            Update_Backupmenu();
-                        }
-                    };
-                    DockPanel.SetDock(DeleteButton, Dock.Left);
-                    dp.Children.Add(DeleteButton);
-                    #endregion
-
-                    #region Recover button
-                    Button RecoverButton = new Button();
-                    RecoverButton = new Button();
-                    RecoverButton.Content = "Recover";
-                    RecoverButton.Height = 25;
-                    RecoverButton.Width = 80;
-                    RecoverButton.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
-                    RecoverButton.Foreground = new SolidColorBrush(Color.FromRgb(235, 235, 235));
-                    RecoverButton.Style = this.FindResource("CustomButtonStyle1") as Style;
-                    RecoverButton.VerticalAlignment = VerticalAlignment.Bottom;
-                    RecoverButton.Focusable = false;
-                    RecoverButton.Click += (ds, de) =>
-                    {
-                        if(Backup.Creation == Selected.LastSaved || MessageBox.Show("The selected backup is not the latest one. \nAre you sure you want to recover this one?", 
-                            "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-                        {
-                            RecoverBackup RBwindow = new RecoverBackup(Selected, Backup);
-                            RBwindow.Owner = this;
-                            RBwindow.Show();
-                            InactivateWindow();
-                            RecoverButton.Content = "Recovering";
-                        }
-                    };
-                    DockPanel.SetDock(RecoverButton, Dock.Right);
-                    dp.Children.Add(RecoverButton);
-                    #endregion
-
-                    #region Border
-                    Border ObjectContainer = new Border();
-                    if (Backup.Creation == Selected.LastSaved)
-                    {
-                        ObjectContainer.BorderThickness = new Thickness(5);
-                        ObjectContainer.BorderBrush = this.FindResource("NewestBackup_Border") as LinearGradientBrush;
-                        ObjectContainer.Margin = new Thickness(10, 0, 10, 0);
-                        ObjectContainer.Height = 160;
-                        ObjectContainer.Child = dp;
-                    }
-                    else
-                    {
-                        ObjectContainer.Margin = new Thickness(10, 0, 10, 0);
-                        ObjectContainer.Height = 160;
-                        ObjectContainer.Child = dp;
-                    }
-                    #endregion
-
-                    StoredBackups_stackpanel.Children.Add(ObjectContainer);
-                }
-            }
-            else
-            {
-                DockPanel dp = new DockPanel
-                {
-                    Width = 780,
-                    Height = 180
-                };
-
-                Label label = new Label
-                {
-                    Content = "There are no backups stored yet!",
-                    FontWeight = FontWeights.Normal,
-                    FontSize = 15,
-                    Opacity = 0.5,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalContentAlignment = VerticalAlignment.Center,
-                    Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172))
-                };
-                dp.Children.Add(label);
-                StoredBackups_stackpanel.Children.Add(dp);
-            }
+            Display_StoredBackups(GetSelectedBackupTask());
         }
 
         private void Modification_button_Click(object sender, RoutedEventArgs e)
@@ -444,11 +279,12 @@ namespace File_Master_project
             NumberOfCycles_textbox.Text = BTask.Configuration.NumberOfCycles.ToString();
             foreach (ComboBoxItem item in Intervalselection_combobox.Items)
             {
-                if(item.Tag.ToString() == BTask.Configuration.CycleInterval.GetTime())
+                if(item.Tag.ToString() == BTask.Configuration.CycleInterval.Unit)
                 {
                     Intervalselection_combobox.SelectedItem = item;
                 }
             }
+            BackupInterval_textbox.Text = BTask.Configuration.CycleInterval.Time.ToString();
             BackupDrive Drive = BTask.BackupDriveOfItem;
             ComboBoxItem CI = new ComboBoxItem();
             CI.Content = $"({Drive.GetDriveLetter()}:) {Drive.GetVolumeLabel()}";
@@ -500,7 +336,7 @@ namespace File_Master_project
             HideAllMenu();
             Backupsubmenu2_grid.Visibility = Visibility.Visible;
             Menu = "Backup.sub2";
-            await UpdateSubmenu2_Async();
+            await UpdateBackupSubmenu2_Async();
         }
 
         private void ViewSelectedPath_button_Click(object sender, RoutedEventArgs e)
@@ -634,6 +470,42 @@ namespace File_Master_project
 
         #region Buttons
 
+        #region PathSelect
+        private void Sourcepathselect_button_Click(object sender, RoutedEventArgs e)
+        {
+            if(BrowseForFile_checkbox.IsChecked == true)
+            {
+                Winform.OpenFileDialog PathSelect = new Winform.OpenFileDialog();
+                PathSelect.InitialDirectory = Sourceinput_textbox.Text;
+                if (PathSelect.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Sourceinput_textbox.Text = PathSelect.FileName;
+                }
+            }
+            else
+            {
+                Winform.FolderBrowserDialog PathSelect = new Winform.FolderBrowserDialog();
+                PathSelect.RootFolder = Environment.SpecialFolder.MyComputer;
+                PathSelect.SelectedPath = Sourceinput_textbox.Text;
+                if (PathSelect.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Sourceinput_textbox.Text = PathSelect.SelectedPath;
+                }
+            }
+        }
+
+        private void Destinationpathselect_button_Click(object sender, RoutedEventArgs e)
+        {
+            Winform.FolderBrowserDialog PathSelect = new Winform.FolderBrowserDialog();
+            PathSelect.RootFolder = Environment.SpecialFolder.MyComputer;
+            PathSelect.SelectedPath = Destinationinput_textbox.Text;
+            if (PathSelect.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                Destinationinput_textbox.Text = PathSelect.SelectedPath;
+            }         
+        }
+        #endregion
+
         #region Apply button
         private void Newitemapply_button_Click(object sender, RoutedEventArgs e)//adds the new item to the system
         {
@@ -728,8 +600,9 @@ namespace File_Master_project
         private bool CheckInfo()
         {
             ComboBoxItem Selection = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
-            int NumberOfCycles;
+            int NumberOfCycles, BackupInterval;
             if (!int.TryParse(NumberOfCycles_textbox.Text, out NumberOfCycles)) NumberOfCycles = -1;
+            if (!int.TryParse(BackupInterval_textbox.Text, out BackupInterval)) BackupInterval = -1;
             BackupDrive Target = null;
             if (Selection.Tag != null && Selection.Tag.GetType() == typeof(BackupDrive))
             {
@@ -750,6 +623,10 @@ namespace File_Master_project
             else if (NumberOfCycles < 0)
             {
                 MessageBox.Show("The number of cycles must be a valid integer number greater than -1!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            else if (BackupInterval < 1)
+            {
+                MessageBox.Show("The backup interval must be a valid integer number greater than or equal to 1!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             else
             {
@@ -775,7 +652,7 @@ namespace File_Master_project
             int CycleLength = 1;
             int NumberofCycles = int.Parse(NumberOfCycles_textbox.Text);
             ComboBoxItem CI = (ComboBoxItem)Intervalselection_combobox.SelectedItem;
-            Interval CycleInterval = new Interval(CI.Tag.ToString());
+            Interval CycleInterval = new Interval($"{BackupInterval_textbox.Text} {CI.Tag}");
             DiskSpace MaxStorageData = new DiskSpace(0);
             Interval RetryWaitTime = new Interval("5 minute");
             int MaxNumberOfRetries = 3;
@@ -827,9 +704,11 @@ namespace File_Master_project
         {
             Sourceinput_textbox.Text = "";
             Destinationinput_textbox.Text = "";
-            Intervalselection_combobox.SelectedIndex = -1;
+            Intervalselection_combobox.SelectedIndex = 2;
+            BackupInterval_textbox.Text = "1";
             AvailableFreeSpaceBD_label.Content = "-";
             AvailableAllocatedSpace_label.Content= "-";
+            BrowseForFile_checkbox.IsChecked = false;
             Backupdriveselect_combobox_Reset();
 
             Destinationinput_textbox.IsEnabled = true;
@@ -850,7 +729,7 @@ namespace File_Master_project
         #region User Actions
         private void Showunavailable_checkbox_click(object sender, RoutedEventArgs e)
         {
-            UpdateSubmenu2_Async();
+            UpdateBackupSubmenu2_Async();
         }
 
         private void SetLimitChange(object sender, RoutedEventArgs e)
@@ -885,7 +764,7 @@ namespace File_Master_project
                 MessageBox.Show("The set limit cannot be this big!\nIt will be set to the maximum allowed amount!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 Main.BackupDriveSizeLimits[serial].Text = result.ToString();
             }
-            UpdateSubmenu2_Async();
+            UpdateBackupSubmenu2_Async();
         }
 
         private void UpdateDrive_Click(object sender, RoutedEventArgs e)
@@ -908,13 +787,13 @@ namespace File_Master_project
                 Main.BackupDriveSizeLimits[serial].Text = "";
             }
             BackupProcess.Upload_BackupInfo();
-            UpdateSubmenu2_Async();
+            UpdateBackupSubmenu2_Async();
         }
 
         private void DeactivateDrive_Click(object sender, RoutedEventArgs e)
         {
             BackupProcess.DeactivateBackupDrive(((Image)sender).Tag.ToString());
-            UpdateSubmenu2_Async();
+            UpdateBackupSubmenu2_Async();
         }
 
         private void Delete_mouseenter(object sender, RoutedEventArgs e)
@@ -1235,7 +1114,7 @@ namespace File_Master_project
         #endregion
 
         #region Menu control
-        private async Task UpdateSubmenu2_Async()// data is for transfering new drive size limit
+        public async Task UpdateBackupSubmenu2_Async()// data is for transfering new drive size limit
         {
             StackPanel Drives = new StackPanel();
             #region Loading message
@@ -1318,7 +1197,6 @@ namespace File_Master_project
                     var ThisItem = temp.Tag;
                     if (ThisItem == Item) Backuptask_listbox.SelectedIndex = i;
                 }
-                Display_BackupTask(Item);
             }
             else
             {
@@ -1383,33 +1261,37 @@ namespace File_Master_project
             #endregion
         }
 
-        private void Display_BackupTask(BackupTask Item)
+        private void Display_BackupTask(BackupTask Selected)
         {
-            StoredBacups_grid.Visibility = Visibility.Hidden;
-            if(Item.ActiveTask)
+            if(Selected.ActiveTask)
             {
                 BackupProgress_grid.Visibility = Visibility.Visible;
                 BackupManaging_grid.Visibility = Visibility.Hidden;
-                BackupProcess.DisplayBackupProgress(Item);
+                StoredBacups_grid.Visibility = Visibility.Hidden;
+                BackupProcess.DisplayBackupProgress(Selected);
+            }
+            else if (StoredBacups_grid.Visibility == Visibility.Visible && Selected.IsAvailable)
+            {
+                Display_StoredBackups(Selected);
             }
             else
             {
+                StoredBacups_grid.Visibility = Visibility.Hidden;
                 BackupProgress_grid.Visibility = Visibility.Hidden;
                 BackupManaging_grid.Visibility = Visibility.Visible;
-                if(Item.IsAvailable)
+                if(Selected.IsAvailable)
                 {
                     #region Loads interval
-                    Item.Configuration.CycleInterval.Humanize();
-                    Interval_label.Content = $"Save interval: {Item.Configuration.CycleInterval.GetTime()}";
+                    Interval_label.Content = $"Save interval: {Selected.Configuration.CycleInterval.GetTime()}";
                     #endregion
 
                     #region Loads current number of backup
-                    NumberOfBackups_label.Content = $"Current number of backups: {Item.Backups.Count}";
+                    NumberOfBackups_label.Content = $"Current number of backups: {Selected.Backups.Count}";
                     #endregion
 
                     #region Loads Method
                     string method;
-                    switch (Item.Configuration.Method)
+                    switch (Selected.Configuration.Method)
                     {
                         case 'F': 
                             method = "Full backup";
@@ -1433,30 +1315,30 @@ namespace File_Master_project
                     #endregion
 
                     #region Loads Last saved
-                    if (Item.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
+                    if (Selected.LastSaved == DateTime.MinValue) Lastsaved_label.Content = $"Last saved: Never";
                     else
                     {
-                        Interval lastsaved = new Interval(DateTime.Now - Item.LastSaved);
+                        Interval lastsaved = new Interval(DateTime.Now - Selected.LastSaved);
                         if (lastsaved.IsPlural())
                         {
-                            Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()}s ago";
+                            Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Selected.LastSaved).GetRounded()}s ago";
                         }
                         else
                         {
-                            Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Item.LastSaved).GetTime()} ago";
+                            Lastsaved_label.Content = $"Last saved: {new Interval(DateTime.Now - Selected.LastSaved).GetRounded()} ago";
                         }
                     }
                     #endregion
 
                     #region Loads backup file size
-                    Backupfilesize_label.Content = $"Backup file size: {Item.BackupsSize.Humanize()}";
+                    Backupfilesize_label.Content = $"Backup file size: {Selected.BackupsSize.Humanize()}";
                     #endregion
 
                     #region Buttons
                     #region Enable/Disable
-                    if (Item.IsAvailable && !Item.IsOutOfSpace && Item.Source.Exists)
+                    if (Selected.IsAvailable && !Selected.IsOutOfSpace && Selected.Source.Exists)
                     {
-                        if (!Item.IsEnabled)
+                        if (!Selected.IsEnabled)
                         {
                             Disablebackup_button.Visibility = Visibility.Hidden;
                             Enablebackup_button.Visibility = Visibility.Visible;
@@ -1486,7 +1368,7 @@ namespace File_Master_project
                     Restorefiles_button.Opacity = 1;
                     #endregion
                     #region Manual save
-                    if (Item.ActiveTask)
+                    if (Selected.ActiveTask)
                     {
                         Manualsave_button.IsEnabled = false;
                         Manualsave_button.Opacity = 0.5;
@@ -1494,7 +1376,7 @@ namespace File_Master_project
                     }
                     else
                     {
-                        if (Item.IsAvailable && !Item.IsOutOfSpace && Item.Source.Exists)
+                        if (Selected.IsAvailable && !Selected.IsOutOfSpace && Selected.Source.Exists)
                         {
                             Manualsave_button.IsEnabled = true;
                             Manualsave_button.Opacity = 1;
@@ -1518,7 +1400,7 @@ namespace File_Master_project
                 #region View Selected Path
                 if (ViewPathSelection_Combobox.SelectedIndex == 0)
                 {
-                    if (Item.IsAvailable && Item.Destination.Exists)
+                    if (Selected.IsAvailable && Selected.Destination.Exists)
                     {
                         ViewSelectedPath_button.IsEnabled = true;
                         ViewSelectedPath_button.Opacity = 1;
@@ -1531,7 +1413,7 @@ namespace File_Master_project
                 }
                 else
                 {
-                    if (Item.IsAvailable && Item.Source.Exists)
+                    if (Selected.IsAvailable && Selected.Source.Exists)
                     {
                         ViewSelectedPath_button.IsEnabled = true;
                         ViewSelectedPath_button.Opacity = 1;
@@ -1551,20 +1433,20 @@ namespace File_Master_project
                 ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
                 if (ViewPathSelection_Combobox.SelectedIndex == 0)
                 {
-                    ItemPath_textbox.Text = Item.Destination.FullName;
+                    ItemPath_textbox.Text = Selected.RootDirectoty;
                     dest = true;
                 }
                 else
                 {
-                    if (Item.IsAvailable) ItemPath_textbox.Text = Item.Source.FullName;
+                    if (Selected.IsAvailable) ItemPath_textbox.Text = Selected.Source.FullName;
                     else ItemPath_textbox.Text = "The source is unknown!";
                 }
 
-                if(!Item.IsAvailable)
+                if(!Selected.IsAvailable)
                 {
                     ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
                 }
-                else if (Item.IsOutOfSpace)
+                else if (Selected.IsOutOfSpace)
                 {
                     if (BackupProcess.Settings.IsTempFolderEnabled)
                     {
@@ -1584,12 +1466,12 @@ namespace File_Master_project
                 Status_label.Content = "Status: OK!";
                 #endregion
 
-                if(!Item.IsAvailable)
+                if(!Selected.IsAvailable)
                 {
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(230, 0, 0));
                     Status_label.Content = "Status info: The destination is unreachable!";
                 }
-                else if(Item.IsOutOfSpace)
+                else if(Selected.IsOutOfSpace)
                 {
                     if (BackupProcess.Settings.IsTempFolderEnabled)//Can save to temp-drive temp
                     {
@@ -1602,12 +1484,12 @@ namespace File_Master_project
                         Status_label.Content = "Status info: The backup drive has reached its space limit!";
                     }
                 }
-                else if (!Item.Source.Exists)
+                else if (!Selected.Source.Exists)
                 {
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(200, 0, 180));
                     Status_label.Content = "Status info: The source is missing!";
                 }
-                else if (!Item.IsEnabled)
+                else if (!Selected.IsEnabled)
                 {
                     Status_label.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
                     Status_label.Content = "Status info: The backup item is disabled!";
@@ -1615,6 +1497,176 @@ namespace File_Master_project
                 #endregion
             }
 
+        }
+
+        private void Display_StoredBackups(BackupTask Selected)
+        {
+            BackupManaging_grid.Visibility = Visibility.Hidden;
+            BackupProgress_grid.Visibility = Visibility.Hidden;
+            StoredBacups_grid.Visibility = Visibility.Visible;
+            StoredBackups_stackpanel.Children.Clear();
+
+            if (Selected.Backups.Count > 0)
+            {
+                foreach (var Backup in Selected.Backups.Reverse<Backup>())
+                {
+                    #region DockPanel
+                    DockPanel dp = new DockPanel();
+                    dp.Width = 160;
+                    dp.Height = 150;
+                    dp.HorizontalAlignment = HorizontalAlignment.Stretch;
+                    dp.Background = new SolidColorBrush(Color.FromRgb(33, 33, 33));
+
+                    #endregion
+
+                    #region Backup label
+                    Label label = new Label();
+                    string format = "000";
+                    if (Backup.Partial) label.Content = $"Partial backup [{Backup.NumberID.ToString(format)}]";
+                    else label.Content = $"Full bakcup [{Backup.NumberID.ToString(format)}]";
+                    label.HorizontalAlignment = HorizontalAlignment.Center;
+                    label.VerticalAlignment = VerticalAlignment.Top;
+                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                    label.FontSize = 15;
+                    label.FontWeight = FontWeights.Bold;
+                    label.BorderThickness = new Thickness(0, 0, 0, 1);
+                    label.BorderBrush = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                    label.Padding = new Thickness(5, 3, 5, 2);
+                    DockPanel.SetDock(label, Dock.Top);
+                    dp.Children.Add(label);
+                    #endregion
+
+                    #region Files label
+                    label = new Label();
+                    label.Content = $"Files: {Backup.Files.Count}";
+                    label.HorizontalAlignment = HorizontalAlignment.Center;
+                    label.VerticalAlignment = VerticalAlignment.Bottom;
+                    label.FontSize = 14;
+                    label.FontWeight = FontWeights.Bold;
+                    label.Margin = new Thickness(0, 10, 0, 0);
+                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                    DockPanel.SetDock(label, Dock.Top);
+                    dp.Children.Add(label);
+                    #endregion
+
+                    #region Size label   
+                    label = new Label();
+                    label.Content = $"Size: {Backup.Size.Humanize()}";
+                    label.HorizontalAlignment = HorizontalAlignment.Center;
+                    label.VerticalAlignment = VerticalAlignment.Bottom;
+                    label.FontSize = 14;
+                    label.FontWeight = FontWeights.Bold;
+                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                    DockPanel.SetDock(label, Dock.Top);
+                    dp.Children.Add(label);
+                    #endregion
+
+                    #region Created label
+                    label = new Label();
+                    label.Content = $"Created: {Backup.Creation.ToString("yyyy.MM.dd")}";
+                    label.HorizontalAlignment = HorizontalAlignment.Center;
+                    label.VerticalAlignment = VerticalAlignment.Bottom;
+                    label.FontSize = 14;
+                    label.FontWeight = FontWeights.Bold;
+                    label.Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172));
+                    DockPanel.SetDock(label, Dock.Top);
+                    dp.Children.Add(label);
+                    #endregion
+
+                    #region Delete button
+                    Button DeleteButton = new Button();
+                    DeleteButton.Content = "Delete";
+                    DeleteButton.Height = 25;
+                    DeleteButton.Width = 80;
+                    DeleteButton.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
+                    DeleteButton.Foreground = new SolidColorBrush(Color.FromRgb(235, 235, 235));
+                    DeleteButton.Style = this.FindResource("CustomButtonStyle1") as Style;
+                    DeleteButton.VerticalAlignment = VerticalAlignment.Bottom;
+                    DeleteButton.Focusable = false;
+                    DeleteButton.Click += async (ds, de) =>
+                    {
+                        if (MessageBox.Show("Are you sure you want to delete this backup?\nThis action is irreversable!", "Delete backup", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+                        {
+                            var Deletion = Task.Run(() => { Selected.DeleteBackup(Backup); });
+                            DeleteButton.Content = "Deleting";
+                            await Deletion;
+                            Update_Backupmenu();
+                        }
+                    };
+                    DockPanel.SetDock(DeleteButton, Dock.Left);
+                    dp.Children.Add(DeleteButton);
+                    #endregion
+
+                    #region Recover button
+                    Button RecoverButton = new Button();
+                    RecoverButton = new Button();
+                    RecoverButton.Content = "Recover";
+                    RecoverButton.Height = 25;
+                    RecoverButton.Width = 80;
+                    RecoverButton.Background = new SolidColorBrush(Color.FromRgb(55, 55, 55));
+                    RecoverButton.Foreground = new SolidColorBrush(Color.FromRgb(235, 235, 235));
+                    RecoverButton.Style = this.FindResource("CustomButtonStyle1") as Style;
+                    RecoverButton.VerticalAlignment = VerticalAlignment.Bottom;
+                    RecoverButton.Focusable = false;
+                    RecoverButton.Click += (ds, de) =>
+                    {
+                        if (Backup.Creation == Selected.LastSaved || MessageBox.Show("The selected backup is not the latest one. \nAre you sure you want to recover this one?",
+                            "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                        {
+                            RecoverBackup RBwindow = new RecoverBackup(Selected, Backup);
+                            RBwindow.Owner = this;
+                            RBwindow.Show();
+                            InactivateWindow();
+                            RecoverButton.Content = "Recovering";
+                        }
+                    };
+                    DockPanel.SetDock(RecoverButton, Dock.Right);
+                    dp.Children.Add(RecoverButton);
+                    #endregion
+
+                    #region Border
+                    Border ObjectContainer = new Border();
+                    if (Backup.Creation == Selected.LastSaved)
+                    {
+                        ObjectContainer.BorderThickness = new Thickness(5);
+                        ObjectContainer.BorderBrush = this.FindResource("NewestBackup_Border") as LinearGradientBrush;
+                        ObjectContainer.Margin = new Thickness(10, 0, 10, 0);
+                        ObjectContainer.Height = 160;
+                        ObjectContainer.Child = dp;
+                    }
+                    else
+                    {
+                        ObjectContainer.Margin = new Thickness(10, 0, 10, 0);
+                        ObjectContainer.Height = 160;
+                        ObjectContainer.Child = dp;
+                    }
+                    #endregion
+
+                    StoredBackups_stackpanel.Children.Add(ObjectContainer);
+                }
+            }
+            else
+            {
+                DockPanel dp = new DockPanel
+                {
+                    Width = 780,
+                    Height = 180
+                };
+
+                Label label = new Label
+                {
+                    Content = "There are no backups stored yet!",
+                    FontWeight = FontWeights.Normal,
+                    FontSize = 15,
+                    Opacity = 0.5,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                    Foreground = new SolidColorBrush(Color.FromRgb(172, 172, 172))
+                };
+                dp.Children.Add(label);
+                StoredBackups_stackpanel.Children.Add(dp);
+            }
         }
 
         #region Process data
@@ -1625,20 +1677,12 @@ namespace File_Master_project
             LBI.Opacity = 0.8;
             LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Label} - ({Item.BackupsSize.Humanize()})";
             LBI.Tag = Item;
-            LBI.Padding = new Thickness(15, 0, 0, 0);           
+            LBI.Padding = new Thickness(15, 0, 0, 0);
 
             #region Status color    
 
             //Defaults
-            if (Item.ActiveTask)
-            {
-                LBI.Foreground = new SolidColorBrush(Color.FromRgb(0, 145, 250));
-                LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Source.FullName} - (saving...)";
-            }
-            else
-            {
-                LBI.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
-            }
+            LBI.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
 
             //Issues
             if (!Item.IsAvailable)
@@ -1663,6 +1707,13 @@ namespace File_Master_project
             else if (!Item.IsEnabled)
             {
                 LBI.Foreground = new SolidColorBrush(Color.FromRgb(240, 70, 0));
+            }
+
+            //Active
+            if (Item.ActiveTask)
+            {
+                LBI.Foreground = new SolidColorBrush(Color.FromRgb(0, 145, 250));
+                LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Source.FullName} - (saving...)";
             }
             #endregion
 
