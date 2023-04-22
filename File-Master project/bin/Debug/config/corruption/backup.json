@@ -20,11 +20,6 @@
         "Label": "Screenshot_Backup",
         "DestinationPath": "K:\\Backups",
         "IsEnabled": true
-      },
-      {
-        "Label": "Temp",
-        "DestinationPath": "K:\\",
-        "IsEnabled": false
       }
     ]
   },

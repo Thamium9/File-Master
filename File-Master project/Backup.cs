@@ -247,7 +247,8 @@ namespace File_Master_project
         {
             get
             {
-                return $@"{DestinationPath}\{Label}";
+                if (DestinationPath.Last() == '\\') return $@"{DestinationPath}{Label}";
+                else return $@"{DestinationPath}\{Label}";
             }
         }
         [JsonIgnore] public FileSystemInfo Source //only access it if the item is available!
@@ -307,6 +308,7 @@ namespace File_Master_project
 
         [JsonIgnore] private Timer Backuptimer = new Timer(); //Timer for the next backup task call
         [JsonIgnore] public bool ActiveTask { get; private set; }
+        [JsonIgnore] public bool TaskPreparation { get; private set; }
         [JsonIgnore] public CancellationTokenSource CancelBackup { get; private set; }
 
         [JsonConstructor] private BackupTask(string destinationPath, string label, bool isEnabled)
@@ -320,6 +322,7 @@ namespace File_Master_project
             LoadBackupConfig();
             LoadBackupInfo();
             ActiveTask = false;
+            TaskPreparation = false;
             //StartTimer();
         }
 
@@ -333,6 +336,7 @@ namespace File_Master_project
             IsEnabled = false;
             StoreBackupConfig();
             ActiveTask = false;
+            TaskPreparation = false;
             //StartTimer();
         }
 
@@ -402,6 +406,7 @@ namespace File_Master_project
             if (CheckPermission(isManual))
             {
                 ActiveTask = true;
+                TaskPreparation = true;
                 bool completed = false;
                 try
                 {                    
@@ -416,6 +421,7 @@ namespace File_Master_project
                     else id = GetNextBackupID();
                     string BackupRoot = $@"{RootDirectoty}\{id} - BACKUP";
 
+                    TaskPreparation = false;
                     Backup NewBackup = await Task.Run(() => CreateBackup(progress, Source, BackupRoot));
                     if(OutdatedBackup != null) Backups.Remove(OutdatedBackup);
                     Backups.Add(NewBackup);
@@ -526,12 +532,14 @@ namespace File_Master_project
         public async Task RecoveryRequest(Backup Item, string Destination)
         {
             ActiveTask = true;
+            TaskPreparation = true;
             bool completed = false;
             try
             {
                 Progress<BackupProgressReportModel> progress = new Progress<BackupProgressReportModel>();
                 progress.ProgressChanged += BackupProcess.DisplayBackupProgress;
 
+                TaskPreparation = false;
                 await Task.Run(() => RecoverBackup(progress, Item, Destination));
                 completed = true;
             }
@@ -657,7 +665,7 @@ namespace File_Master_project
 
         public void DeleteBackups()
         {
-            if(Backups != null)
+            if(Backups != null && IsAvailable)
             {
                 foreach (var Item in Backups)
                 {
@@ -699,22 +707,43 @@ namespace File_Master_project
             {
                 try
                 {
-                    MoveBackupTask(destination);                   
+                    MoveBackupTask(destination);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    if(ex.Message != "The new location already contains an item with the same name!")
+                    {
+                        MessageBox.Show("A fatal error was encountered while trying to change the task destination!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        throw;
+                    }
                     MessageBox.Show("Unable to move the backup to the new locaiton!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
 
             if(Label != label)
             {
+                string oldLabel = Label;
                 try
                 {
                     RenameTaskLabel(label);
                 }
                 catch (Exception)
                 {
+                    try
+                    {
+                        string oldRoot = RootDirectoty;
+                        Label = oldLabel;
+                        foreach (var item in Backups)
+                        {
+                            item.UpdateRoot(RootDirectoty);
+                        }
+                        if (!Directory.Exists(RootDirectoty)) { Directory.Move(oldRoot, RootDirectoty); StoreBackupInfo(); }
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("A fatal error was encountered while trying to rename the task label!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        throw;
+                    }
                     MessageBox.Show("Unable to change the task label!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -1188,7 +1217,16 @@ namespace File_Master_project
             {
                 if (Drive.IsReady)
                 {
-                    string Serial = GetHardDiskSerialNumber($"{Drive.Name[0]}");
+                    string Serial;
+                    try
+                    {
+                        Serial = GetHardDiskSerialNumber($"{Drive.Name[0]}");
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+
                     if (NewAllDriveInfo.ContainsKey(Serial)) // delete drives with conflicting serials
                     {
                         NewAllDriveInfo.Remove(Serial);

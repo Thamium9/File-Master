@@ -67,6 +67,7 @@ in 0.8:
 + allow custom interval for backuptask
 + file browser menu implementation
 - hide manage backup task menu when no task is selected
+- show overall bakcup statistics in restore backups menu
 + available drives update in every 5 seconds
 - working automated backup process
 - delete backups option when removing backup drives
@@ -76,6 +77,7 @@ in 0.8:
 - global settings menu implementation
 - make the forms foolproof
 - integrity check for backup files (items and their size must match)
+- remove the root part from the path information of files and folders in backups
 + fix: drive name is not showing if it is default(example : Local Disk (C:))
 + fix: the backup drives menu excludes underscores from drive names
 + fix: drive name is not showing correctly if the drive is unavailable
@@ -83,6 +85,13 @@ in 0.8:
 + fix: the backup task list lists folders as files if the source is missing
 + fix: the 'CopyConfigToCorruptedFolder()' - function moved istead of coping the config file
 + fix: the Delete Task button won't change back if the deletion fails
++ fix: crash if the backup task label contains any special characters
++ fix: in the add new task interface some fields won't reset properly to their default values
++ fix: the progress bar resets after completion before the user closes the dialog box
++ fix: if the selected destination path is a drive root, the displayed destination path will contain a double \\ character
++ fix: cannot delete backuptask if it is unavailable
++ fix: backuptask buttons won't get disabled when the item becomes unavailable during runtime
++ fix: crash sometimes when the program cannot get the HardDiskSerialNumber
 - fix: notification window for deleting backups can be opened multiple times
 - fix: application can be opened multiple times
 - test for bugs before release

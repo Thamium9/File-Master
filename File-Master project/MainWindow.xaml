@@ -39,7 +39,7 @@
         <!--#endregion-->
 
         <!--#region Backup -->
-        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865" Visibility="Hidden">
+        <Grid x:Name="Backup_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865">
             <GroupBox Header="Manage selected item" HorizontalAlignment="Right" Height="288" Margin="0,0,35,35" VerticalAlignment="Bottom" Width="800" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB" FontSize="14">
                 <Grid x:Name="ManageBackupItem_grid" HorizontalAlignment="Left" Height="264" VerticalAlignment="Top" Width="790" Margin="0,0,0,0" Visibility="Visible">
                     <Grid x:Name="StoredBacups_grid" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0" Width="790" Height="264" Visibility="Hidden">
@@ -92,7 +92,6 @@
                         <Button x:Name="Restorefiles_button" Content="Restore files" HorizontalAlignment="Right" Margin="0,160,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" Click="Restorefiles_button_Click" IsEnabled="False"/>
                         <Button x:Name="Manualsave_button" Content="Manual save" HorizontalAlignment="Right" Margin="0,212,22,0" VerticalAlignment="Top" Width="120" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="34" FontWeight="Bold" FontSize="14" FontStyle="Italic" Opacity="0.5" IsEnabled="False" Click="Manualsave_button_Click"/>
                         <Image x:Name="Settings_image" HorizontalAlignment="Right" Height="24" Margin="0,115,147,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-settings-48.png" Visibility="Hidden"/>
-                        <Image x:Name="Save_image" HorizontalAlignment="Right" Height="24" Margin="0,217,147,0" VerticalAlignment="Top" Width="24" RenderTransformOrigin="2.44,0.576" Source="Icons/icons8-save(grey-dark).png" Opacity="0.5" Visibility="Hidden"/>
                         <TextBox x:Name="ItemPath_textbox" HorizontalAlignment="Left" Height="44" Margin="28,39,282,0" VerticalAlignment="Top" Width="480" Background="#FF151515" Text="Select a source folder!" Foreground="#FFE29A06" VerticalContentAlignment="Center" Padding="5,0,0,0" FontWeight="Bold" IsReadOnlyCaretVisible="True" IsReadOnly="True"/>
                         <Button x:Name="ViewSelectedPath_button" Content="View" HorizontalAlignment="Left" Margin="508,40,0,0" VerticalAlignment="Top" Width="45" Background="#FFACACAC" BorderBrush="#FF474747" BorderThickness="2" Height="43" FontSize="14" Opacity="0.5" IsEnabled="False" FontStyle="Italic" Click="ViewSelectedPath_button_Click"/>
                         <Label x:Name="NumberOfBackups_label" Content="Current number of backups:" HorizontalAlignment="Left" Margin="28,149,512,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" IsEnabled="False" FontWeight="Bold" Width="250"/>
@@ -116,7 +115,7 @@
         </Grid>
 
         <!--#region Submenu1 -->
-        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865">
+        <Grid x:Name="Backupsubmenu1_grid" HorizontalAlignment="Left" Height="670" Margin="160,0,0,0" VerticalAlignment="Top" Width="865" Visibility="Hidden">
             <GroupBox Header="Settings" HorizontalAlignment="Left" Height="334" Margin="21,111,0,0" VerticalAlignment="Top" Width="799" Foreground="#FFACACAC" BorderThickness="1" BorderBrush="#FFBBBBBB"/>
             <Grid x:Name="Backupsubmenu1_settings_grid" HorizontalAlignment="Left" Height="319" VerticalAlignment="Top" Width="799"  Margin="21,126,0,0">
                 <Label Content="Method:" HorizontalAlignment="Left" Margin="30,45,0,0" VerticalAlignment="Top" Foreground="#FFACACAC" FontSize="14" RenderTransformOrigin="0.647,1.625"/>

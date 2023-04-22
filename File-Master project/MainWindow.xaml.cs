@@ -236,11 +236,28 @@ namespace File_Master_project
 
         private async void DeleteTask_button_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to delete this task? \nIt will be deleted permanently along with the associated backups!", "Deletion", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
+            BackupTask Item = GetSelectedBackupTask();
+            bool delete = false;
+            if (Item.IsAvailable)
+            {
+                if (MessageBox.Show("Are you sure you want to delete this task? \nIt will be deleted permanently along with the associated backups!", "Deletion",
+                    MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
+                {
+                    delete = true;
+                }
+            }
+            else
+            {
+                if(MessageBox.Show("The task configuration file is unreachable! \nIf you delete this task, the task files will not be deleted, including the stored backups!\nDo you want to proceed anyway? \n", "Deletion",
+                    MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel).Equals(MessageBoxResult.Yes))
+                {
+                    delete = true;
+                }
+            }
+            if(delete)
             {
                 try
                 {
-                    BackupTask Item = GetSelectedBackupTask();
                     var Deletion = Task.Run(() => { Item.BackupDriveOfItem.RemoveBackupTask(Item); });
                     DeleteTask_button.Content = "Deleting task";
                     await Deletion;
@@ -255,7 +272,6 @@ namespace File_Master_project
                     DeleteTask_button.Content = "Delete task";
                     //LOG
                 }
-
             }
         }
 
@@ -378,6 +394,7 @@ namespace File_Master_project
             BackupManaging_grid.Visibility = Visibility.Visible;
             BackupProgress_grid.Visibility = Visibility.Hidden;
             StoredBacups_grid.Visibility = Visibility.Hidden;
+            Update_Backupmenu();
         }
 
         private void DeleteAllBackup_button_Click(object sender, RoutedEventArgs e)
@@ -513,17 +530,25 @@ namespace File_Master_project
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
-                    ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
-                    BackupDrive Target = (BackupDrive)CI.Tag;
-                    Target.AddBackupTask(CreateBackupitem());
-                    BackupProcess.Upload_BackupInfo();
-                    #region UI changes
-                    Reset_Backupmenu();
-                    Reset_BackupSubmenu1();
-                    HideAllMenu();
-                    Backup_grid.Visibility = Visibility.Visible;
-                    Menu = "Backup";
-                    #endregion
+                    try
+                    {
+                        ComboBoxItem CI = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
+                        BackupDrive Target = (BackupDrive)CI.Tag;
+                        Target.AddBackupTask(CreateBackupitem());
+                        BackupProcess.Upload_BackupInfo();
+                        #region UI changes
+                        Reset_Backupmenu();
+                        Reset_BackupSubmenu1();
+                        HideAllMenu();
+                        Backup_grid.Visibility = Visibility.Visible;
+                        Menu = "Backup";
+                        #endregion
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("A fatal error was encountered while trying to create the backup task!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        throw;
+                    }
                 }
             }
         }
@@ -611,6 +636,10 @@ namespace File_Master_project
             if (Sourceinput_textbox.Text == "" || Destinationinput_textbox.Text == "" || Intervalselection_combobox.SelectedIndex == -1 || Target == null)
             {
                 MessageBox.Show("You have to provide more information!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            else if (BackupTaskLabel_textbox.Text.Any(System.IO.Path.GetInvalidFileNameChars().Contains))
+            {
+                MessageBox.Show($"The task label contains prohibited characters!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             else if (!(File.Exists(Sourceinput_textbox.Text) || Directory.Exists(Sourceinput_textbox.Text)))
             {
@@ -702,8 +731,10 @@ namespace File_Master_project
         #region Menu control
         private void Reset_BackupSubmenu1()
         {
+            BackupTaskLabel_textbox.Text = "";
             Sourceinput_textbox.Text = "";
             Destinationinput_textbox.Text = "";
+            NumberOfCycles_textbox.Text = "1";
             Intervalselection_combobox.SelectedIndex = 2;
             BackupInterval_textbox.Text = "1";
             AvailableFreeSpaceBD_label.Content = "-";
@@ -711,6 +742,7 @@ namespace File_Master_project
             BrowseForFile_checkbox.IsChecked = false;
             Backupdriveselect_combobox_Reset();
 
+            BackupTaskLabel_textbox.IsEnabled = true;
             Destinationinput_textbox.IsEnabled = true;
             Sourceinput_textbox.IsEnabled = true;
             Intervalselection_combobox.Visibility = Visibility.Visible;
@@ -1150,17 +1182,20 @@ namespace File_Master_project
         #region Menu control
         public void Reset_Backupmenu()
         {
-            Backuptask_listbox.SelectedIndex = -1;         
+            Backuptask_listbox.SelectedIndex = -1;
+            ViewPathSelection_Combobox.SelectedIndex = 0;
             ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
             ItemPath_textbox.Text = "Select a source folder!";
-            Interval_label.Content = "Save interval: ";
-            NumberOfBackups_label.Content = $"Current number of backups: ";
-            Method_label.Content = "Method: ";
-            Status_label.Content = "Status info: No items are selected!";
-            Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
-            OnlySaveOnChange_label.Content = "Only save if data is modified: -";
-            Lastsaved_label.Content = "Last saved:";
-            Backupfilesize_label.Content = "Backup file size: ";
+            Reset_BackupTaskManagementInfo();
+            BackupProgress_grid.Visibility = Visibility.Hidden;
+            StoredBacups_grid.Visibility = Visibility.Hidden;
+            BackupManaging_grid.Visibility = Visibility.Visible;
+            Display_Backups();
+        }
+
+        public void Reset_BackupTaskManagementInfo()
+        {
+            #region Buttons
             DeleteTask_button.IsEnabled = false;
             DeleteTask_button.Opacity = 0.5;
             Restorefiles_button.IsEnabled = false;
@@ -1171,23 +1206,30 @@ namespace File_Master_project
             Manualsave_button.IsEnabled = false;
             Manualsave_button.Opacity = 0.5;
             Manualsave_button.Content = "Manual save";
-            Save_image.Opacity = 0.5;
             Disablebackup_button.Visibility = Visibility.Hidden;
             Enablebackup_button.IsEnabled = false;
             Enablebackup_button.Visibility = Visibility.Visible;
             Enablebackup_button.Opacity = 0.5;
             ViewSelectedPath_button.IsEnabled = false;
             ViewSelectedPath_button.Opacity = 0.5;
-            ViewPathSelection_Combobox.SelectedIndex = 0;
-            BackupProgress_grid.Visibility = Visibility.Hidden;
-            StoredBacups_grid.Visibility = Visibility.Hidden;
-            BackupManaging_grid.Visibility = Visibility.Visible;
-            Display_Backups();
+            #endregion
+
+            #region Labels
+            Interval_label.Content = "Save interval: ";
+            NumberOfBackups_label.Content = $"Current number of backups: ";
+            Method_label.Content = "Method: ";
+            Status_label.Content = "Status info: No items are selected!";
+            Status_label.Foreground = new SolidColorBrush(Color.FromRgb(226, 154, 6));
+            OnlySaveOnChange_label.Content = "Only save if data is modified: -";
+            Lastsaved_label.Content = "Last saved:";
+            Backupfilesize_label.Content = "Backup file size: ";
+            #endregion
         }
 
         public void Update_Backupmenu()
         {
-            if(Backuptask_listbox.SelectedIndex!=-1)
+            Reset_BackupTaskManagementInfo();
+            if (Backuptask_listbox.SelectedIndex!=-1)
             {
                 BackupTask Item = GetSelectedBackupTask();
                 Display_Backups();
@@ -1268,7 +1310,7 @@ namespace File_Master_project
                 BackupProgress_grid.Visibility = Visibility.Visible;
                 BackupManaging_grid.Visibility = Visibility.Hidden;
                 StoredBacups_grid.Visibility = Visibility.Hidden;
-                BackupProcess.DisplayBackupProgress(Selected);
+                if(Selected.TaskPreparation) BackupProcess.DisplayBackupProgress(Selected);
             }
             else if (StoredBacups_grid.Visibility == Visibility.Visible && Selected.IsAvailable)
             {
@@ -1433,13 +1475,22 @@ namespace File_Master_project
                 ItemPath_textbox.Foreground = new SolidColorBrush(Color.FromRgb(0, 230, 120));
                 if (ViewPathSelection_Combobox.SelectedIndex == 0)
                 {
-                    ItemPath_textbox.Text = Selected.RootDirectoty;
+                    string text = Selected.RootDirectoty;
+                    if (ItemPath_textbox.Text != text) ItemPath_textbox.Text = text; //only updates value if it changed
                     dest = true;
                 }
                 else
                 {
-                    if (Selected.IsAvailable) ItemPath_textbox.Text = Selected.Source.FullName;
-                    else ItemPath_textbox.Text = "The source is unknown!";
+                    if (Selected.IsAvailable)
+                    {
+                        string text = Selected.Source.FullName;
+                        if (ItemPath_textbox.Text != text) ItemPath_textbox.Text = text; //only updates value if it changed
+                    }
+                    else
+                    {
+                        string text = "The source is unknown!";
+                        if (ItemPath_textbox.Text != text) ItemPath_textbox.Text = text; //only updates value if it changed
+                    }
                 }
 
                 if(!Selected.IsAvailable)
