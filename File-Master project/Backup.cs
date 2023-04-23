@@ -294,7 +294,7 @@ namespace File_Master_project
             get
             {
                 DiskSpace Size = new DiskSpace(0);
-                if(IsAvailable)
+                if(IsAvailable && Backups != null)
                 {
                     foreach (var backup in Backups)
                     {
@@ -765,12 +765,19 @@ namespace File_Master_project
             #endregion
 
             #region UpdateBackups
-            if(IsAvailable)
+            try
             {
-                bool changed = false;
-                foreach (var Backup in Backups) { if (Backup.UpdateDriveLetter(DriveLetter)) changed = true; }
-                if (changed) StoreBackupInfo();
+                if (IsAvailable)
+                {
+                    bool changed = false;
+                    foreach (var Backup in Backups) { if (Backup.UpdateDriveLetter(DriveLetter)) changed = true; }
+                    if (changed) StoreBackupInfo();
+                }
             }
+            catch (Exception ex)
+            {
+                //LOG
+            }           
             #endregion
         }
 
@@ -821,6 +828,7 @@ namespace File_Master_project
                 {
                     string data = File.ReadAllText(path);
                     Backups = JsonConvert.DeserializeObject<List<Backup>>(data);
+                    if(Backups == null) Backups = new List<Backup>(); 
                 }
                 catch (Exception)
                 {
@@ -916,14 +924,23 @@ namespace File_Master_project
 
         public void Update()
         {
-            ValidityCheck();
-            if (IsAvailable)
+            try
             {
-                if (SizeLimitCheck(out double limit))
+                ValidityCheck();
+                if (IsAvailable)
                 {
-                    SizeLimit.Gigabytes = limit;
+                    if (SizeLimitCheck(out double limit))
+                    {
+                        SizeLimit.Gigabytes = limit;
+                    }
+                    LimitCheck();
                 }
-                LimitCheck();
+            }
+            catch (Exception ex)
+            {
+                //LOG
+                IsAvailable = false;
+                IsOutOfSpace = true;
             }
         }
 
@@ -1205,6 +1222,7 @@ namespace File_Master_project
             }
             else
             {
+                Directory.CreateDirectory(@".\config");
                 File.WriteAllText(filepath, BackupInfo);
             }
         }
@@ -1220,7 +1238,7 @@ namespace File_Master_project
                     string Serial;
                     try
                     {
-                        Serial = GetHardDiskSerialNumber($"{Drive.Name[0]}");
+                        Serial = GetHardDiskSerialNumber($"{ Drive.Name[0]}");
                     }
                     catch (Exception)
                     {

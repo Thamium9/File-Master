@@ -8,7 +8,7 @@
     "BackupTasks": [
       {
         "Label": "BACKUP_Notepad++",
-        "DestinationPath": "K:\\Backups\\TEMP",
+        "DestinationPath": "K:\\Backups",
         "IsEnabled": true
       },
       {
@@ -22,7 +22,7 @@
         "IsEnabled": true
       },
       {
-        "Label": "Temp",
+        "Label": "Downloads_Backup",
         "DestinationPath": "K:\\",
         "IsEnabled": false
       }

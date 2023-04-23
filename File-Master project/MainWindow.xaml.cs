@@ -69,7 +69,7 @@ namespace File_Master_project
 
             public Settings()
             {
-                if (!File.Exists(Path)) File.Create(Path);
+                //if (!File.Exists(Path)) File.Create(Path);
             }
 
             public void Load_Settings()
@@ -613,7 +613,7 @@ namespace File_Master_project
                     BackupProcess.Upload_BackupInfo();
                     #region UI changes
                     HideAllMenu();
-                    Reset_Backupmenu();
+                    Update_Backupmenu();
                     Reset_BackupSubmenu1();
                     Backup_grid.Visibility = Visibility.Visible;
                     Menu = "Backup";
@@ -648,6 +648,10 @@ namespace File_Master_project
             else if (new DirectoryInfo(Destinationinput_textbox.Text).Root.FullName != $@"{Target.GetDriveLetter()}:\")
             {
                 MessageBox.Show("The destination is not located in the selected backup drive!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            else if (Directory.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}") || File.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}"))
+            {
+                MessageBox.Show("The destination already contains an item with the same name as the task label!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             else if (NumberOfCycles < 0)
             {
@@ -710,7 +714,7 @@ namespace File_Master_project
             HideAllMenu();
             Backup_grid.Visibility = Visibility.Visible;
             Menu = "Backup";
-            Reset_Backupmenu();
+            Update_Backupmenu();
             Reset_BackupSubmenu1();
         }
         #endregion
@@ -1189,7 +1193,8 @@ namespace File_Master_project
             Reset_BackupTaskManagementInfo();
             BackupProgress_grid.Visibility = Visibility.Hidden;
             StoredBacups_grid.Visibility = Visibility.Hidden;
-            BackupManaging_grid.Visibility = Visibility.Visible;
+            BackupManaging_grid.Visibility = Visibility.Hidden;
+            NoSelectedTask_grid.Visibility = Visibility.Visible;
             Display_Backups();
         }
 
@@ -1290,7 +1295,7 @@ namespace File_Master_project
                 {
                     Content = "Go to 'Manage backup drives' to allow\n    backup operations on local drives",
                     FontWeight = FontWeights.Normal,
-                    FontSize = 15,
+                    FontSize = 20,
                     Opacity = 0.5,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -1305,6 +1310,7 @@ namespace File_Master_project
 
         private void Display_BackupTask(BackupTask Selected)
         {
+            NoSelectedTask_grid.Visibility = Visibility.Hidden;
             if(Selected.ActiveTask)
             {
                 BackupProgress_grid.Visibility = Visibility.Visible;
@@ -1557,6 +1563,7 @@ namespace File_Master_project
             StoredBacups_grid.Visibility = Visibility.Visible;
             StoredBackups_stackpanel.Children.Clear();
 
+            #region StoredBackups
             if (Selected.Backups.Count > 0)
             {
                 foreach (var Backup in Selected.Backups.Reverse<Backup>())
@@ -1718,6 +1725,15 @@ namespace File_Master_project
                 dp.Children.Add(label);
                 StoredBackups_stackpanel.Children.Add(dp);
             }
+            #endregion
+
+            SelectedTotalBackupSpace_label.Content = $"Total backup space: {Selected.BackupsSize.Humanize()}";
+            int numberofbackups = 0;
+            if(Selected.Backups != null) numberofbackups = Selected.Backups.Count;
+            SelectedNumberOfBackups_label.Content = $"Number of backups: {numberofbackups}";
+            int numberofallowed = 0;
+            if (Selected.IsAvailable) numberofallowed = Selected.Configuration.NumberOfCycles;
+            SelectedNumberOfAllowed_label.Content = $"Number of allowed: {numberofallowed}";
         }
 
         #region Process data
