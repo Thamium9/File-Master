@@ -95,6 +95,7 @@ in 0.8:
 + fix: crash sometimes when the driveinformation returns null during the drive Update() event (unpredictable)
 + fix: the user can specify a task label that is already present as a file/folder in the destination directory
 + fix: crash when the config folder does not exist
++ fix: backup process fails when a folder is created in the task folder with the same name as the next backup
 - fix: notification window for deleting backups can be opened multiple times
 - fix: application can be opened multiple times
 - test for bugs before release

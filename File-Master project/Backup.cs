@@ -420,6 +420,11 @@ namespace File_Master_project
                     }
                     else id = GetNextBackupID();
                     string BackupRoot = $@"{RootDirectoty}\{id} - BACKUP";
+                    if (Directory.Exists(BackupRoot)) 
+                    { 
+                        await Task.Run(() => Directory.Delete(BackupRoot, true)); 
+                        //LOG
+                    }
 
                     TaskPreparation = false;
                     Backup NewBackup = await Task.Run(() => CreateBackup(progress, Source, BackupRoot));

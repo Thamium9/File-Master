@@ -104,7 +104,6 @@ namespace File_Master_project
         #endregion
 
         #region Options (System)
-        private bool InDevelopment = true;
         private bool Hasprivileges = false;
         private bool Hasadminrights = false;
         private string Menu;
@@ -120,7 +119,7 @@ namespace File_Master_project
 
         private void Main_window_Loaded(object sender, RoutedEventArgs e)
         {
-            bool debug = true;
+            bool debug = false;
             try
             {
                 #region Window visibility on startup
@@ -129,31 +128,27 @@ namespace File_Master_project
                 else Main_window.WindowState = WindowState.Normal;
                 #endregion
 
-                Settings Usersettings = new Settings();
-                Usersettings.Shortsource = false;
-
-                if (InDevelopment && !debug)
-                {
-                    Unstable_Warning();
-                }
                 HideAllMenu();
                 Backup_grid.Visibility = Visibility.Visible;
                 Main_window.Activate();
                 Menu = "Backup";
 
                 #region debug
-                /*
-                List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
-                Backupdrive Drive = new Backupdrive();
-                Interval SI = new Interval("60 min");
-                Interval RWT = new Interval("10 min");
+                if(debug)
+                {
+                    /*
+                    List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
+                    Backupdrive Drive = new Backupdrive();
+                    Interval SI = new Interval("60 min");
+                    Interval RWT = new Interval("10 min");
 
-                //Backupsettings_Local config = new Backupsettings_Local(true, 1, SI, true, false, false, false, true, false, 0, RWT, 3, true, false);
-                //Backupitem Item = new Backupitem(0,"source path", "destination path", CurrentTime, true, config);
-                Drive.DriveID = "02466E75";
-                //Drive.AddBackupitem(Item);
-                DataBackupdrives.Add(Drive);
-                Upload_Backupinfo(DataBackupdrives);*/
+                    //Backupsettings_Local config = new Backupsettings_Local(true, 1, SI, true, false, false, false, true, false, 0, RWT, 3, true, false);
+                    //Backupitem Item = new Backupitem(0,"source path", "destination path", CurrentTime, true, config);
+                    Drive.DriveID = "02466E75";
+                    //Drive.AddBackupitem(Item);
+                    DataBackupdrives.Add(Drive);
+                    Upload_Backupinfo(DataBackupdrives);*/
+                }
                 #endregion
 
                 Reset_Backupmenu();
@@ -177,8 +172,8 @@ namespace File_Master_project
 
         private bool Warning_Save()
         {
-            return MessageBox.Show("This is an unstable version of the program! \nIt might cause some issues! \nDo you want to save anyway?", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Exclamation).Equals(MessageBoxResult.Yes);
-            //return true; 
+            //return MessageBox.Show("This is an unstable version of the program! \nIt might cause some issues! \nDo you want to save anyway?", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Exclamation).Equals(MessageBoxResult.Yes);
+            return true; 
         }
         #endregion
 
@@ -2001,7 +1996,7 @@ namespace File_Master_project
 
         private void Main_window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (!MessageBox.Show("Are you sure you want to close the program?\nAll processes will be halted!", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
+            if (!MessageBox.Show("Are you sure you want to close the program?", "Close", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes).Equals(MessageBoxResult.Yes))
             {
                 e.Cancel = true;
             }

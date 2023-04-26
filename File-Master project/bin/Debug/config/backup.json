@@ -8,22 +8,22 @@
     "BackupTasks": [
       {
         "Label": "BACKUP_Notepad++",
-        "DestinationPath": "K:\\Backups",
+        "DestinationPath": "D:\\Backups",
         "IsEnabled": true
       },
       {
         "Label": "BACKUP_Wallpapers",
-        "DestinationPath": "K:\\Backups",
+        "DestinationPath": "D:\\Backups",
         "IsEnabled": true
       },
       {
         "Label": "Screenshot_Backup",
-        "DestinationPath": "K:\\Backups",
+        "DestinationPath": "D:\\Backups",
         "IsEnabled": true
       },
       {
         "Label": "Downloads_Backup",
-        "DestinationPath": "K:\\",
+        "DestinationPath": "D:\\",
         "IsEnabled": false
       }
     ]
