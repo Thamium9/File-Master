@@ -521,7 +521,7 @@ namespace File_Master_project
         #region Apply button
         private void Newitemapply_button_Click(object sender, RoutedEventArgs e)//adds the new item to the system
         {
-            if (CheckInfo())
+            if (CheckInfo(false))
             {
                 if (MessageBox.Show("Are you sure you want to add this item to the list?", "Apply", MessageBoxButton.YesNo, MessageBoxImage.None).Equals(MessageBoxResult.Yes))
                 {
@@ -550,7 +550,7 @@ namespace File_Master_project
 
         private void Updateitemapply_button_Click(object sender, RoutedEventArgs e)
         {
-            if (CheckInfo())
+            if (CheckInfo(true))
             {
                 BackupTask SelectedItem = GetSelectedBackupTask();
                 BackupTaskConfiguration Settings = CreateBackupConfiguration();
@@ -617,7 +617,7 @@ namespace File_Master_project
             }
         }
 
-        private bool CheckInfo()
+        private bool CheckInfo(bool modify)
         {
             ComboBoxItem Selection = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
             int NumberOfCycles, BackupInterval;
@@ -644,7 +644,7 @@ namespace File_Master_project
             {
                 MessageBox.Show("The destination is not located in the selected backup drive!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            else if (Directory.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}") || File.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}"))
+            else if (!modify && (Directory.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}") || File.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}")))
             {
                 MessageBox.Show("The destination already contains an item with the same name as the task label!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }

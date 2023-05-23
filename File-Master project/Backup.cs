@@ -323,7 +323,7 @@ namespace File_Master_project
             LoadBackupInfo();
             ActiveTask = false;
             TaskPreparation = false;
-            //StartTimer();
+            InitiateTimer();
         }
 
         public BackupTask(string destinationPath, string label, BackupTaskConfiguration configuration)
@@ -337,7 +337,7 @@ namespace File_Master_project
             StoreBackupConfig();
             ActiveTask = false;
             TaskPreparation = false;
-            //StartTimer();
+            InitiateTimer();
         }
 
         #region Get data
@@ -639,6 +639,7 @@ namespace File_Master_project
         private bool CheckPermission(bool isManual)
         {
             bool result = true;
+            if(!Source.Exists) result = false;
             if (!isManual)
             {
                 if (!IsEnabled) result = false;
@@ -656,15 +657,20 @@ namespace File_Master_project
             StartTimer();
         }
 
+        private void InitiateTimer()
+        {
+            Backuptimer.Elapsed += Backuptimer_Elapsed;
+            Backuptimer.AutoReset = false;
+            StartTimer();
+        }
+        
         private void StartTimer()
         {
             DateTime NextCall;
             if (Configuration != null) NextCall = LastSaved.AddTicks(Configuration.CycleInterval.Convert_to_ticks()); //this is the date when the next backup will happen
             else NextCall = DateTime.Now.AddSeconds(30); // if the configuration file is unavailable, the elapes event will happen once every 30 seconds
             TimeSpan diff = (NextCall - DateTime.Now);
-            Backuptimer.Interval = Math.Min(Math.Max(10000, diff.Ticks / 10000), 2147483647); //the interval cannot be less than a second (or in this case 10000000 ticks or 1000 miliseconds)  AND  the interval cannot be more than 2147483647 miliseconds
-            Backuptimer.Elapsed += Backuptimer_Elapsed;
-            Backuptimer.AutoReset = false;
+            Backuptimer.Interval = Math.Min(Math.Max(10000, diff.Ticks / 10000), 2147483647); //the interval cannot be less than 10 seconds (or in this case 10000 miliseconds)  AND  the interval cannot be more than 2147483647 miliseconds
             Backuptimer.Start();
         }
 

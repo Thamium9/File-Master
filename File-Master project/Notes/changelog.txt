@@ -96,6 +96,10 @@ in 0.8:
 + fix: the user can specify a task label that is already present as a file/folder in the destination directory
 + fix: crash when the config folder does not exist
 + fix: backup process fails when a folder is created in the task folder with the same name as the next backup
++ fix: crash due to timer elapses exponentially and running out of system memory
++ fix: cannot modify task due to faulty infocheck (error message: The destination already contains an item with the same name as the task label!)
++ fix: backup initiates even when the source is missing, which causes backup failure
+- fix: cursor keeps disappearing from the input field in the manage backup drives menu
 - fix: notification window for deleting backups can be opened multiple times
 - fix: application can be opened multiple times
 - test for bugs before release
