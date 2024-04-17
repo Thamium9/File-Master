@@ -69,13 +69,13 @@ in 0.8:
 + hide manage backup task menu when no task is selected
 + show overall bakcup statistics in restore backups menu
 + available drives update in every 5 seconds
-- working automated backup process
++ working automated backup process
 - delete backups option when removing backup drives
 - remove canncelled operation files
 - application language settings
 - compress backup files implementation
 - global settings menu implementation
-- make the forms foolproof
++ make the forms foolproof
 - integrity check for backup files (items and their size must match)
 - remove the root part from the path information of files and folders in backups
 + fix: drive name is not showing if it is default(example : Local Disk (C:))
@@ -99,6 +99,11 @@ in 0.8:
 + fix: crash due to timer elapses exponentially and running out of system memory
 + fix: cannot modify task due to faulty infocheck (error message: The destination already contains an item with the same name as the task label!)
 + fix: backup initiates even when the source is missing, which causes backup failure
++ fix: cannot create backup with default name
++ fix: cannot cancel operation during the folder creation phase
++ fix: the backup root folder's name contains the task label when the path of the source item's parent folder ends with '\'-character (e.g. -> D:\Dokumentumok)
+- fix: changeing the backup settings won't take effect until the app restarts
+- fix: backup failure when an item path is too long 
 - fix: cursor keeps disappearing from the input field in the manage backup drives menu
 - fix: notification window for deleting backups can be opened multiple times
 - fix: application can be opened multiple times
@@ -121,6 +126,8 @@ in 0.9:
 - import stored backups into the program (search for backups in folder)
 - only grab the window from the top section(toolbar)
 - add option to store backup task information globally too (to have the data when the destination is unreachable)
+- add filter option for folder backups (exclusion of specified filenames/extentions)
+- implement file checksum tests (for stored backup integration and for detecting changes in files)
 - test for bugs before release
 
 in the future:

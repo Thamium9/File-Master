@@ -30,6 +30,14 @@ namespace File_Master_project
     /// </summary>
     public partial class MainWindow : Window
     {
+        public struct data
+        {
+            public string Info;
+        }
+
+        public data bindtest = new data { Info = "test" };
+        public string Info = "test123";
+
         #region Classes
 
         class FileExplorerItem
@@ -134,7 +142,7 @@ namespace File_Master_project
                 Menu = "Backup";
 
                 #region debug
-                if(debug)
+                if (debug)
                 {
                     /*
                     List<Backupdrive> DataBackupdrives = new List<Backupdrive>();
@@ -153,6 +161,9 @@ namespace File_Master_project
 
                 Reset_Backupmenu();
                 Display_Backups();
+
+                //Drives_Itemscontrol.ItemsSource = BackupProcess.AllDriveInfo.Values;
+                //BackupProcess.AllDriveInfo[0].DriveInformation.VolumeLabel;
             }
             catch (Exception ex)
             {
@@ -620,6 +631,8 @@ namespace File_Master_project
         private bool CheckInfo(bool modify)
         {
             ComboBoxItem Selection = (ComboBoxItem)Backupdriveselect_combobox.SelectedItem;
+            string Label = BackupTaskLabel_textbox.Text;
+            if (Label == "") Label = $"BACKUP_{new FileInfo(Sourceinput_textbox.Text).Name}";
             int NumberOfCycles, BackupInterval;
             if (!int.TryParse(NumberOfCycles_textbox.Text, out NumberOfCycles)) NumberOfCycles = -1;
             if (!int.TryParse(BackupInterval_textbox.Text, out BackupInterval)) BackupInterval = -1;
@@ -632,7 +645,7 @@ namespace File_Master_project
             {
                 MessageBox.Show("You have to provide more information!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            else if (BackupTaskLabel_textbox.Text.Any(System.IO.Path.GetInvalidFileNameChars().Contains))
+            else if (Label.Any(System.IO.Path.GetInvalidFileNameChars().Contains))
             {
                 MessageBox.Show($"The task label contains prohibited characters!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -644,7 +657,7 @@ namespace File_Master_project
             {
                 MessageBox.Show("The destination is not located in the selected backup drive!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            else if (!modify && (Directory.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}") || File.Exists($@"{Destinationinput_textbox.Text}\{BackupTaskLabel_textbox.Text}")))
+            else if (!modify && (Directory.Exists($@"{Destinationinput_textbox.Text}\{Label}") || File.Exists($@"{Destinationinput_textbox.Text}\{Label}")))
             {
                 MessageBox.Show("The destination already contains an item with the same name as the task label!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -856,15 +869,15 @@ namespace File_Master_project
             StackPanel Drives = new StackPanel();
             Drives.HorizontalAlignment = HorizontalAlignment.Stretch;
             #region Available label
-            Label Unavailable = new Label();
-            Unavailable.Content = "Available drives: ";
-            Unavailable.Foreground = Brushes.Gray;
-            Unavailable.FontSize = 15;
-            Unavailable.FontWeight = FontWeights.Bold;
-            Unavailable.VerticalAlignment = VerticalAlignment.Center;
-            Unavailable.HorizontalAlignment = HorizontalAlignment.Left;
-            Unavailable.Margin = new Thickness(5, 40, 0, 5);
-            Drives.Children.Add(Unavailable);
+            Label Available = new Label();
+            Available.Content = "Available drives: ";
+            Available.Foreground = Brushes.Gray;
+            Available.FontSize = 15;
+            Available.FontWeight = FontWeights.Bold;
+            Available.VerticalAlignment = VerticalAlignment.Center;
+            Available.HorizontalAlignment = HorizontalAlignment.Left;
+            Available.Margin = new Thickness(5, 40, 0, 5);
+            Drives.Children.Add(Available);
             #endregion
             foreach (var ThisDrive in BackupProcess.AllDriveInfo)
             {
@@ -1147,6 +1160,7 @@ namespace File_Master_project
         #region Menu control
         public async Task UpdateBackupSubmenu2_Async()// data is for transfering new drive size limit
         {
+            //return;
             StackPanel Drives = new StackPanel();
             #region Loading message
             ListBoxItem Message = new ListBoxItem();
@@ -1737,7 +1751,8 @@ namespace File_Master_project
         {
             ListBoxItem LBI = new ListBoxItem();
             LBI.Opacity = 0.8;
-            LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Label} - ({Item.BackupsSize.Humanize()})";
+            //LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Label} - ({Item.BackupsSize.Humanize()})";
+            LBI.Content = $"◍ {Item.Label} - ({Item.BackupsSize.Humanize()})";
             LBI.Tag = Item;
             LBI.Padding = new Thickness(15, 0, 0, 0);
 
@@ -1775,7 +1790,8 @@ namespace File_Master_project
             if (Item.ActiveTask)
             {
                 LBI.Foreground = new SolidColorBrush(Color.FromRgb(0, 145, 250));
-                LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Source.FullName} - (saving...)";
+                //LBI.Content = $"◍ {Item.GetBackupType()}: {Item.Label} - (saving...)";
+                LBI.Content = $"◍ {Item.Label} - (saving...)";
             }
             #endregion
 
@@ -1792,7 +1808,8 @@ namespace File_Master_project
             #endregion
 
             #region Drivespace + Drivename
-            drivename.Text = $"Backup drive: {Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+            //drivename.Text = $"Backup drive: {Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
+            drivename.Text = $"{Drive.GetVolumeLabel()} ({Drive.GetDriveLetter()}:)";
             if (Drive.SizeLimit.Gigabytes == 0) drivespace.Text = $"{Drive.GetBackupSize().Humanize()}";
             else drivespace.Text = $"{Drive.GetBackupSize().Humanize()} / {Drive.SizeLimit.Gigabytes} GB";
             Drive_dockpanel.Children.Add(drivename);

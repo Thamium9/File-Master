@@ -85,8 +85,8 @@ namespace File_Master_project
             Item = item;
             Recovery = recovery;
             Preparation = true;
-            AllFiles = 0;
-            FinisedFiles = 0;
+            AllFiles = -1;
+            FinisedFiles = -1;
             AllData = null;
             FinishedData = null;
             NextItem = null;
@@ -350,7 +350,7 @@ namespace File_Master_project
         {
             if(IsAvailable && Source.Exists)
             {
-                if (Source.GetType() == typeof(DirectoryInfo)) return "Folder";
+                if (Source.GetType() == typeof(DirectoryInfo)) return "Directory";
                 else if (Source.GetType() == typeof(FileInfo)) return "File";
             }
             return "Item";
@@ -427,7 +427,7 @@ namespace File_Master_project
                     }
 
                     TaskPreparation = false;
-                    Backup NewBackup = await Task.Run(() => CreateBackup(progress, Source, BackupRoot));
+                    Backup NewBackup = await Task.Run(() => CreateBackup(progress, Source, BackupRoot, CancelBackup.Token));
                     if(OutdatedBackup != null) Backups.Remove(OutdatedBackup);
                     Backups.Add(NewBackup);
                     completed = true;
@@ -435,7 +435,7 @@ namespace File_Master_project
                 }
                 catch (Exception error)
                 {
-                    if (isManual) MessageBox.Show(error.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    if (isManual) MessageBox.Show(error.Message, "Backup error", MessageBoxButton.OK, MessageBoxImage.Error);
                     //LOG
                 }
 
@@ -458,7 +458,7 @@ namespace File_Master_project
             }
         }
 
-        private Backup CreateBackup(IProgress<BackupProgressReportModel> ProgressReport, FileSystemInfo Source, string BackupRoot)
+        private Backup CreateBackup(IProgress<BackupProgressReportModel> ProgressReport, FileSystemInfo Source, string BackupRoot, CancellationToken Cancel)
         {
             Backup Result;
             BackupProgressReportModel Progress;
@@ -467,20 +467,24 @@ namespace File_Master_project
                 throw new Exception("System files are not allowed to be accessed!");
             }
             try
-            {                
+            {
+                string Parent = Directory.GetParent(Source.FullName).FullName.TrimEnd('\\'); // this part of the path will be replaced for every item
                 if ((Source.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
                 {
                     List<string> SourceFiles, BackupFiles = new List<string>();
                     List<string> SourceFolders, BackupFolders = new List<string>();
-                    GetDirectoryContent((DirectoryInfo)Source, out SourceFiles, out SourceFolders);
+                    GetDirectoryContent((DirectoryInfo)Source, out SourceFiles, out SourceFolders);                   
                     foreach (var Item in SourceFolders)
                     {
-                        string Parent = Directory.GetParent(Source.FullName).FullName;              
-                        string Target = Item.Replace(Parent, $@"{BackupRoot}");
-                        BackupFolders.Add(Directory.CreateDirectory(Target).FullName);
-
+                        if (Cancel.IsCancellationRequested)
+                        {
+                            Cancel.ThrowIfCancellationRequested();
+                        }
                         Progress = new BackupProgressReportModel(this, false);
                         ProgressReport.Report(Progress);
+
+                        string Target = Item.Replace(Parent, $@"{BackupRoot}");
+                        BackupFolders.Add(Directory.CreateDirectory(Target).FullName);
                     }
                     #region DiskSpaces
                     DiskSpace All = new DiskSpace(0);
@@ -493,13 +497,16 @@ namespace File_Master_project
                     #endregion
                     foreach (var Item in SourceFiles)
                     {
+                        if (Cancel.IsCancellationRequested)
+                        {
+                            Cancel.ThrowIfCancellationRequested();
+                        }
                         Progress = new BackupProgressReportModel(this, false, SourceFiles.Count, BackupFiles.Count, All, Finished, new FileInfo(Item).Name);
                         ProgressReport.Report(Progress);
 
-                        string Parent = Directory.GetParent(Source.FullName).FullName;
                         string Target = Item.Replace(Parent, $@"{BackupRoot}");
                         BackupFiles.Add(Target);
-                        CopyFile(Item, Target, ProgressReport, Progress, CancelBackup.Token);
+                        CopyFile(Item, Target, ProgressReport, Progress, Cancel);
                     }
                     Progress = new BackupProgressReportModel(this, false, SourceFiles.Count, BackupFiles.Count, All, Finished, "none");
                     ProgressReport.Report(Progress);
@@ -508,18 +515,31 @@ namespace File_Master_project
                 else
                 {
                     FileInfo SourceFile = new FileInfo(Source.FullName);
-                    string Parent = Directory.GetParent(Source.FullName).FullName;
                     string BackupFile = SourceFile.FullName.Replace(Parent, $@"{BackupRoot}");
                     #region DiskSpaces
                     DiskSpace All = new DiskSpace(SourceFile.Length);
                     DiskSpace Finished = new DiskSpace(0);
                     #endregion
+
+                    #region CreateFolder
+                    if (Cancel.IsCancellationRequested)
+                    {
+                        Cancel.ThrowIfCancellationRequested();
+                    }
+                    Progress = new BackupProgressReportModel(this, false);
+                    ProgressReport.Report(Progress);
+                    Directory.CreateDirectory(new FileInfo(BackupFile).Directory.FullName);
+                    #endregion
+
+                    #region CopyFile
+                    if (Cancel.IsCancellationRequested)
+                    {
+                        Cancel.ThrowIfCancellationRequested();
+                    }
                     Progress = new BackupProgressReportModel(this, false, 1, 0, All, Finished, SourceFile.Name);
                     ProgressReport.Report(Progress);
-
-                    Directory.CreateDirectory(new FileInfo(BackupFile).Directory.FullName);
-                    CopyFile(SourceFile.FullName, BackupFile, ProgressReport, Progress, CancelBackup.Token);
-
+                    CopyFile(SourceFile.FullName, BackupFile, ProgressReport, Progress, Cancel);
+                    #endregion
                     Progress = new BackupProgressReportModel(this, false, 1, 1, All, Finished, "none");
                     ProgressReport.Report(Progress);
                     Result = new Backup(BackupRoot, BackupFile);
@@ -527,6 +547,11 @@ namespace File_Master_project
 
                 BackupProcess.Upload_BackupInfo();
                 return Result;
+            }
+            catch (OperationCanceledException error)
+            {
+                //clean up files
+                throw new Exception($"{error.Message}");
             }
             catch (Exception error)
             {

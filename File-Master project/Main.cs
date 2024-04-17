@@ -43,5 +43,11 @@ namespace File_Master_project
             if (Directory.Exists(Path)) return new DirectoryInfo(Path);
             else return new FileInfo(Path);
         }
+
+        /*static public int CompareByteArrayMatchRatio(byte[] A, byte[] B)
+        {
+            int ratio;
+
+        }*/
     }
 }

@@ -3,7 +3,7 @@
     "DriveID": "E9EFF223",
     "DefaultVolumeLabel": "KINGSTON_C",
     "SizeLimit": {
-      "Bytes": 1073741824
+      "Bytes": 5368709120
     },
     "BackupTasks": [
       {
@@ -17,14 +17,24 @@
         "IsEnabled": true
       },
       {
-        "Label": "Screenshot_Backup",
-        "DestinationPath": "K:\\Backups",
-        "IsEnabled": true
-      },
-      {
         "Label": "Downloads_Backup",
         "DestinationPath": "K:\\",
-        "IsEnabled": true
+        "IsEnabled": false
+      },
+      {
+        "Label": "EX",
+        "DestinationPath": "K:\\Backups",
+        "IsEnabled": false
+      },
+      {
+        "Label": "RMT",
+        "DestinationPath": "K:\\Backups",
+        "IsEnabled": false
+      },
+      {
+        "Label": "BACKUP_Dokumentumok",
+        "DestinationPath": "K:\\Backups",
+        "IsEnabled": false
       }
     ]
   },
@@ -42,6 +52,12 @@
     "SizeLimit": {
       "Bytes": 107374182400
     },
-    "BackupTasks": []
+    "BackupTasks": [
+      {
+        "Label": "BACKUP_Dokumentumok",
+        "DestinationPath": "J:\\Biztonsági mentések\\File Master",
+        "IsEnabled": false
+      }
+    ]
   }
 ]
